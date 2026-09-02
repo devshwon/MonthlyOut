@@ -2,8 +2,7 @@ import { closeView, graniteEvent } from "@apps-in-toss/web-framework";
 import { useEffect, useRef } from "react";
 import { Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import { FlowDebugPanel } from "@/components/FlowDebugPanel";
-import AdsAndRewardsPage from "@/pages/AdsAndRewards";
-import FeaturePage from "@/pages/Feature";
+import ChargeFormPage from "@/pages/ChargeForm";
 import HomePage from "@/pages/Home";
 import NotFoundPage from "@/pages/NotFound";
 import SettingsPage from "@/pages/Settings";
@@ -60,8 +59,8 @@ export default function App() {
 		<>
 			<Routes>
 				<Route path="/" element={<HomePage />} />
-				<Route path="/feature" element={<FeaturePage />} />
-				<Route path="/ads-rewards" element={<AdsAndRewardsPage />} />
+				<Route path="/charge/new" element={<ChargeFormPage />} />
+				<Route path="/charge/:id" element={<ChargeFormPage />} />
 				<Route path="/settings" element={<SettingsPage />} />
 				<Route path="*" element={<NotFoundPage />} />
 			</Routes>

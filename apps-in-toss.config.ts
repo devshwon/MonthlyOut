@@ -5,9 +5,9 @@
 import { defineConfig } from '@apps-in-toss/web-framework/config';
 
 export default defineConfig({
-  // TODO: 앱인토스 콘솔에 생성한 앱 이름으로 변경하세요.
-  // 콘솔의 앱 이름과 완전히 동일해야 하고, 배포 스킴/CORS 도메인의 기준이 됩니다.
-  appName: 'sample-miniapp',
+  // 콘솔에 만든 앱 이름과 완전히 동일해야 한다(배포 스킴 · CORS 도메인의 기준).
+  // TODO: 콘솔에서 'monthlyout'으로 앱을 만들었는지 확인하고, 다르면 여기를 맞춘다.
+  appName: 'monthlyout',
 
   // 3.x부터 brand는 primaryColor만 받습니다. displayName·icon은 콘솔에서 관리해요.
   brand: {

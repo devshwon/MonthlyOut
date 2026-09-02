@@ -1,113 +1,136 @@
-import { Button, Paragraph, Switch } from "@toss/tds-mobile";
-import { useEffect, useState } from "react";
-import { spacing } from "@/design/tokens";
+import { Button, Paragraph } from "@toss/tds-mobile";
+import { useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { colors, radius, spacing } from "@/design/tokens";
+import { useCharges } from "@/hooks/useCharges";
+import { clearCharges } from "@/services/chargeStore";
 import {
-	getDefaultSettings,
-	loadTemplateSettings,
-	saveTemplateSettings,
-} from "@/services/templateStorage";
-import type { TemplateSettings } from "@/types";
+	activeCharges,
+	currentYearMonth,
+	formatKrw,
+	monthlyTotal,
+} from "@/services/charges";
 
 const s = {
-	container: {
-		minHeight: "100vh",
-		backgroundColor: "#F9FAFB",
-		padding: `${spacing.md} ${spacing.sm}`,
-	} as React.CSSProperties,
-	section: {
-		padding: `${spacing.sm} 0`,
-		borderTop: "1px solid #E5E8EB",
-		borderBottom: "1px solid #E5E8EB",
-	} as React.CSSProperties,
-	title: { marginBottom: spacing.md } as React.CSSProperties,
+	screen: {
+		minHeight: "100dvh",
+		backgroundColor: colors.background,
+		padding: `${spacing.md}px ${spacing.md}px ${spacing.xl}px`,
+	} satisfies React.CSSProperties,
+	title: {
+		padding: `${spacing.md}px 0 ${spacing.lg}px`,
+	} satisfies React.CSSProperties,
+	card: {
+		padding: spacing.md,
+		borderRadius: radius.lg,
+		backgroundColor: colors.surface,
+		marginBottom: spacing.md,
+	} satisfies React.CSSProperties,
 	row: {
 		display: "flex",
-		justifyContent: "space-between",
 		alignItems: "center",
-		padding: spacing.md,
-		borderBottom: "1px solid #E5E8EB",
-	} as React.CSSProperties,
-	rowLabel: { marginRight: spacing.sm } as React.CSSProperties,
-	rowDescription: {
-		marginTop: spacing.xxs,
-		color: "#8B95A1",
-	} as React.CSSProperties,
-	resetWrap: { marginTop: spacing.lg } as React.CSSProperties,
+		justifyContent: "space-between",
+		gap: spacing.sm,
+		paddingBottom: spacing.xs,
+	} satisfies React.CSSProperties,
+	hint: { marginTop: spacing.xs } satisfies React.CSSProperties,
+	action: { marginTop: spacing.md } satisfies React.CSSProperties,
 };
 
 export default function SettingsPage() {
-	const [settings, setSettings] = useState<TemplateSettings>(() =>
-		loadTemplateSettings(),
-	);
+	const navigate = useNavigate();
+	const charges = useCharges();
+	const yearMonth = useMemo(() => currentYearMonth(), []);
+	const [confirmingClear, setConfirmingClear] = useState(false);
 
-	useEffect(() => {
-		saveTemplateSettings(settings);
-	}, [settings]);
-
-	const updateSetting = (partial: Partial<TemplateSettings>) => {
-		setSettings((prev) => ({ ...prev, ...partial }));
-	};
-
-	const resetToDefault = () => {
-		setSettings(getDefaultSettings());
+	const handleClear = () => {
+		if (!confirmingClear) {
+			setConfirmingClear(true);
+			return;
+		}
+		clearCharges();
+		setConfirmingClear(false);
 	};
 
 	return (
-		<div style={s.container}>
-			<div style={s.section}>
-				<Paragraph
-					typography="t4"
-					fontWeight="bold"
-					color="#191F28"
-					style={s.title}
-				>
-					<Paragraph.Text>설정 예시</Paragraph.Text>
+		<div style={s.screen}>
+			<Paragraph
+				typography="t4"
+				fontWeight="bold"
+				color={colors.textPrimary}
+				style={s.title}
+			>
+				<Paragraph.Text>설정</Paragraph.Text>
+			</Paragraph>
+
+			<div style={s.card}>
+				<div style={s.row}>
+					<Paragraph typography="t6" color={colors.textSecondary}>
+						<Paragraph.Text>등록한 항목</Paragraph.Text>
+					</Paragraph>
+					<Paragraph
+						typography="t6"
+						fontWeight="bold"
+						color={colors.textPrimary}
+					>
+						<Paragraph.Text>{`${charges.length}개`}</Paragraph.Text>
+					</Paragraph>
+				</div>
+				<div style={s.row}>
+					<Paragraph typography="t6" color={colors.textSecondary}>
+						<Paragraph.Text>이번 달 고정과금</Paragraph.Text>
+					</Paragraph>
+					<Paragraph
+						typography="t6"
+						fontWeight="bold"
+						color={colors.textPrimary}
+					>
+						<Paragraph.Text>
+							{formatKrw(monthlyTotal(charges, yearMonth))}
+						</Paragraph.Text>
+					</Paragraph>
+				</div>
+				<Paragraph typography="t7" color={colors.textTertiary} style={s.hint}>
+					<Paragraph.Text>
+						{`이번 달에 실제로 빠지는 항목은 ${activeCharges(charges, yearMonth).length}개예요. 데이터는 이 기기에만 저장돼요.`}
+					</Paragraph.Text>
 				</Paragraph>
+			</div>
 
-				<div style={s.row}>
-					<div style={s.rowLabel}>
-						<Paragraph typography="t6" color="#191F28">
-							<Paragraph.Text>푸시 알림 사용</Paragraph.Text>
-						</Paragraph>
-						<Paragraph typography="t7" style={s.rowDescription}>
-							<Paragraph.Text>서비스 업데이트 안내 수신</Paragraph.Text>
-						</Paragraph>
-					</div>
-					<Switch
-						checked={settings.pushEnabled}
-						onChange={(_, checked) => updateSetting({ pushEnabled: checked })}
-					/>
-				</div>
-
-				<div style={s.row}>
-					<div style={s.rowLabel}>
-						<Paragraph typography="t6" color="#191F28">
-							<Paragraph.Text>마케팅 수신 동의</Paragraph.Text>
-						</Paragraph>
-						<Paragraph typography="t7" style={s.rowDescription}>
-							<Paragraph.Text>이벤트/혜택 알림 수신</Paragraph.Text>
-						</Paragraph>
-					</div>
-					<Switch
-						checked={settings.marketingConsent}
-						onChange={(_, checked) =>
-							updateSetting({ marketingConsent: checked })
-						}
-					/>
-				</div>
-
-				<div style={s.resetWrap}>
+			<div style={s.card}>
+				<Paragraph typography="t6" fontWeight="bold" color={colors.textPrimary}>
+					<Paragraph.Text>데이터 초기화</Paragraph.Text>
+				</Paragraph>
+				<Paragraph typography="t7" color={colors.textTertiary} style={s.hint}>
+					<Paragraph.Text>
+						등록한 항목을 모두 지워요. 되돌릴 수 없어요.
+					</Paragraph.Text>
+				</Paragraph>
+				<div style={s.action}>
 					<Button
-						size="large"
+						size="medium"
 						color="dark"
 						variant="weak"
 						display="block"
-						onClick={resetToDefault}
+						disabled={charges.length === 0}
+						onClick={handleClear}
 					>
-						초기값으로 복원
+						{confirmingClear
+							? "한 번 더 누르면 모두 삭제돼요"
+							: "모든 항목 삭제"}
 					</Button>
 				</div>
 			</div>
+
+			<Button
+				size="large"
+				color="dark"
+				variant="weak"
+				display="block"
+				onClick={() => navigate("/", { replace: true })}
+			>
+				홈으로
+			</Button>
 		</div>
 	);
 }

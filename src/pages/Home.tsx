@@ -1,126 +1,172 @@
-import { Button, Paragraph } from "@toss/tds-mobile";
+import { Button, Paragraph, TextButton } from "@toss/tds-mobile";
+import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { spacing } from "@/design/tokens";
-import type { TemplateMenuItem } from "@/types";
+import { ChargeRow } from "@/components/ChargeRow";
+import { colors, radius, spacing } from "@/design/tokens";
+import { useCharges } from "@/hooks/useCharges";
+import { useSafeAreaInsets } from "@/hooks/useSafeAreaInsets";
+import {
+	activeCharges,
+	currentYearMonth,
+	formatAmount,
+	formatKrw,
+	formatYearMonth,
+	monthlyTotal,
+	nextRelease,
+} from "@/services/charges";
 
 const s = {
-	container: {
-		minHeight: "100vh",
-		backgroundColor: "#F9FAFB",
-		padding: `${spacing.md} ${spacing.sm}`,
-	} as React.CSSProperties,
-	hero: {
-		padding: `${spacing.md} 0`,
-		marginBottom: spacing.sm,
-	} as React.CSSProperties,
-	title: { marginBottom: spacing.xxs } as React.CSSProperties,
-	subtitle: { color: "#6B7684" } as React.CSSProperties,
-	section: {
-		padding: `${spacing.sm} 0`,
-		borderTop: "1px solid #E5E8EB",
-		borderBottom: "1px solid #E5E8EB",
-	} as React.CSSProperties,
-	sectionTitle: { marginBottom: spacing.sm } as React.CSSProperties,
-	menuButtonWrap: { marginBottom: spacing.sm } as React.CSSProperties,
-	footerHint: {
-		marginTop: spacing.lg,
-		color: "#8B95A1",
-	} as React.CSSProperties,
+	screen: {
+		display: "flex",
+		flexDirection: "column" as const,
+		minHeight: "100dvh",
+		backgroundColor: colors.background,
+	} satisfies React.CSSProperties,
+	scroll: {
+		flex: 1,
+		overflowY: "auto" as const,
+		padding: `${spacing.md}px ${spacing.md}px ${spacing.xl}px`,
+	} satisfies React.CSSProperties,
+	topBar: {
+		display: "flex",
+		alignItems: "center",
+		justifyContent: "flex-end",
+		height: spacing.xxl,
+	} satisfies React.CSSProperties,
+	summary: {
+		padding: `${spacing.lg}px 0 ${spacing.xl}px`,
+	} satisfies React.CSSProperties,
+	total: { marginTop: spacing.xs } satisfies React.CSSProperties,
+	summaryMeta: { marginTop: spacing.xs } satisfies React.CSSProperties,
+	release: {
+		display: "flex",
+		gap: spacing.xxs,
+		padding: `${spacing.sm}px ${spacing.md}px`,
+		marginBottom: spacing.md,
+		borderRadius: radius.md,
+		backgroundColor: colors.surface,
+	} satisfies React.CSSProperties,
+	list: {
+		display: "flex",
+		flexDirection: "column" as const,
+		gap: spacing.xs,
+	} satisfies React.CSSProperties,
+	empty: {
+		padding: `${spacing.xxxl}px ${spacing.md}px`,
+		borderRadius: radius.lg,
+		backgroundColor: colors.surface,
+		textAlign: "center" as const,
+	} satisfies React.CSSProperties,
+	emptyDescription: { marginTop: spacing.xs } satisfies React.CSSProperties,
+	cta: {
+		padding: `${spacing.sm}px ${spacing.md}px`,
+		backgroundColor: colors.background,
+	} satisfies React.CSSProperties,
 };
-
-const APP_TEMPLATE_NAME = "샘플 미니앱";
-
-const menuItems: TemplateMenuItem[] = [
-	{
-		id: "feature",
-		title: "기능 예시",
-		description: "폼 입력 + 토스트 + 진동 등 기본 인터랙션",
-		path: "/feature",
-	},
-	{
-		id: "ads-rewards",
-		title: "광고 + 리워드 샘플",
-		description: "전면형/리워드 광고, 토스 포인트 지급, 배너, 알림 동의",
-		path: "/ads-rewards",
-	},
-	{
-		id: "settings",
-		title: "설정 예시",
-		description: "로컬 저장소 기반 설정 관리",
-		path: "/settings",
-	},
-];
 
 export default function HomePage() {
 	const navigate = useNavigate();
+	const insets = useSafeAreaInsets();
+	const charges = useCharges();
+	const yearMonth = useMemo(() => currentYearMonth(), []);
+
+	const visible = activeCharges(charges, yearMonth);
+	const total = monthlyTotal(charges, yearMonth);
+	const release = nextRelease(charges, yearMonth);
 
 	return (
-		<div style={s.container}>
-			<div style={s.hero}>
-				<Paragraph
-					typography="t4"
-					fontWeight="bold"
-					color="#191F28"
-					style={s.title}
-				>
-					<Paragraph.Text>{APP_TEMPLATE_NAME}</Paragraph.Text>
-				</Paragraph>
-				<Paragraph typography="t7" style={s.subtitle}>
-					<Paragraph.Text>
-						TDS 기준 간격/타이포/버튼 규칙으로 구성한 기본 화면입니다.
-					</Paragraph.Text>
-				</Paragraph>
-			</div>
+		<div style={s.screen}>
+			<div style={s.scroll}>
+				<div style={s.topBar}>
+					<TextButton size="small" onClick={() => navigate("/settings")}>
+						설정
+					</TextButton>
+				</div>
 
-			<div style={s.section}>
-				<Paragraph
-					typography="t7"
-					fontWeight="bold"
-					color="#6B7684"
-					style={s.sectionTitle}
-				>
-					<Paragraph.Text>샘플 페이지</Paragraph.Text>
-				</Paragraph>
-
-				{menuItems.map((item) => (
-					<div key={item.id} style={s.menuButtonWrap}>
-						<Button
-							size="large"
-							color="dark"
-							variant="weak"
-							display="block"
-							onClick={() => navigate(item.path)}
-						>
-							{item.title}
-						</Button>
+				<div style={s.summary}>
+					<Paragraph typography="t7" color={colors.textTertiary}>
+						<Paragraph.Text>
+							{formatYearMonth(yearMonth)} 고정과금
+						</Paragraph.Text>
+					</Paragraph>
+					<Paragraph
+						typography="t2"
+						fontWeight="bold"
+						color={colors.textPrimary}
+						style={s.total}
+					>
+						<Paragraph.Text>{formatKrw(total)}</Paragraph.Text>
+					</Paragraph>
+					{visible.length > 0 ? (
 						<Paragraph
 							typography="t7"
-							color="#6B7684"
-							style={{ marginTop: spacing.xxs, marginLeft: spacing.xs }}
+							color={colors.textSecondary}
+							style={s.summaryMeta}
 						>
-							<Paragraph.Text>{item.description}</Paragraph.Text>
+							<Paragraph.Text>{`매달 자동으로 빠지는 항목 ${visible.length}개`}</Paragraph.Text>
+						</Paragraph>
+					) : null}
+				</div>
+
+				{release ? (
+					<div style={s.release}>
+						<Paragraph
+							typography="t7"
+							fontWeight="bold"
+							color={colors.positive}
+						>
+							<Paragraph.Text>{`${release.monthsLater}개월 뒤`}</Paragraph.Text>
+						</Paragraph>
+						<Paragraph typography="t7" color={colors.textSecondary}>
+							<Paragraph.Text>{`${formatAmount(release.amount)}원이 풀립니다`}</Paragraph.Text>
 						</Paragraph>
 					</div>
-				))}
+				) : null}
 
-				<div style={{ marginTop: spacing.sm }}>
-					<Button
-						size="large"
-						color="primary"
-						variant="fill"
-						display="block"
-						onClick={() => navigate("/feature")}
-					>
-						기능 예시 바로 시작
-					</Button>
-				</div>
+				{visible.length === 0 ? (
+					<div style={s.empty}>
+						<Paragraph
+							typography="t6"
+							fontWeight="bold"
+							color={colors.textPrimary}
+						>
+							<Paragraph.Text>아직 등록한 항목이 없어요</Paragraph.Text>
+						</Paragraph>
+						<Paragraph
+							typography="t7"
+							color={colors.textTertiary}
+							style={s.emptyDescription}
+						>
+							<Paragraph.Text>
+								구독·할부·보험·대출처럼 매달 알아서 빠지는 것부터 넣어보세요.
+							</Paragraph.Text>
+						</Paragraph>
+					</div>
+				) : (
+					<div style={s.list}>
+						{visible.map((charge) => (
+							<ChargeRow
+								key={charge.id}
+								charge={charge}
+								yearMonth={yearMonth}
+								onClick={() => navigate(`/charge/${charge.id}`)}
+							/>
+						))}
+					</div>
+				)}
 			</div>
 
-			<Paragraph typography="t7" style={s.footerHint}>
-				<Paragraph.Text>
-					TODO: 서비스명/메뉴명/설명 문구를 실제 도메인 기준으로 교체하세요.
-				</Paragraph.Text>
-			</Paragraph>
+			<div style={{ ...s.cta, paddingBottom: spacing.sm + insets.bottom }}>
+				<Button
+					size="large"
+					color="primary"
+					variant="fill"
+					display="block"
+					onClick={() => navigate("/charge/new")}
+				>
+					항목 추가
+				</Button>
+			</div>
 		</div>
 	);
 }
