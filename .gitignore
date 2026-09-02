@@ -1,0 +1,25 @@
+# dependencies
+node_modules/
+
+# build output
+dist/
+*.ait
+.granite/
+
+# logs
+*.log
+npm-debug.log*
+yarn-error.log*
+
+# editor / OS
+.DS_Store
+.idea/
+*.local
+
+# env / secrets
+.env
+.env.*
+!.env.example
+
+# claude: 공유 설정(settings.json)·MCP는 커밋, 개인 오버라이드만 제외
+.claude/settings.local.json

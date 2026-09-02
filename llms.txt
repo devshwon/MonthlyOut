@@ -1,0 +1,10 @@
+# toss-base LLM context
+Project: Apps-in-Toss web mini-app template
+Stack: React + TypeScript + (your build tool)
+Rules:
+- If work involves Apps-in-Toss SDK, policies, or constraints: use @docs first, then implement.
+- Prefer referencing apps-in-toss-examples and port the closest example.
+- Always include loading/error/empty states for networked screens.
+- Never introduce new libraries unless necessary; explain why.
+Deliverables per task:
+- Summary, DoD checklist, files changed, risk notes.

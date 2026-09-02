@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="ko">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<link
+			rel="stylesheet"
+			href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css"
+		/>
+		<title>디자인 시안 미리보기</title>
+		<style>
+			/* 토스 토큰 참고: src/design/tokens.ts — 확정 후 src로 옮길 때는 토큰을 쓴다 */
+			:root {
+				--bg: #f9fafb;
+				--surface: #ffffff;
+				--strong: #191f28;
+				--body: #4e5968;
+				--sub: #6b7684;
+				--hint: #8b95a1;
+				--border: #e5e8eb;
+				--borderSubtle: #f2f4f6;
+				--primary: #3182f6;
+			}
+			* {
+				margin: 0;
+				padding: 0;
+				box-sizing: border-box;
+			}
+			body {
+				font-family: Pretendard, -apple-system, sans-serif;
+				background: #dfe3e8;
+				padding: 32px 0 60px;
+				-webkit-font-smoothing: antialiased;
+			}
+			/* 폰 프레임: 여러 시안을 비교하려면 .phone을 여러 개 둔다 */
+			.phone {
+				width: 390px;
+				min-height: 780px;
+				margin: 0 auto 40px;
+				background: var(--bg);
+				border-radius: 44px;
+				overflow: hidden;
+				box-shadow: 0 24px 60px rgba(20, 30, 50, 0.25);
+				padding: 24px 20px;
+			}
+			.hint {
+				color: var(--hint);
+				font-size: 14px;
+				line-height: 1.6;
+			}
+		</style>
+	</head>
+	<body>
+		<div class="phone">
+			<!--
+				여기에 HTML 목업(시안)을 그리고 preview(launch.json의 "design" 서버)로 시각 검증한다.
+				레이아웃·색·위계가 만족스러우면 확정안을 src에 토큰 기반으로 옮긴다.
+				여러 방향을 비교하려면 .phone 블록을 복제해 나란히 둔다.
+			-->
+			<p class="hint">
+				design-preview — 여기에 시안을 그려 미리보기로 확인하고, 확정안을 src에 토큰
+				기반으로 구현하세요.
+			</p>
+		</div>
+	</body>
+</html>

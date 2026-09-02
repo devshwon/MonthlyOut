@@ -1,0 +1,28 @@
+{
+	"version": "0.0.1",
+	"configurations": [
+		{
+			"name": "vite-dev",
+			"runtimeExecutable": "npx",
+			"runtimeArgs": [
+				"vite",
+				"--port",
+				"5179",
+				"--host"
+			],
+			"port": 5179
+		},
+		{
+			"name": "design",
+			"runtimeExecutable": "npx",
+			"runtimeArgs": [
+				"vite",
+				"design-preview",
+				"--port",
+				"5180",
+				"--strictPort"
+			],
+			"port": 5180
+		}
+	]
+}
