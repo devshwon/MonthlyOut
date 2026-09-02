@@ -1,72 +1,92 @@
-# Toss InApp 샘플 템플릿
+# 매달얼마 (MonthlyOut)
 
-토스 WebView 미니앱을 빠르게 복제해서 쓸 수 있는 최소 템플릿입니다.
-SDK 3.x 기준(`@apps-in-toss/web-framework` 3.1.1, `apps-in-toss.config.ts`)으로 맞춰져 있습니다.
+> 구독·할부·보험·대출 한번에 정리
 
-## 1) 가장 먼저 바꿀 값
+카드 앱은 "이번 달 결제금액 87만원"이라는 숫자 하나만 보여준다. 그 안에 뭐가 들어 있는지는 알려주지 않는다.
+**매달얼마**는 자동으로 빠져나가는 돈을 한 곳에 모아 **총액**을 보여준다. 알아야 줄일 수 있다.
 
-- `apps-in-toss.config.ts`
-  - `appName` — 앱인토스 콘솔의 앱 이름과 완전히 동일해야 합니다
-  - `brand.primaryColor` (3.x부터 `displayName`·`icon`은 콘솔에서 관리)
-- `index.html`의 `<title>`
-- `package.json`의 `name`
-- `src/pages/Home.tsx`의 서비스 문구
+Apps in Toss WebView 미니앱 (React + TypeScript + TDS, 로컬 저장).
 
-## 2) 실행
+```
+─────────────────────────
+ 2026년 9월 고정과금
+      562,000원
+─────────────────────────
+ 자동차 할부   320,000  25일  7/12회차
+ 전세대출이자  180,000  15일
+ 실손보험       45,000  15일
+ 넷플릭스       17,000  25일
+─────────────────────────
+ 6개월 뒤 320,000원이 풀립니다
+```
+
+- 금액 내림차순 정렬 — 줄일 대상이 자연스럽게 위로 온다.
+- 할부는 **산 금액이 아니라 매달 빠지는 금액**으로 잡는다(현금 기준). 총액·회차는 참고 정보다.
+- 끝나는 날이 있는 항목은 "언제 얼마가 풀리는지"까지 계산한다.
+
+기획 배경·범위·원칙은 [`docs/매달얼마_기획서.md`](docs/매달얼마_기획서.md)에 있다. 기능을 더하기 전에 여기부터 읽는다.
+
+## 실행
 
 ```bash
 npm install
-npm run dev
+npm run dev        # http://localhost:5173
 ```
 
-브라우저(`http://localhost:5173`)에서 바로 뜹니다. `@apps-in-toss/devtools`가 토스 SDK를 mock으로
-대체하고 우하단에 **AIT DevTools 패널**을 띄워 주므로, 토스 앱 없이도 플랫폼·권한·SafeArea·광고 결과 등을
-바꿔가며 테스트할 수 있습니다. 실기기에서 LAN으로 붙어볼 땐 `npm run dev:web`(5179, `--host`).
+토스 앱 없이 브라우저에서 그대로 뜬다. `@apps-in-toss/devtools`가 토스 SDK를 mock으로 바꿔주고,
+우하단 **AIT** 버튼으로 플랫폼·SafeArea·권한 등을 바꿔가며 테스트할 수 있다.
+실기기에서 LAN으로 붙어볼 땐 `npm run dev:web`(5179, `--host`).
 
-## 3) 빌드
+샘플 데이터를 넣어보려면 브라우저 콘솔에서:
+
+```js
+localStorage.setItem("monthlyout.charges.v1", JSON.stringify([
+  { id: "1", name: "넷플릭스", amount: 17000, billingDay: 25, category: "subscription",
+    method: { kind: "card", name: "신한카드" }, term: null, createdAt: 0, updatedAt: 0 },
+]));
+location.reload(); // 스토어는 모듈 로드 시 한 번만 읽는다
+```
+
+## 빌드 · 배포
 
 ```bash
-npm run build
+npm run build      # vite build → dist/ → ait build → monthlyout.ait
+npm run release    # build + ait deploy
 ```
 
-`vite build`로 `dist/`를 만든 뒤 `ait build`가 그걸 `<appName>.ait` 아티팩트로 패키징합니다.
-3.x의 `ait build`는 웹을 직접 빌드하지 않으므로 **이 순서를 지켜야** 합니다.
+`ait build`는 웹을 직접 빌드하지 않고 `dist/`를 패키징만 하므로 **이 순서를 지켜야 한다.**
+배포하려면 `package.json`의 `__PUT_YOUR_CONSOLE_API_KEY__`를 콘솔 발급 키로 바꾸거나,
+`npx ait token add`로 프로필을 만들어 `ait deploy --profile <이름>`을 쓴다.
 
-## 3-1) SDK 2.x 프로젝트에서 올라올 때
+검증은 `npx tsc --noEmit` → `npx biome check --write src` → `npm run build`.
 
-```bash
-npx ait migrate v3
+## 구조
+
+```
+docs/     기획서 + 구현 참조(포인트 지급 · 하단 여백 · 배너 배치)
+src/
+  pages/       Home(총액·리스트) · ChargeForm(등록/수정) · Settings · NotFound
+  services/    charges.ts(계산) · chargeStore.ts(로컬 저장)
+  hooks/       useCharges · useSafeAreaInsets
+  components/  ChargeRow · ErrorBoundary · FlowDebugPanel
+  design/      tokens.ts (간격 · 모서리 · 색)
+desigin/  toss-look.md (디자인 규칙)
+prompts/  출시 전 검수 체크리스트 등
 ```
 
-`granite.config.ts` → `apps-in-toss.config.ts` 변환, `build` 스크립트에 `&& ait build` 추가,
-devtools 플러그인 주입까지 자동으로 해 줍니다. 실행 전에 커밋해 두세요.
+계산 로직은 전부 `src/services/charges.ts`의 순수 함수다 —
+월 총액·정렬(`activeCharges`, `monthlyTotal`), 회차·해제 시점(`installmentRound`, `nextRelease`),
+출금 층 묶음(`withdrawalGroups`), 카드 고정분(`cardFixedTotal`).
 
-> ⚠️ 3.x 번들을 한 번 출시하면 **2.x로 롤백할 수 없습니다.** 콘솔 QR로 실기기 테스트 후 출시하세요.
-> ⚠️ 자체 API를 쓴다면 CORS 허용 목록에 `https://<appName>.web.tossmini.com`,
-> `https://<appName>.private-web.tossmini.com`을 등록해야 합니다.
+## 범위
 
-## 4) 템플릿 구조
+**지금(MVP)**: 항목 CRUD, 월 총액 + 정렬 리스트, 결제수단(카드/통장) 구분, 로컬 저장.
+**다음**: 출금 달력, 카드값 역산, 결제일 알림, 종료 예정 알림, 클라우드 동기화.
 
-- `src/App.tsx`: 라우팅 및 토스 backEvent 처리
-- `src/pages/Home.tsx`: 홈(메뉴 허브)
-- `src/pages/Feature.tsx`: 기능 화면 예시(입력/저장/진동)
-- `src/pages/Settings.tsx`: 설정 화면 예시(로컬 저장)
-- `src/services/templateStorage.ts`: 설정 저장소
+서버도 계정도 없다. 데이터는 기기에만 남는다.
 
-## 5) AI 치환 포인트
+## Claude Code로 작업할 때
 
-- `TODO:` 주석이 있는 위치를 우선 치환
-- `Template*` 타입/함수명을 도메인명으로 변경
-- `feature`, `settings` 라우트를 실제 서비스 라우트로 변경
-
-## 6) Claude Code로 시작하기
-
-1. 이 폴더를 Claude Code로 연다. 루트 `CLAUDE.md`가 작업 가이드(자율 진행·플러그인·디자인·배포)를 담고 있다.
-2. **기획안으로 시작**: `prompts/00-charter.md`를 헌장으로 따른다. 아이디어를 주거나 `prompts/01-app-console-input-template.md`를 채운 뒤 "이 기획대로 만들어줘"라고 하면, 기획→화면→구현→검증→배포까지 한 흐름으로 진행한다.
-3. **토스 문서 검색**: `/docs-search`(또는 `.mcp.json`의 `apps-in-toss` MCP)로 SDK·TDS·정책 문서를 확인한다. SDK export는 node_modules가 grep되지 않으므로 문서나 `.d.ts`(Read)로 본다.
-4. **프로젝트 검증**: `/project-validator`로 설정·구조를 점검한다.
-5. **디자인**: `design-preview/`에 HTML 목업을 그려 미리보기로 시각 검증한 뒤 `src`에 토큰 기반으로 옮긴다.
-6. **배포**: `package.json`의 API 키 placeholder를 콘솔 발급값으로 바꾸고 `npm run release`.
-
-> 플러그인(`apps-in-toss-skills`)이 없다면: `claude plugin marketplace add toss/apps-in-toss-skills` 후 `claude plugin install knowledge-skills@apps-in-toss-skills`.
-> `ax` MCP를 쓰려면 ax CLI가 필요하다: `scoop bucket add toss https://github.com/toss/scoop-bucket.git && scoop install ax`.
+루트 [`CLAUDE.md`](CLAUDE.md)가 작업 지침이다 — 도메인 규칙(현금 기준·항목/출금 층), 코드 지도,
+검증·배포 절차, 토스 SDK/TDS 함정이 정리돼 있다.
+토스 문서는 `/docs-search`, 설정·구조 점검은 `/project-validator`(apps-in-toss-skills 플러그인).
