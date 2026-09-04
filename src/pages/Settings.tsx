@@ -1,7 +1,8 @@
 import { Button, Paragraph } from "@toss/tds-mobile";
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { colors, radius, spacing } from "@/design/tokens";
+import { IconChevronLeft } from "@/components/icons";
+import { colors, radius, shadow, spacing } from "@/design/tokens";
 import { useCharges } from "@/hooks/useCharges";
 import { clearCharges } from "@/services/chargeStore";
 import {
@@ -10,21 +11,38 @@ import {
 	formatKrw,
 	monthlyTotal,
 } from "@/services/charges";
+import { clearConfirmations } from "@/services/confirmStore";
 
 const s = {
-	screen: {
-		minHeight: "100dvh",
-		backgroundColor: colors.background,
-		padding: `${spacing.md}px ${spacing.md}px ${spacing.xl}px`,
+	page: {
+		padding: `${spacing.xs}px ${spacing.md}px ${spacing.xxl}px`,
+	} satisfies React.CSSProperties,
+	topBar: {
+		display: "flex",
+		alignItems: "center",
+		height: 48,
+	} satisfies React.CSSProperties,
+	backButton: {
+		display: "flex",
+		alignItems: "center",
+		justifyContent: "center",
+		width: 36,
+		height: 36,
+		marginLeft: -spacing.xs,
+		border: "none",
+		borderRadius: radius.full,
+		background: "none",
+		cursor: "pointer",
 	} satisfies React.CSSProperties,
 	title: {
-		padding: `${spacing.md}px 0 ${spacing.lg}px`,
+		padding: `${spacing.xs}px 0 ${spacing.lg}px`,
 	} satisfies React.CSSProperties,
 	card: {
 		padding: spacing.md,
-		borderRadius: radius.lg,
+		marginBottom: spacing.sm,
+		borderRadius: radius.xl,
 		backgroundColor: colors.surface,
-		marginBottom: spacing.md,
+		boxShadow: shadow.card,
 	} satisfies React.CSSProperties,
 	row: {
 		display: "flex",
@@ -40,7 +58,7 @@ const s = {
 export default function SettingsPage() {
 	const navigate = useNavigate();
 	const charges = useCharges();
-	const yearMonth = useMemo(() => currentYearMonth(), []);
+	const ym = useMemo(() => currentYearMonth(), []);
 	const [confirmingClear, setConfirmingClear] = useState(false);
 
 	const handleClear = () => {
@@ -49,11 +67,23 @@ export default function SettingsPage() {
 			return;
 		}
 		clearCharges();
+		clearConfirmations();
 		setConfirmingClear(false);
 	};
 
 	return (
-		<div style={s.screen}>
+		<div style={s.page}>
+			<div style={s.topBar}>
+				<button
+					type="button"
+					style={s.backButton}
+					aria-label="뒤로"
+					onClick={() => navigate(-1)}
+				>
+					<IconChevronLeft size={22} color={colors.textSecondary} />
+				</button>
+			</div>
+
 			<Paragraph
 				typography="t4"
 				fontWeight="bold"
@@ -78,7 +108,7 @@ export default function SettingsPage() {
 				</div>
 				<div style={s.row}>
 					<Paragraph typography="t6" color={colors.textSecondary}>
-						<Paragraph.Text>이번 달 고정과금</Paragraph.Text>
+						<Paragraph.Text>이번 달 고정지출</Paragraph.Text>
 					</Paragraph>
 					<Paragraph
 						typography="t6"
@@ -86,13 +116,24 @@ export default function SettingsPage() {
 						color={colors.textPrimary}
 					>
 						<Paragraph.Text>
-							{formatKrw(monthlyTotal(charges, yearMonth))}
+							{formatKrw(monthlyTotal(charges, ym))}
 						</Paragraph.Text>
 					</Paragraph>
 				</div>
 				<Paragraph typography="t7" color={colors.textTertiary} style={s.hint}>
 					<Paragraph.Text>
-						{`이번 달에 실제로 빠지는 항목은 ${activeCharges(charges, yearMonth).length}개예요. 데이터는 이 기기에만 저장돼요.`}
+						{`이번 달에 실제로 빠지는 항목은 ${activeCharges(charges, ym).length}개예요.`}
+					</Paragraph.Text>
+				</Paragraph>
+			</div>
+
+			<div style={s.card}>
+				<Paragraph typography="t6" fontWeight="bold" color={colors.textPrimary}>
+					<Paragraph.Text>데이터는 이 기기에만 있어요</Paragraph.Text>
+				</Paragraph>
+				<Paragraph typography="t7" color={colors.textTertiary} style={s.hint}>
+					<Paragraph.Text>
+						서버에 보내지 않아요. 앱을 지우면 등록한 항목도 함께 사라져요.
 					</Paragraph.Text>
 				</Paragraph>
 			</div>
@@ -103,7 +144,7 @@ export default function SettingsPage() {
 				</Paragraph>
 				<Paragraph typography="t7" color={colors.textTertiary} style={s.hint}>
 					<Paragraph.Text>
-						등록한 항목을 모두 지워요. 되돌릴 수 없어요.
+						등록한 항목과 이체 확인 기록을 모두 지워요. 되돌릴 수 없어요.
 					</Paragraph.Text>
 				</Paragraph>
 				<div style={s.action}>
@@ -121,16 +162,6 @@ export default function SettingsPage() {
 					</Button>
 				</div>
 			</div>
-
-			<Button
-				size="large"
-				color="dark"
-				variant="weak"
-				display="block"
-				onClick={() => navigate("/", { replace: true })}
-			>
-				홈으로
-			</Button>
 		</div>
 	);
 }

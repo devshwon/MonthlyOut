@@ -9,7 +9,8 @@ import {
 } from "@toss/tds-mobile";
 import { useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { colors, radius, spacing } from "@/design/tokens";
+import { IconChevronLeft } from "@/components/icons";
+import { colors, radius, shadow, spacing } from "@/design/tokens";
 import { useSafeAreaInsets } from "@/hooks/useSafeAreaInsets";
 import {
 	addCharge,
@@ -30,42 +31,61 @@ import {
 import type { ChargeCategory, ChargeDraft, PaymentMethodKind } from "@/types";
 
 const s = {
-	screen: {
-		display: "flex",
-		flexDirection: "column" as const,
-		minHeight: "100dvh",
-		backgroundColor: colors.background,
+	page: {
+		padding: `${spacing.xs}px ${spacing.md}px 0`,
 	} satisfies React.CSSProperties,
-	scroll: {
-		flex: 1,
-		overflowY: "auto" as const,
-		padding: `${spacing.md}px ${spacing.md}px ${spacing.xl}px`,
+	topBar: {
+		display: "flex",
+		alignItems: "center",
+		height: 48,
+	} satisfies React.CSSProperties,
+	backButton: {
+		display: "flex",
+		alignItems: "center",
+		justifyContent: "center",
+		width: 36,
+		height: 36,
+		marginLeft: -spacing.xs,
+		border: "none",
+		borderRadius: radius.full,
+		background: "none",
+		cursor: "pointer",
 	} satisfies React.CSSProperties,
 	title: {
-		padding: `${spacing.md}px 0 ${spacing.lg}px`,
+		padding: `${spacing.xs}px 0 ${spacing.lg}px`,
+	} satisfies React.CSSProperties,
+	card: {
+		padding: spacing.md,
+		marginBottom: spacing.sm,
+		borderRadius: radius.xl,
+		backgroundColor: colors.surface,
+		boxShadow: shadow.card,
 	} satisfies React.CSSProperties,
 	field: { marginBottom: spacing.sm } satisfies React.CSSProperties,
-	group: { marginBottom: spacing.lg } satisfies React.CSSProperties,
 	label: { marginBottom: spacing.xs } satisfies React.CSSProperties,
+	hint: { marginTop: spacing.xs } satisfies React.CSSProperties,
 	switchRow: {
 		display: "flex",
 		alignItems: "center",
 		justifyContent: "space-between",
 		gap: spacing.sm,
-		padding: `${spacing.sm}px ${spacing.md}px`,
-		borderRadius: radius.md,
-		backgroundColor: colors.surface,
-		marginBottom: spacing.sm,
 	} satisfies React.CSSProperties,
-	hint: { marginTop: spacing.xs } satisfies React.CSSProperties,
+	termFields: {
+		marginTop: spacing.md,
+		paddingTop: spacing.md,
+		borderTop: `1px solid ${colors.border}`,
+	} satisfies React.CSSProperties,
 	deleteWrap: {
 		display: "flex",
 		justifyContent: "center",
-		marginTop: spacing.xl,
+		padding: `${spacing.md}px 0 ${spacing.xl}px`,
 	} satisfies React.CSSProperties,
 	cta: {
-		padding: `${spacing.sm}px ${spacing.md}px`,
-		backgroundColor: colors.background,
+		position: "sticky" as const,
+		bottom: 0,
+		padding: `${spacing.sm}px 0`,
+		marginTop: spacing.md,
+		background: `linear-gradient(180deg, rgba(244,246,249,0) 0%, ${colors.background} 32%)`,
 	} satisfies React.CSSProperties,
 };
 
@@ -145,7 +165,7 @@ export default function ChargeFormPage() {
 		} else {
 			addCharge(draft);
 		}
-		navigate("/", { replace: true });
+		navigate(-1);
 	};
 
 	const handleDelete = () => {
@@ -157,21 +177,34 @@ export default function ChargeFormPage() {
 			return;
 		}
 		removeCharge(editing.id);
-		navigate("/", { replace: true });
+		navigate("/manage", { replace: true });
 	};
 
 	return (
-		<div style={s.screen}>
-			<div style={s.scroll}>
-				<Paragraph
-					typography="t4"
-					fontWeight="bold"
-					color={colors.textPrimary}
-					style={s.title}
+		<div style={s.page}>
+			<div style={s.topBar}>
+				<button
+					type="button"
+					style={s.backButton}
+					aria-label="뒤로"
+					onClick={() => navigate(-1)}
 				>
-					<Paragraph.Text>{editing ? "항목 수정" : "항목 추가"}</Paragraph.Text>
-				</Paragraph>
+					<IconChevronLeft size={22} color={colors.textSecondary} />
+				</button>
+			</div>
 
+			<Paragraph
+				typography="t4"
+				fontWeight="bold"
+				color={colors.textPrimary}
+				style={s.title}
+			>
+				<Paragraph.Text>
+					{editing ? "항목 수정" : "무엇이 매달 나가나요?"}
+				</Paragraph.Text>
+			</Paragraph>
+
+			<div style={s.card}>
 				<div style={s.field}>
 					<TextField
 						variant="box"
@@ -203,148 +236,128 @@ export default function ChargeFormPage() {
 					</Paragraph>
 				</div>
 
-				<div style={s.group}>
+				<TextField
+					variant="box"
+					labelOption="sustain"
+					label="결제일"
+					placeholder="예: 25"
+					inputMode="numeric"
+					suffix="일"
+					value={billingDayText}
+					onChange={(event) =>
+						setBillingDayText(onlyDigits(event.target.value, 2))
+					}
+				/>
+			</div>
+
+			<div style={s.card}>
+				<Paragraph typography="t7" color={colors.textSecondary} style={s.label}>
+					<Paragraph.Text>분류</Paragraph.Text>
+				</Paragraph>
+				<Chip kind="select" wrap margin="none">
+					{CATEGORY_ORDER.map((value) => (
+						<ChipItem
+							key={value}
+							selected={category === value}
+							onClick={() => handleCategory(value)}
+						>
+							{CATEGORY_LABEL[value]}
+						</ChipItem>
+					))}
+				</Chip>
+			</div>
+
+			<div style={s.card}>
+				<Paragraph typography="t7" color={colors.textSecondary} style={s.label}>
+					<Paragraph.Text>어디서 빠지나요</Paragraph.Text>
+				</Paragraph>
+				<Chip kind="select" margin="none">
+					{(["card", "account"] as PaymentMethodKind[]).map((kind) => (
+						<ChipItem
+							key={kind}
+							selected={methodKind === kind}
+							onClick={() => setMethodKind(kind)}
+						>
+							{METHOD_KIND_LABEL[kind]}
+						</ChipItem>
+					))}
+				</Chip>
+				<div style={{ marginTop: spacing.sm }}>
 					<TextField
 						variant="box"
 						labelOption="sustain"
-						label="결제일"
-						placeholder="예: 25"
-						inputMode="numeric"
-						suffix="일"
-						value={billingDayText}
-						onChange={(event) =>
-							setBillingDayText(onlyDigits(event.target.value, 2))
+						label={methodKind === "card" ? "카드 이름" : "통장 이름"}
+						placeholder={
+							methodKind === "card" ? "예: 신한카드" : "예: 국민은행 통장"
 						}
+						value={methodName}
+						onChange={(event) => setMethodName(event.target.value)}
+					/>
+				</div>
+			</div>
+
+			<div style={s.card}>
+				<div style={s.switchRow}>
+					<div>
+						<Paragraph
+							typography="t6"
+							fontWeight="bold"
+							color={colors.textPrimary}
+						>
+							<Paragraph.Text>끝나는 날이 있어요</Paragraph.Text>
+						</Paragraph>
+						<Paragraph
+							typography="t7"
+							color={colors.textTertiary}
+							style={s.hint}
+						>
+							<Paragraph.Text>할부·대출처럼 회차가 정해진 항목</Paragraph.Text>
+						</Paragraph>
+					</div>
+					<Switch
+						checked={hasTerm}
+						onChange={(_, checked) => setHasTerm(checked)}
 					/>
 				</div>
 
-				<div style={s.group}>
-					<Paragraph
-						typography="t7"
-						color={colors.textSecondary}
-						style={s.label}
-					>
-						<Paragraph.Text>분류</Paragraph.Text>
-					</Paragraph>
-					<Chip kind="select" wrap margin="none">
-						{CATEGORY_ORDER.map((value) => (
-							<ChipItem
-								key={value}
-								selected={category === value}
-								onClick={() => handleCategory(value)}
-							>
-								{CATEGORY_LABEL[value]}
-							</ChipItem>
-						))}
-					</Chip>
-				</div>
-
-				<div style={s.group}>
-					<Paragraph
-						typography="t7"
-						color={colors.textSecondary}
-						style={s.label}
-					>
-						<Paragraph.Text>어디서 빠지나요</Paragraph.Text>
-					</Paragraph>
-					<Chip kind="select" margin="none">
-						{(["card", "account"] as PaymentMethodKind[]).map((kind) => (
-							<ChipItem
-								key={kind}
-								selected={methodKind === kind}
-								onClick={() => setMethodKind(kind)}
-							>
-								{METHOD_KIND_LABEL[kind]}
-							</ChipItem>
-						))}
-					</Chip>
-					<div style={{ marginTop: spacing.xs }}>
+				{hasTerm ? (
+					<div style={s.termFields}>
+						<div style={s.field}>
+							<TextField
+								variant="box"
+								labelOption="sustain"
+								label="총 회차"
+								placeholder="예: 12"
+								inputMode="numeric"
+								suffix="회"
+								value={totalCountText}
+								onChange={(event) =>
+									setTotalCountText(onlyDigits(event.target.value, 3))
+								}
+							/>
+						</div>
 						<TextField
 							variant="box"
 							labelOption="sustain"
-							label={methodKind === "card" ? "카드 이름" : "통장 이름"}
-							placeholder={
-								methodKind === "card" ? "예: 신한카드" : "예: 국민은행 통장"
+							label="1회차가 빠지는 달"
+							placeholder="2026-09"
+							inputMode="numeric"
+							value={startMonth}
+							onChange={(event) =>
+								setStartMonth(formatMonthInput(event.target.value))
 							}
-							value={methodName}
-							onChange={(event) => setMethodName(event.target.value)}
 						/>
-					</div>
-				</div>
-
-				<div style={s.group}>
-					<div style={s.switchRow}>
-						<div>
-							<Paragraph typography="t6" color={colors.textPrimary}>
-								<Paragraph.Text>끝나는 날이 있어요</Paragraph.Text>
-							</Paragraph>
+						{totalCount > 0 && amount > 0 && isValidYearMonth(startMonth) ? (
 							<Paragraph
 								typography="t7"
 								color={colors.textTertiary}
 								style={s.hint}
 							>
 								<Paragraph.Text>
-									할부·대출처럼 회차가 정해진 항목
+									{`총 ${formatKrw(totalCount * amount)} · ${totalCount}회차로 나눠서 빠져요`}
 								</Paragraph.Text>
 							</Paragraph>
-						</div>
-						<Switch
-							checked={hasTerm}
-							onChange={(_, checked) => setHasTerm(checked)}
-						/>
-					</div>
-
-					{hasTerm ? (
-						<>
-							<div style={s.field}>
-								<TextField
-									variant="box"
-									labelOption="sustain"
-									label="총 회차"
-									placeholder="예: 12"
-									inputMode="numeric"
-									suffix="회"
-									value={totalCountText}
-									onChange={(event) =>
-										setTotalCountText(onlyDigits(event.target.value, 3))
-									}
-								/>
-							</div>
-							<TextField
-								variant="box"
-								labelOption="sustain"
-								label="1회차가 빠지는 달"
-								placeholder="2026-09"
-								inputMode="numeric"
-								value={startMonth}
-								onChange={(event) =>
-									setStartMonth(formatMonthInput(event.target.value))
-								}
-							/>
-							{totalCount > 0 && amount > 0 && isValidYearMonth(startMonth) ? (
-								<Paragraph
-									typography="t7"
-									color={colors.textTertiary}
-									style={s.hint}
-								>
-									<Paragraph.Text>
-										{`총 ${formatKrw(totalCount * amount)} · ${totalCount}회차로 나눠서 빠져요`}
-									</Paragraph.Text>
-								</Paragraph>
-							) : null}
-						</>
-					) : null}
-				</div>
-
-				{editing ? (
-					<div style={s.deleteWrap}>
-						<TextButton
-							size="medium"
-							color={colors.danger}
-							onClick={handleDelete}
-						>
-							{confirmingDelete ? "한 번 더 누르면 삭제돼요" : "항목 삭제"}
-						</TextButton>
+						) : null}
 					</div>
 				) : null}
 			</div>
@@ -361,6 +374,18 @@ export default function ChargeFormPage() {
 					저장
 				</Button>
 			</div>
+
+			{editing ? (
+				<div style={s.deleteWrap}>
+					<TextButton
+						size="medium"
+						color={colors.danger}
+						onClick={handleDelete}
+					>
+						{confirmingDelete ? "한 번 더 누르면 삭제돼요" : "항목 삭제"}
+					</TextButton>
+				</div>
+			) : null}
 		</div>
 	);
 }

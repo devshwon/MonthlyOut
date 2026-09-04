@@ -27,30 +27,44 @@
 
 ---
 
+## 화면 구조
+
+하단 탭 3개(**홈 · 관리 · 연간**) + 홈 우상단 설정 아이콘. 상세는 홈/연간에서 밀고 들어간다.
+
+| 화면 | 경로 | 하는 일 |
+|---|---|---|
+| 홈 | `/` | 이번 달 총액(히어로) · 카드/이체 분리 · 이체 확인 진행률 · 카테고리 비율 · 많이 나가는 항목 3개 |
+| 관리 | `/manage` | 등록된 항목을 **카테고리별**로 묶어 보여주고 + 버튼으로 추가 |
+| 연간 | `/yearly` | 1~12월 막대(월 탭 → 그 달 상세) · 연 합계/월 평균 · 카테고리별 연간 합계 |
+| 상세 | `/month/:ym` | 그 달 요약 · **이체 확인 체크리스트**(날짜순) · 카테고리별 정리. 월 이동 가능 |
+| 등록/수정 | `/charge/new`, `/charge/:id` | 항목 폼 |
+| 설정 | `/settings` | 현황 · 데이터 초기화 |
+
 ## 코드 지도
 
 | 무엇 | 어디 |
 |---|---|
 | 도메인 타입 | `src/types/index.ts` — `FixedCharge` · `ChargeTerm` · `PaymentMethod` · `WithdrawalGroup` |
-| 계산(순수 함수) | `src/services/charges.ts` — 회차/활성 판정, `activeCharges` · `monthlyTotal` · `nextRelease` · `withdrawalGroups` · `cardFixedTotal`, 표시 포맷 |
-| 저장소 | `src/services/chargeStore.ts` — localStorage(`monthlyout.charges.v1`) + 모듈 스토어. 변경은 `addCharge`/`updateCharge`/`removeCharge`/`clearCharges`로만 |
-| 화면 구독 | `src/hooks/useCharges.ts` — `useSyncExternalStore`. 화면에서 localStorage를 직접 읽지 말 것 |
-| 홈 | `src/pages/Home.tsx` — 총액 → 금액 내림차순 리스트 → 해제 예정 |
-| 등록/수정 | `src/pages/ChargeForm.tsx` — `/charge/new`, `/charge/:id` 공용 |
-| 설정 | `src/pages/Settings.tsx` — 현황 · 전체 삭제 |
-| 리스트 행 | `src/components/ChargeRow.tsx` |
-| 라우팅·뒤로가기 | `src/App.tsx` — `backEvent`로 직접 스택 관리, 최초 화면에서 `closeView()` |
+| 계산(순수 함수) | `src/services/charges.ts` — 회차/활성 판정, `activeCharges` · `monthlyTotal` · `nextRelease` · `totalByMethodKind` · `categoryBreakdown` · `groupByCategory` · `yearlyTotals` · `yearlyCategoryTotals` · `transferCharges` · `withdrawalGroups` · `cardFixedTotal` |
+| 항목 저장소 | `src/services/chargeStore.ts` — localStorage(`monthlyout.charges.v1`) + 모듈 스토어. 변경은 `addCharge`/`updateCharge`/`removeCharge`/`clearCharges`로만 |
+| 이체 확인 저장소 | `src/services/confirmStore.ts` — `monthlyout.confirmations.v1`, `{ "2026-09": [chargeId] }`. **달마다 따로** 쌓인다 |
+| 화면 구독 | `src/hooks/useCharges.ts` · `src/hooks/useConfirmations.ts` — `useSyncExternalStore`. 화면에서 localStorage를 직접 읽지 말 것 |
+| 화면 | `src/pages/` — `Home` · `Manage` · `Yearly` · `MonthDetail` · `ChargeForm` · `Settings` · `NotFound` |
+| 공용 UI | `src/components/` — `BottomNav`(탭) · `ChargeRow`(항목 한 줄) · `CategoryBar`(비율 바) · `icons.tsx`(SVG 아이콘) |
+| 셸·뒤로가기 | `src/App.tsx` — `100dvh` 플렉스 컬럼(스크롤 영역 + 탭), `backEvent`로 직접 스택 관리 |
 
-라우트: `/` · `/charge/new` · `/charge/:id` · `/settings`.
+**레이아웃 규칙**: 스크롤은 `App`의 `<main>`이 담당한다. 각 페이지는 자기 높이를 `100dvh`로 잡지 말고
+패딩만 준다. 페이지 하단 CTA는 `position: sticky; bottom: 0`으로 붙인다(탭이 없는 화면 전용).
 
 ## 지금 상태 / 다음
 
-**구현됨(기획서 6장 MVP)**: 항목 CRUD, 월 총액 + 정렬 리스트, 결제수단(카드/통장) 구분, 로컬 저장.
+**구현됨**: 항목 CRUD · 카테고리별 관리 · 월 총액과 카드/이체 분리 · 카테고리 비율 ·
+연간 12개월 뷰 · 월 상세 · **이체 확인 체크** · 로컬 저장.
 
-**2차 후보** — 재료는 이미 `charges.ts`에 있다:
-- 출금 달력 → `withdrawalGroups()`
+**다음 후보** — 재료는 이미 `charges.ts`에 있다:
 - 카드값 역산 → `cardFixedTotal()`. 화면에 **"카드값 중 최소 X원은 확정"**이라는 한계를 반드시 명시한다
-- 결제일 알림, 종료 예정 알림, 클라우드 동기화
+- 출금 달력(같은 날·같은 수단으로 묶기) → `withdrawalGroups()`
+- 결제일 알림, 종료 예정 알림, 백업/내보내기
 
 기획서 6장의 기준: **첫 버전을 본인이 두 달 연속 쓰는지 확인하기 전에는 기능을 늘리지 않는다.**
 
@@ -131,6 +145,10 @@ apps-in-toss-skills 마켓플레이스 플러그인이 설치돼 있다.
 - `desigin/toss-look.md` + `src/design/tokens.ts`를 따른다. 간격·모서리·**색은 토큰만**(임의 px·hex 금지), 타이포는 TDS Typography(t2~t7).
 - 색은 `tokens.ts`의 `colors`를 쓴다(`background`/`surface`/`border`/`textPrimary`/`textSecondary`/`textTertiary`/`primary`/`positive`/`danger`). 새 hex를 화면 파일에 직접 적지 않는다.
 - 섹션은 "제목 → 내용 → 액션", 화면당 주요 CTA 1개.
+- **아이콘은 이모지 대신 `src/components/icons.tsx`의 SVG를 쓴다.** 24×24 그리드, `currentColor`, stroke 1.8.
+  새 아이콘이 필요하면 같은 규격으로 이 파일에 추가한다(플랫폼별로 모양이 달라지는 이모지 금지).
+- 카테고리 색은 `categoryColors`/`categorySoftColors` 하나로 통일한다 — 비율 바·아이콘·배지가 같은 색이어야 읽힌다.
+- 히어로(그라데이션) 카드는 **화면당 하나**. 총액보다 시선을 끄는 요소를 두지 않는다.
 - 이 앱의 시각적 중심은 **총액 숫자**다. 홈에서 총액보다 시선을 끄는 요소를 추가하지 않는다.
 - **디자인은 눈으로 검증한다.** 큰 UI 작업은: `design-preview/index.html`에 Pretendard 기반 목업 → 미리보기(`.claude/launch.json`의 `design` 서버)로 확인 → 확정안을 `src`에 토큰 기반으로 옮긴다.
 
@@ -181,10 +199,10 @@ desigin/        toss-look.md (디자인 규칙)
 design-preview/ 디자인 시각 검증용 HTML 목업
 prompts/        베이스에서 온 워크플로우 문서 (99-last-checklist는 출시 전에 본다)
 src/
-  pages/        Home · ChargeForm · Settings · NotFound
-  components/   ChargeRow · BannerAd · ErrorBoundary · FlowDebugPanel
-  hooks/        useCharges · useSafeAreaInsets · useFullScreenAd
-  services/     charges(계산) · chargeStore(저장) · 광고/포인트(미사용)
+  pages/        Home · Manage · Yearly · MonthDetail · ChargeForm · Settings · NotFound
+  components/   BottomNav · ChargeRow · CategoryBar · icons · ErrorBoundary · FlowDebugPanel
+  hooks/        useCharges · useConfirmations · useSafeAreaInsets
+  services/     charges(계산) · chargeStore · confirmStore(이체 확인) · 광고/포인트(미사용)
   design/       tokens.ts (간격·모서리·색)
   types/        도메인 타입
 apps-in-toss.config.ts  appName monthlyout · 브랜드 · webBundleDir · 권한

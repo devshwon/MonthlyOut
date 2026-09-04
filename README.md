@@ -65,10 +65,10 @@ npm run release    # build + ait deploy
 ```
 docs/     기획서 + 구현 참조(포인트 지급 · 하단 여백 · 배너 배치)
 src/
-  pages/       Home(총액·리스트) · ChargeForm(등록/수정) · Settings · NotFound
-  services/    charges.ts(계산) · chargeStore.ts(로컬 저장)
-  hooks/       useCharges · useSafeAreaInsets
-  components/  ChargeRow · ErrorBoundary · FlowDebugPanel
+  pages/       Home · Manage · Yearly · MonthDetail · ChargeForm · Settings
+  services/    charges.ts(계산) · chargeStore.ts · confirmStore.ts(이체 확인)
+  hooks/       useCharges · useConfirmations · useSafeAreaInsets
+  components/  BottomNav · ChargeRow · CategoryBar · icons(SVG)
   design/      tokens.ts (간격 · 모서리 · 색)
 desigin/  toss-look.md (디자인 규칙)
 prompts/  출시 전 검수 체크리스트 등
@@ -78,10 +78,20 @@ prompts/  출시 전 검수 체크리스트 등
 월 총액·정렬(`activeCharges`, `monthlyTotal`), 회차·해제 시점(`installmentRound`, `nextRelease`),
 출금 층 묶음(`withdrawalGroups`), 카드 고정분(`cardFixedTotal`).
 
+## 화면
+
+| 탭/화면 | 하는 일 |
+|---|---|
+| **홈** | 이번 달 총액, 카드/이체 얼마씩 나가는지, 카테고리 비율, 많이 나가는 항목 |
+| **관리** | 등록한 항목을 카테고리별로 정리. + 버튼으로 추가 |
+| **연간** | 1~12월 막대로 한눈에. 월을 누르면 그 달 상세로 |
+| **상세** | 그 달 카테고리별 정리 + **이체 확인 체크**(잔고 부족으로 못 빠진 달 찾기용) |
+| **설정** | 현황과 데이터 초기화 |
+
 ## 범위
 
-**지금(MVP)**: 항목 CRUD, 월 총액 + 정렬 리스트, 결제수단(카드/통장) 구분, 로컬 저장.
-**다음**: 출금 달력, 카드값 역산, 결제일 알림, 종료 예정 알림, 클라우드 동기화.
+**지금**: 항목 CRUD, 월 총액과 카드/이체 분리, 카테고리 비율, 연간 뷰, 월 상세, 이체 확인, 로컬 저장.
+**다음**: 카드값 역산, 출금 달력, 결제일 알림, 종료 예정 알림, 백업.
 
 서버도 계정도 없다. 데이터는 기기에만 남는다.
 

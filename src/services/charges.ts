@@ -251,3 +251,172 @@ export function formatYearMonth(ym: YearMonth): string {
 	const [year, month] = ym.split("-");
 	return `${year}년 ${Number(month)}월`;
 }
+
+// ─────────────────────────────────────────────
+// 집계 (홈 · 연간 · 상세 화면 재료)
+// ─────────────────────────────────────────────
+
+export interface MethodTotals {
+	/** 카드로 빠지는 합계 */
+	card: number;
+	/** 통장에서 이체되는 합계 */
+	account: number;
+	/** 결제수단을 안 적은 항목 */
+	unset: number;
+}
+
+export function totalByMethodKind(
+	charges: FixedCharge[],
+	ym: YearMonth,
+): MethodTotals {
+	const totals: MethodTotals = { card: 0, account: 0, unset: 0 };
+
+	for (const charge of activeCharges(charges, ym)) {
+		if (charge.method?.kind === "card") {
+			totals.card += charge.amount;
+		} else if (charge.method?.kind === "account") {
+			totals.account += charge.amount;
+		} else {
+			totals.unset += charge.amount;
+		}
+	}
+	return totals;
+}
+
+export interface CategorySlice {
+	category: ChargeCategory;
+	amount: number;
+	/** 0~1 */
+	ratio: number;
+	count: number;
+}
+
+/** 이번 달 카테고리별 금액. 금액 내림차순, 0원 카테고리는 뺀다. */
+export function categoryBreakdown(
+	charges: FixedCharge[],
+	ym: YearMonth,
+): CategorySlice[] {
+	const list = activeCharges(charges, ym);
+	const total = list.reduce((sum, charge) => sum + charge.amount, 0);
+	const byCategory = new Map<
+		ChargeCategory,
+		{ amount: number; count: number }
+	>();
+
+	for (const charge of list) {
+		const prev = byCategory.get(charge.category) ?? { amount: 0, count: 0 };
+		byCategory.set(charge.category, {
+			amount: prev.amount + charge.amount,
+			count: prev.count + 1,
+		});
+	}
+
+	return [...byCategory.entries()]
+		.map(([category, { amount, count }]) => ({
+			category,
+			amount,
+			count,
+			ratio: total > 0 ? amount / total : 0,
+		}))
+		.sort((a, b) => b.amount - a.amount);
+}
+
+export interface CategoryGroup {
+	category: ChargeCategory;
+	charges: FixedCharge[];
+	amount: number;
+}
+
+/**
+ * 관리 화면용 카테고리별 묶음.
+ * 이번 달 활성 여부와 무관하게 **등록된 전체**를 보여준다(끝난 할부도 기록으로 남는다).
+ */
+export function groupByCategory(charges: FixedCharge[]): CategoryGroup[] {
+	const groups: CategoryGroup[] = [];
+
+	for (const category of CATEGORY_ORDER) {
+		const list = charges
+			.filter((charge) => charge.category === category)
+			.sort((a, b) => b.amount - a.amount || a.name.localeCompare(b.name));
+
+		if (list.length === 0) {
+			continue;
+		}
+		groups.push({
+			category,
+			charges: list,
+			amount: list.reduce((sum, charge) => sum + charge.amount, 0),
+		});
+	}
+	return groups;
+}
+
+export interface MonthTotal {
+	ym: YearMonth;
+	month: number;
+	total: number;
+}
+
+/** 해당 연도 1~12월의 월별 고정지출. */
+export function yearlyTotals(
+	charges: FixedCharge[],
+	year: number,
+): MonthTotal[] {
+	return Array.from({ length: 12 }, (_, index) => {
+		const ym = `${year}-${String(index + 1).padStart(2, "0")}`;
+		return { ym, month: index + 1, total: monthlyTotal(charges, ym) };
+	});
+}
+
+/** 해당 연도 카테고리별 합계(12개월 누적). 금액 내림차순. */
+export function yearlyCategoryTotals(
+	charges: FixedCharge[],
+	year: number,
+): CategorySlice[] {
+	const byCategory = new Map<
+		ChargeCategory,
+		{ amount: number; count: number }
+	>();
+	let total = 0;
+
+	for (let month = 1; month <= 12; month += 1) {
+		const ym = `${year}-${String(month).padStart(2, "0")}`;
+		for (const charge of activeCharges(charges, ym)) {
+			const prev = byCategory.get(charge.category) ?? { amount: 0, count: 0 };
+			byCategory.set(charge.category, {
+				amount: prev.amount + charge.amount,
+				count: prev.count + 1,
+			});
+			total += charge.amount;
+		}
+	}
+
+	return [...byCategory.entries()]
+		.map(([category, { amount, count }]) => ({
+			category,
+			amount,
+			count,
+			ratio: total > 0 ? amount / total : 0,
+		}))
+		.sort((a, b) => b.amount - a.amount);
+}
+
+/** 이번 달 통장에서 이체되는 항목을 날짜 순으로. 상세 화면의 체크리스트 재료. */
+export function transferCharges(
+	charges: FixedCharge[],
+	ym: YearMonth,
+): FixedCharge[] {
+	return activeCharges(charges, ym)
+		.filter((charge) => charge.method?.kind === "account")
+		.sort((a, b) => a.billingDay - b.billingDay || b.amount - a.amount);
+}
+
+/** 이번 달 카드에서 빠지는 항목을 날짜 순으로. */
+export function cardCharges(
+	charges: FixedCharge[],
+	ym: YearMonth,
+): FixedCharge[] {
+	return activeCharges(charges, ym)
+		.filter((charge) => charge.method?.kind !== "account")
+		.sort((a, b) => a.billingDay - b.billingDay || b.amount - a.amount);
+}

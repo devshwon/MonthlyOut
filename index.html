@@ -4,6 +4,22 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
     <title>매달얼마</title>
+    <style>
+      :root { color-scheme: light; }
+      body {
+        margin: 0;
+        background-color: #F4F6F9;
+        -webkit-tap-highlight-color: transparent;
+      }
+      button {
+        font: inherit;
+        color: inherit;
+        -webkit-tap-highlight-color: transparent;
+      }
+      /* 마우스/터치로 누를 땐 포커스 링을 숨기고, 키보드 이동일 때만 보여준다 */
+      button:focus { outline: none; }
+      button:focus-visible { outline: 2px solid #3182F6; outline-offset: 2px; border-radius: 8px; }
+    </style>
   </head>
   <body>
     <div id="root"></div>
