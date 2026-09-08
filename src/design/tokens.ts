@@ -91,3 +91,13 @@ export const categorySoftColors = {
 	loan: "#FFF0E5",
 	etc: "#F0F2F5",
 } as const;
+
+/** 돈 캐릭터('머니') 색. 캐릭터를 그림으로 교체하더라도 말풍선 색은 여기를 쓴다. */
+export const characterColors = {
+	coin: "#FFD34E",
+	coinDeep: "#F2A93B",
+	coinEdge: "#E08C1F",
+	face: "#5B3A00",
+	blush: "#FF9E9E",
+	bubble: "#FFFFFF",
+} as const;
