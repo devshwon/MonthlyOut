@@ -54,6 +54,12 @@ const s = {
 		backgroundColor: colors.surfaceSunken,
 	} satisfies React.CSSProperties,
 	meta: { marginTop: 2 } satisfies React.CSSProperties,
+	memo: {
+		marginTop: 2,
+		overflow: "hidden",
+		textOverflow: "ellipsis",
+		whiteSpace: "nowrap" as const,
+	} satisfies React.CSSProperties,
 	tail: {
 		display: "flex",
 		flexShrink: 0,
@@ -129,6 +135,11 @@ export function ChargeRow({
 				<Paragraph typography="t7" color={colors.textTertiary} style={s.meta}>
 					<Paragraph.Text>{meta.join(" · ")}</Paragraph.Text>
 				</Paragraph>
+				{charge.memo ? (
+					<Paragraph typography="t7" color={colors.textTertiary} style={s.memo}>
+						<Paragraph.Text>{charge.memo}</Paragraph.Text>
+					</Paragraph>
+				) : null}
 			</div>
 
 			<div style={s.tail}>

@@ -251,6 +251,17 @@ function IconPiggy(props: IconProps) {
 	);
 }
 
+/** 정기배송 */
+function IconBox(props: IconProps) {
+	return (
+		<Svg {...props}>
+			<path d="M4 8.5 12 5l8 3.5v7L12 19l-8-3.5v-7Z" />
+			<path d="M4 8.5 12 12l8-3.5" />
+			<path d="M12 12v7" />
+		</Svg>
+	);
+}
+
 /** 연필 — "적는다"는 동작을 나타내는 버튼용 */
 export function IconPencil(props: IconProps) {
 	return (
@@ -269,6 +280,7 @@ const CATEGORY_ICON: Record<ChargeCategory, (props: IconProps) => JSX.Element> =
 		insurance: IconShield,
 		loan: IconLoan,
 		installment: IconCard,
+		delivery: IconBox,
 		health: IconHeart,
 		education: IconBook,
 		transport: IconBus,

@@ -4,6 +4,7 @@ import {
 	ChipItem,
 	Paragraph,
 	Switch,
+	TextArea,
 	TextButton,
 	TextField,
 } from "@toss/tds-mobile";
@@ -20,6 +21,12 @@ import {
 } from "@/design/tokens";
 import { useSafeAreaInsets } from "@/hooks/useSafeAreaInsets";
 import {
+	CATEGORY_GROUPS,
+	type CategoryGroupDef,
+	findGroup,
+	findSubCategory,
+} from "@/services/categoryGroups";
+import {
 	addCharge,
 	getCharge,
 	removeCharge,
@@ -27,8 +34,6 @@ import {
 } from "@/services/chargeStore";
 import {
 	CATEGORY_HINT,
-	CATEGORY_LABEL,
-	CATEGORY_ORDER,
 	currentYearMonth,
 	formatAmount,
 	formatKrw,
@@ -69,6 +74,8 @@ const s = {
 		borderRadius: radius.md,
 		cursor: "pointer",
 	} satisfies React.CSSProperties,
+	subSection: { marginTop: spacing.md } satisfies React.CSSProperties,
+	subLabel: { marginBottom: spacing.xs } satisfies React.CSSProperties,
 	categoryHint: {
 		marginTop: spacing.sm,
 		textAlign: "center" as const,
@@ -125,9 +132,15 @@ export default function ChargeFormPage() {
 	const [billingDayText, setBillingDayText] = useState(
 		editing ? String(editing.billingDay) : "",
 	);
-	const [category, setCategory] = useState<ChargeCategory>(
-		editing?.category ?? "subscription",
+	const [group, setGroup] = useState<CategoryGroupDef>(() =>
+		editing
+			? findGroup(editing.category, editing.subCategory)
+			: CATEGORY_GROUPS[0],
 	);
+	const [subCategoryId, setSubCategoryId] = useState<string | undefined>(
+		editing?.subCategory,
+	);
+	const [memo, setMemo] = useState(editing?.memo ?? "");
 	const [methodKind, setMethodKind] = useState<PaymentMethodKind>(
 		editing?.method?.kind ?? "card",
 	);
@@ -141,6 +154,10 @@ export default function ChargeFormPage() {
 	);
 	const [confirmingDelete, setConfirmingDelete] = useState(false);
 
+	// 세부를 골랐으면 그쪽 카테고리가, 아니면 대분류의 기본 카테고리가 통계 기준이 된다.
+	const selectedSub = findSubCategory(subCategoryId);
+	const category: ChargeCategory = selectedSub?.category ?? group.category;
+
 	const amount = Number(amountText || 0);
 	const billingDay = Math.min(Math.max(Number(billingDayText || 1), 1), 31);
 	const totalCount = Number(totalCountText || 0);
@@ -148,11 +165,21 @@ export default function ChargeFormPage() {
 		!hasTerm || (totalCount > 0 && isValidYearMonth(startMonth));
 	const canSave = name.trim().length > 0 && amount > 0 && termValid;
 
-	const handleCategory = (next: ChargeCategory) => {
-		setCategory(next);
+	const handleGroup = (next: CategoryGroupDef) => {
+		setGroup(next);
+		setSubCategoryId(undefined);
 		// 할부·대출은 기본이 유기한이다 — 사용자가 직접 끄기 전까지 켜준다.
-		if (!editing && TERM_DEFAULT_CATEGORIES.includes(next)) {
+		if (!editing && TERM_DEFAULT_CATEGORIES.includes(next.category)) {
 			setHasTerm(true);
+		}
+	};
+
+	const handleSubCategory = (id: string, label: string) => {
+		const next = subCategoryId === id ? undefined : id;
+		setSubCategoryId(next);
+		// 이름을 아직 안 적었으면 세부 항목 이름으로 채워준다(고치면 그대로 유지).
+		if (next && name.trim().length === 0) {
+			setName(label);
 		}
 	};
 
@@ -166,16 +193,21 @@ export default function ChargeFormPage() {
 			amount,
 			billingDay,
 			category,
+			subCategory: subCategoryId,
+			memo: memo.trim() || undefined,
 			method: { kind: methodKind, name: methodName.trim() },
 			term: hasTerm ? { totalCount, startMonth } : null,
 		};
 
 		if (editing) {
 			updateCharge(editing.id, draft);
-		} else {
-			addCharge(draft);
+			navigate(-1);
+			return;
 		}
-		navigate(-1);
+
+		addCharge(draft);
+		// 새로 적었으면 방금 넣은 줄이 보이는 관리 화면으로 보낸다.
+		navigate("/manage", { replace: true });
 	};
 
 	const handleDelete = () => {
@@ -209,40 +241,67 @@ export default function ChargeFormPage() {
 				</Paragraph>
 
 				<div style={s.categoryGrid}>
-					{CATEGORY_ORDER.map((value) => {
-						const selected = category === value;
+					{CATEGORY_GROUPS.map((value) => {
+						const selected = group.id === value.id;
 
 						return (
 							<button
-								key={value}
+								key={value.id}
 								type="button"
 								aria-pressed={selected}
 								style={{
 									...s.categoryTile,
 									border: selected
-										? `1.5px solid ${categoryColors[value]}`
+										? `1.5px solid ${categoryColors[value.category]}`
 										: "1.5px solid transparent",
 									backgroundColor: selected
-										? categorySoftColors[value]
+										? categorySoftColors[value.category]
 										: colors.surfaceSunken,
 								}}
-								onClick={() => handleCategory(value)}
+								onClick={() => handleGroup(value)}
 							>
 								<CategoryIcon
-									category={value}
+									category={value.category}
 									size={22}
-									color={selected ? categoryColors[value] : colors.textTertiary}
+									color={
+										selected
+											? categoryColors[value.category]
+											: colors.textTertiary
+									}
 								/>
 								<Paragraph
 									typography="t7"
 									fontWeight={selected ? "bold" : "regular"}
 									color={selected ? colors.textPrimary : colors.textSecondary}
 								>
-									<Paragraph.Text>{CATEGORY_LABEL[value]}</Paragraph.Text>
+									<Paragraph.Text>{value.label}</Paragraph.Text>
 								</Paragraph>
 							</button>
 						);
 					})}
+				</div>
+
+				<div style={s.subSection}>
+					<Paragraph
+						typography="t7"
+						color={colors.textTertiary}
+						style={s.subLabel}
+					>
+						<Paragraph.Text>
+							{selectedSub ? "골라둔 세부 항목" : "세부 항목 (건너뛰어도 돼요)"}
+						</Paragraph.Text>
+					</Paragraph>
+					<Chip kind="select" wrap margin="none">
+						{group.items.map((item) => (
+							<ChipItem
+								key={item.id}
+								selected={subCategoryId === item.id}
+								onClick={() => handleSubCategory(item.id, item.label)}
+							>
+								{item.label}
+							</ChipItem>
+						))}
+					</Chip>
 				</div>
 
 				<Paragraph
@@ -393,6 +452,19 @@ export default function ChargeFormPage() {
 						) : null}
 					</div>
 				) : null}
+			</div>
+
+			<div style={s.card}>
+				<Paragraph typography="t7" color={colors.textSecondary} style={s.label}>
+					<Paragraph.Text>메모 (선택)</Paragraph.Text>
+				</Paragraph>
+				<TextArea
+					variant="box"
+					placeholder="예: 가족 공유 계정, 12월에 해지 예정"
+					minHeight={72}
+					value={memo}
+					onChange={(event) => setMemo(event.target.value)}
+				/>
 			</div>
 
 			<div style={{ ...s.cta, paddingBottom: spacing.sm + insets.bottom }}>

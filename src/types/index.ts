@@ -6,6 +6,7 @@ export type ChargeCategory =
 	| "insurance"
 	| "loan"
 	| "installment"
+	| "delivery"
 	| "health"
 	| "education"
 	| "transport"
@@ -51,6 +52,8 @@ export interface FixedCharge {
 	/** 결제일 1~31. 31은 "말일"로 취급한다. */
 	billingDay: number;
 	category: ChargeCategory;
+	/** 2차 카테고리 id (`categoryGroups.ts`). 안 고르면 비어 있다. */
+	subCategory?: string;
 	method: PaymentMethod | null;
 	term: ChargeTerm | null;
 	memo?: string;
