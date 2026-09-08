@@ -42,14 +42,20 @@ const s = {
 		transform: "rotate(-0.6deg)",
 	} satisfies React.CSSProperties,
 	summary: { marginTop: spacing.xxs } satisfies React.CSSProperties,
-	/** 괘선 있는 노트 한 장 */
 	section: {
 		marginBottom: spacing.sm,
 		borderRadius: radius.xl,
-		backgroundColor: paperColors.surface,
-		backgroundImage: paperBackground,
+		backgroundColor: colors.surface,
 		boxShadow: shadow.card,
 		overflow: "hidden",
+	} satisfies React.CSSProperties,
+	/**
+	 * 괘선은 **행 목록에만** 깐다. 헤더까지 덮으면 첫 줄부터 어긋나서
+	 * 글씨가 줄 사이에 뜬다(행 높이 64 = 괘선 32 × 2).
+	 */
+	sectionRows: {
+		backgroundColor: paperColors.surface,
+		backgroundImage: paperBackground,
 	} satisfies React.CSSProperties,
 	sectionHead: {
 		display: "flex",
@@ -190,19 +196,21 @@ export default function ManagePage() {
 							</Paragraph>
 						</div>
 
-						{group.charges.map((charge) => (
-							<ChargeRow
-								key={charge.id}
-								charge={charge}
-								yearMonth={ym}
-								paper
-								dimmed={!isActive(charge, ym)}
-								onClick={() => navigate(`/charge/${charge.id}`)}
-								accessory={
-									<IconChevronRight size={16} color={colors.textTertiary} />
-								}
-							/>
-						))}
+						<div style={s.sectionRows}>
+							{group.charges.map((charge) => (
+								<ChargeRow
+									key={charge.id}
+									charge={charge}
+									yearMonth={ym}
+									paper
+									dimmed={!isActive(charge, ym)}
+									onClick={() => navigate(`/charge/${charge.id}`)}
+									accessory={
+										<IconChevronRight size={16} color={colors.textTertiary} />
+									}
+								/>
+							))}
+						</div>
 					</div>
 				))
 			)}

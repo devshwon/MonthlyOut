@@ -7,7 +7,7 @@ import {
 	TextButton,
 	TextField,
 } from "@toss/tds-mobile";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { CategoryIcon, IconChevronRight, IconPencil } from "@/components/icons";
 import { PrimaryButton } from "@/components/PrimaryButton";
@@ -16,7 +16,6 @@ import {
 	categorySoftColors,
 	colors,
 	handDrawnRadius,
-	paperBackground,
 	paperColors,
 	radius,
 	shadow,
@@ -54,13 +53,17 @@ const s = {
 	title: {
 		padding: `${spacing.sm}px 0 ${spacing.md}px`,
 	} satisfies React.CSSProperties,
-	/** 등록도 "내가 적는 곳"이라 관리와 같은 노트 종이로 맞춘다 */
+	/**
+	 * 등록도 "내가 적는 곳"이라 종이로 맞춘다.
+	 * 다만 **괘선은 깔지 않는다** — 입력 요소 높이가 제각각이라 줄과 절대 안 맞는다.
+	 * 종이 색과 왼쪽 여백선만으로 노트 느낌을 낸다.
+	 */
 	card: {
 		padding: `${spacing.xs}px ${spacing.md}px ${spacing.md}px ${spacing.xl}px`,
 		marginBottom: spacing.sm,
 		borderRadius: radius.xl,
 		backgroundColor: paperColors.surface,
-		backgroundImage: paperBackground,
+		backgroundImage: `linear-gradient(90deg, transparent 0 21px, ${paperColors.margin} 21px 22px, transparent 22px)`,
 		boxShadow: shadow.card,
 	} satisfies React.CSSProperties,
 	field: { marginBottom: spacing.sm } satisfies React.CSSProperties,
@@ -101,11 +104,23 @@ const s = {
 		textAlign: "left" as const,
 	} satisfies React.CSSProperties,
 	stepValue: {
-		flex: 1,
-		textAlign: "left" as const,
 		overflow: "hidden",
 		textOverflow: "ellipsis",
 		whiteSpace: "nowrap" as const,
+	} satisfies React.CSSProperties,
+	stepValueWrap: {
+		flex: 1,
+		minWidth: 0,
+		padding: `${spacing.xxs}px ${spacing.xs}px`,
+	} satisfies React.CSSProperties,
+	/** 고른 값에는 동그라미가 그대로 남는다 — 접히고 나서도 뭘 골랐는지 보이게 */
+	stepValueCircled: {
+		minWidth: 0,
+		padding: `${spacing.xxs}px ${spacing.sm}px`,
+		marginRight: "auto",
+		border: `2px solid ${colors.accent}`,
+		borderRadius: handDrawnRadius,
+		transform: "rotate(-1deg)",
 	} satisfies React.CSSProperties,
 	rowDivider: {
 		height: 1,
@@ -206,14 +221,16 @@ function StepRow({
 			>
 				<Paragraph.Text>{label}</Paragraph.Text>
 			</Paragraph>
-			<Paragraph
-				typography="t6"
-				fontWeight="bold"
-				color={muted ? colors.textTertiary : colors.textPrimary}
-				style={s.stepValue}
-			>
-				<Paragraph.Text>{value}</Paragraph.Text>
-			</Paragraph>
+			<span style={muted ? s.stepValueWrap : s.stepValueCircled}>
+				<Paragraph
+					typography="t6"
+					fontWeight="bold"
+					color={muted ? colors.textTertiary : colors.textPrimary}
+					style={s.stepValue}
+				>
+					<Paragraph.Text>{value}</Paragraph.Text>
+				</Paragraph>
+			</span>
 			<span
 				style={{
 					display: "flex",
@@ -287,6 +304,27 @@ export default function ChargeFormPage() {
 		"group" | "sub" | "name" | null
 	>(editing ? null : "group");
 
+	// 바로 접으면 동그라미가 쳐지는 걸 못 본다 — 잠깐 보여준 뒤 넘어간다.
+	const advanceTimer = useRef<number | null>(null);
+	const advanceTo = (section: "group" | "sub" | "name" | null) => {
+		if (advanceTimer.current !== null) {
+			window.clearTimeout(advanceTimer.current);
+		}
+		advanceTimer.current = window.setTimeout(() => {
+			setOpenSection(section);
+			advanceTimer.current = null;
+		}, 420);
+	};
+
+	useEffect(
+		() => () => {
+			if (advanceTimer.current !== null) {
+				window.clearTimeout(advanceTimer.current);
+			}
+		},
+		[],
+	);
+
 	// 세부를 골랐으면 그쪽 카테고리가, 아니면 대분류의 기본 카테고리가 통계 기준이 된다.
 	const selectedSub = findSubCategory(subCategoryId);
 	const category: ChargeCategory = selectedSub?.category ?? group.category;
@@ -308,7 +346,7 @@ export default function ChargeFormPage() {
 		setSubCategoryId(undefined);
 		setName("");
 		setCustomName(false);
-		setOpenSection("sub");
+		advanceTo("sub");
 		// 할부·대출은 기본이 유기한이다 — 사용자가 직접 끄기 전까지 켜준다.
 		if (!editing && TERM_DEFAULT_CATEGORIES.includes(next.category)) {
 			setHasTerm(true);
@@ -321,7 +359,7 @@ export default function ChargeFormPage() {
 		setName("");
 		setCustomName(false);
 		// 프리셋이 있는 세부를 골랐으면 이름 고르기로 넘어간다.
-		setOpenSection(
+		advanceTo(
 			next && (findSubCategory(next)?.presets?.length ?? 0) > 0 ? "name" : null,
 		);
 	};
@@ -522,7 +560,7 @@ export default function ChargeFormPage() {
 											onClick={() => {
 												setName(preset);
 												setCustomName(false);
-												setOpenSection(null);
+												advanceTo(null);
 											}}
 										>
 											<Paragraph
