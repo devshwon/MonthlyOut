@@ -1,4 +1,4 @@
-import { Paragraph } from "@toss/tds-mobile";
+import { Button, Paragraph } from "@toss/tds-mobile";
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { CategoryBar } from "@/components/CategoryBar";
@@ -9,7 +9,6 @@ import {
 	IconCard,
 	IconChevronLeft,
 	IconChevronRight,
-	IconPencil,
 	IconSettings,
 } from "@/components/icons";
 import { MoneyBuddy } from "@/components/MoneyBuddy";
@@ -329,28 +328,6 @@ const s = {
 	} satisfies React.CSSProperties,
 	previewName: { flex: 1 } satisfies React.CSSProperties,
 	emptyCta: { marginTop: spacing.lg } satisfies React.CSSProperties,
-	woodButton: {
-		display: "flex",
-		alignItems: "center",
-		justifyContent: "center",
-		gap: spacing.xs,
-		width: "100%",
-		height: 54,
-		border: `2px solid ${boardColors.woodDeep}`,
-		borderRadius: radius.full,
-		background: `linear-gradient(180deg, ${boardColors.wood} 0%, ${boardColors.woodDeep} 100%)`,
-		boxShadow: shadow.card,
-		cursor: "pointer",
-	} satisfies React.CSSProperties,
-	woodButtonPencil: {
-		display: "flex",
-		alignItems: "center",
-		justifyContent: "center",
-		width: 30,
-		height: 30,
-		borderRadius: radius.full,
-		backgroundColor: "rgba(255,255,255,0.9)",
-	} satisfies React.CSSProperties,
 };
 
 export default function HomePage() {
@@ -576,22 +553,15 @@ export default function HomePage() {
 					</div>
 
 					<div style={s.emptyCta}>
-						<button
-							type="button"
-							style={s.woodButton}
+						<Button
+							size="large"
+							color="primary"
+							variant="fill"
+							display="block"
 							onClick={() => navigate("/manage")}
 						>
-							<span style={s.woodButtonPencil}>
-								<IconPencil size={18} color={boardColors.woodDeep} />
-							</span>
-							<Paragraph
-								typography="t6"
-								fontWeight="bold"
-								color={colors.textOnDark}
-							>
-								<Paragraph.Text>관리에서 첫 항목 적기</Paragraph.Text>
-							</Paragraph>
-						</button>
+							관리에서 첫 항목 적기
+						</Button>
 					</div>
 				</div>
 			) : (

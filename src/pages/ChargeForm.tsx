@@ -10,7 +10,7 @@ import {
 } from "@toss/tds-mobile";
 import { useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { CategoryIcon } from "@/components/icons";
+import { CategoryIcon, IconPencil } from "@/components/icons";
 import {
 	categoryColors,
 	categorySoftColors,
@@ -38,6 +38,7 @@ import {
 	formatAmount,
 	formatKrw,
 	isValidYearMonth,
+	josa,
 	METHOD_KIND_LABEL,
 	TERM_DEFAULT_CATEGORIES,
 } from "@/services/charges";
@@ -75,6 +76,49 @@ const s = {
 		cursor: "pointer",
 	} satisfies React.CSSProperties,
 	subSection: { marginTop: spacing.md } satisfies React.CSSProperties,
+	subGrid: {
+		display: "grid",
+		gridTemplateColumns: "repeat(3, 1fr)",
+		gap: spacing.xs,
+	} satisfies React.CSSProperties,
+	subTile: {
+		display: "flex",
+		alignItems: "center",
+		justifyContent: "center",
+		minHeight: 38,
+		padding: `${spacing.xs}px ${spacing.xxs}px`,
+		borderRadius: radius.md,
+		cursor: "pointer",
+	} satisfies React.CSSProperties,
+	presetGrid: {
+		display: "grid",
+		gridTemplateColumns: "repeat(2, 1fr)",
+		gap: spacing.xs,
+		marginBottom: spacing.sm,
+	} satisfies React.CSSProperties,
+	presetTile: {
+		display: "flex",
+		alignItems: "center",
+		gap: spacing.xs,
+		padding: `${spacing.xs}px ${spacing.sm}px`,
+		borderRadius: radius.md,
+		cursor: "pointer",
+		textAlign: "left" as const,
+	} satisfies React.CSSProperties,
+	presetBadge: {
+		display: "flex",
+		flexShrink: 0,
+		alignItems: "center",
+		justifyContent: "center",
+		width: 24,
+		height: 24,
+		borderRadius: radius.full,
+	} satisfies React.CSSProperties,
+	presetName: {
+		overflow: "hidden",
+		textOverflow: "ellipsis",
+		whiteSpace: "nowrap" as const,
+	} satisfies React.CSSProperties,
 	subLabel: { marginBottom: spacing.xs } satisfies React.CSSProperties,
 	categoryHint: {
 		marginTop: spacing.sm,
@@ -141,6 +185,14 @@ export default function ChargeFormPage() {
 		editing?.subCategory,
 	);
 	const [memo, setMemo] = useState(editing?.memo ?? "");
+	// 프리셋에 없는 이름을 쓰는 중인지(= 이름 칸을 직접 연 상태)
+	const [customName, setCustomName] = useState(() => {
+		if (!editing?.name) {
+			return false;
+		}
+		const presets = findSubCategory(editing.subCategory)?.presets ?? [];
+		return !presets.some((preset) => preset.name === editing.name);
+	});
 	const [methodKind, setMethodKind] = useState<PaymentMethodKind>(
 		editing?.method?.kind ?? "card",
 	);
@@ -158,29 +210,33 @@ export default function ChargeFormPage() {
 	const selectedSub = findSubCategory(subCategoryId);
 	const category: ChargeCategory = selectedSub?.category ?? group.category;
 
+	// 이름은 선택 입력이다. 비워두면 고른 세부 항목(없으면 대분류) 이름으로 저장한다.
+	const presets = selectedSub?.presets ?? [];
+	const fallbackName = selectedSub?.label ?? group.label;
+	const finalName = name.trim() || fallbackName;
+
 	const amount = Number(amountText || 0);
 	const billingDay = Math.min(Math.max(Number(billingDayText || 1), 1), 31);
 	const totalCount = Number(totalCountText || 0);
 	const termValid =
 		!hasTerm || (totalCount > 0 && isValidYearMonth(startMonth));
-	const canSave = name.trim().length > 0 && amount > 0 && termValid;
+	const canSave = amount > 0 && termValid;
 
 	const handleGroup = (next: CategoryGroupDef) => {
 		setGroup(next);
 		setSubCategoryId(undefined);
+		setName("");
+		setCustomName(false);
 		// 할부·대출은 기본이 유기한이다 — 사용자가 직접 끄기 전까지 켜준다.
 		if (!editing && TERM_DEFAULT_CATEGORIES.includes(next.category)) {
 			setHasTerm(true);
 		}
 	};
 
-	const handleSubCategory = (id: string, label: string) => {
-		const next = subCategoryId === id ? undefined : id;
-		setSubCategoryId(next);
-		// 이름을 아직 안 적었으면 세부 항목 이름으로 채워준다(고치면 그대로 유지).
-		if (next && name.trim().length === 0) {
-			setName(label);
-		}
+	const handleSubCategory = (id: string) => {
+		setSubCategoryId(subCategoryId === id ? undefined : id);
+		setName("");
+		setCustomName(false);
 	};
 
 	const handleSave = () => {
@@ -189,7 +245,7 @@ export default function ChargeFormPage() {
 		}
 
 		const draft: ChargeDraft = {
-			name: name.trim(),
+			name: finalName,
 			amount,
 			billingDay,
 			category,
@@ -291,17 +347,37 @@ export default function ChargeFormPage() {
 							{selectedSub ? "골라둔 세부 항목" : "세부 항목 (건너뛰어도 돼요)"}
 						</Paragraph.Text>
 					</Paragraph>
-					<Chip kind="select" wrap margin="none">
-						{group.items.map((item) => (
-							<ChipItem
-								key={item.id}
-								selected={subCategoryId === item.id}
-								onClick={() => handleSubCategory(item.id, item.label)}
-							>
-								{item.label}
-							</ChipItem>
-						))}
-					</Chip>
+					<div style={s.subGrid}>
+						{group.items.map((item) => {
+							const selected = subCategoryId === item.id;
+
+							return (
+								<button
+									key={item.id}
+									type="button"
+									aria-pressed={selected}
+									style={{
+										...s.subTile,
+										border: selected
+											? `1.5px solid ${categoryColors[item.category]}`
+											: "1.5px solid transparent",
+										backgroundColor: selected
+											? categorySoftColors[item.category]
+											: colors.surfaceSunken,
+									}}
+									onClick={() => handleSubCategory(item.id)}
+								>
+									<Paragraph
+										typography="t7"
+										fontWeight={selected ? "bold" : "regular"}
+										color={selected ? colors.textPrimary : colors.textSecondary}
+									>
+										<Paragraph.Text>{item.label}</Paragraph.Text>
+									</Paragraph>
+								</button>
+							);
+						})}
+					</div>
 				</div>
 
 				<Paragraph
@@ -315,14 +391,126 @@ export default function ChargeFormPage() {
 
 			<div style={s.card}>
 				<div style={s.field}>
-					<TextField
-						variant="box"
-						labelOption="sustain"
-						label="이름"
-						placeholder="예: 넷플릭스"
-						value={name}
-						onChange={(event) => setName(event.target.value)}
-					/>
+					<Paragraph
+						typography="t7"
+						color={colors.textSecondary}
+						style={s.label}
+					>
+						<Paragraph.Text>이름 (선택)</Paragraph.Text>
+					</Paragraph>
+
+					{presets.length > 0 ? (
+						<div style={s.presetGrid}>
+							{presets.map((preset) => {
+								const selected = !customName && name === preset.name;
+
+								return (
+									<button
+										key={preset.name}
+										type="button"
+										aria-pressed={selected}
+										style={{
+											...s.presetTile,
+											border: selected
+												? `1.5px solid ${preset.color}`
+												: "1.5px solid transparent",
+											backgroundColor: selected
+												? colors.surface
+												: colors.surfaceSunken,
+										}}
+										onClick={() => {
+											setName(preset.name);
+											setCustomName(false);
+										}}
+									>
+										<span
+											style={{
+												...s.presetBadge,
+												backgroundColor: preset.color,
+											}}
+										>
+											<Paragraph
+												typography="t7"
+												fontWeight="bold"
+												color={colors.textOnDark}
+											>
+												<Paragraph.Text>
+													{preset.name.slice(0, 1)}
+												</Paragraph.Text>
+											</Paragraph>
+										</span>
+										<Paragraph
+											typography="t7"
+											fontWeight={selected ? "bold" : "regular"}
+											color={
+												selected ? colors.textPrimary : colors.textSecondary
+											}
+											style={s.presetName}
+										>
+											<Paragraph.Text>{preset.name}</Paragraph.Text>
+										</Paragraph>
+									</button>
+								);
+							})}
+
+							<button
+								type="button"
+								aria-pressed={customName}
+								style={{
+									...s.presetTile,
+									border: customName
+										? `1.5px solid ${colors.primary}`
+										: "1.5px solid transparent",
+									backgroundColor: customName
+										? colors.surface
+										: colors.surfaceSunken,
+								}}
+								onClick={() => {
+									setCustomName(true);
+									setName("");
+								}}
+							>
+								<span
+									style={{
+										...s.presetBadge,
+										backgroundColor: colors.background,
+									}}
+								>
+									<IconPencil size={13} color={colors.textTertiary} />
+								</span>
+								<Paragraph
+									typography="t7"
+									fontWeight={customName ? "bold" : "regular"}
+									color={customName ? colors.textPrimary : colors.textSecondary}
+								>
+									<Paragraph.Text>직접 입력</Paragraph.Text>
+								</Paragraph>
+							</button>
+						</div>
+					) : null}
+
+					{presets.length === 0 || customName ? (
+						<TextField
+							variant="box"
+							labelOption="sustain"
+							label="이름"
+							placeholder={fallbackName}
+							value={name}
+							onChange={(event) => setName(event.target.value)}
+						/>
+					) : null}
+
+					{name.trim().length === 0 ? (
+						<Paragraph
+							typography="t7"
+							color={colors.textTertiary}
+							style={s.hint}
+						>
+							<Paragraph.Text>
+								{`안 적으면 '${fallbackName}'${josa(fallbackName, "으로", "로")} 저장돼요`}
+							</Paragraph.Text>
+						</Paragraph>
+					) : null}
 				</div>
 
 				<div style={s.field}>

@@ -31,7 +31,7 @@ export const CATEGORY_HINT: Record<ChargeCategory, string> = {
 	loan: "원리금 · 이자",
 	installment: "자동차 · 가전 · 휴대폰",
 	delivery: "생필품 · 식품 · 건강식품",
-	health: "헬스장 · 필라테스 · 약",
+	health: "헬스장 · 필라테스 · 요가",
 	education: "학원 · 강의 · 학습지",
 	transport: "정기권 · 주차 · 리스",
 	pet: "사료 정기배송 · 펫보험",
@@ -452,4 +452,22 @@ export function cardCharges(
 	return activeCharges(charges, ym)
 		.filter((charge) => charge.method?.kind !== "account")
 		.sort((a, b) => a.billingDay - b.billingDay || b.amount - a.amount);
+}
+
+/**
+ * 받침 유무에 따라 조사를 고른다 — "학원·강의**로**" / "넷플릭스**으로**".
+ * 단어가 아니라 **조사만** 돌려주므로 따옴표로 감싼 뒤에도 붙일 수 있다.
+ */
+export function josa(
+	word: string,
+	withBatchim: string,
+	withoutBatchim: string,
+): string {
+	const last = word.trim().slice(-1);
+	const code = last.charCodeAt(0);
+	// 한글 음절이 아니면 받침이 없는 쪽으로 읽는다.
+	if (Number.isNaN(code) || code < 0xac00 || code > 0xd7a3) {
+		return withoutBatchim;
+	}
+	return (code - 0xac00) % 28 !== 0 ? withBatchim : withoutBatchim;
 }

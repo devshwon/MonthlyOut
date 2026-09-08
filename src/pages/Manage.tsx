@@ -5,7 +5,6 @@ import { navSpace } from "@/components/BottomNav";
 import { ChargeRow } from "@/components/ChargeRow";
 import { CategoryIcon, IconChevronRight, IconPencil } from "@/components/icons";
 import {
-	boardColors,
 	categoryColors,
 	categorySoftColors,
 	colors,
@@ -67,16 +66,19 @@ const s = {
 		marginTop: spacing.md,
 		pointerEvents: "none" as const,
 	} satisfies React.CSSProperties,
-	/** 분필/연필로 칠판에 적는 느낌의 커스텀 버튼 */
+	/**
+	 * "적는다"는 동작을 연필로 보여주는 추가 버튼.
+	 * 나무색은 칠판 프레임에만 쓴다 — 액션 버튼까지 나무로 하면 화면에서 겉돈다.
+	 */
 	fab: {
 		display: "flex",
 		alignItems: "center",
 		gap: spacing.xs,
 		height: 54,
 		padding: `0 ${spacing.lg}px 0 ${spacing.md}px`,
-		border: `2px solid ${boardColors.woodDeep}`,
+		border: "none",
 		borderRadius: radius.full,
-		background: `linear-gradient(180deg, ${boardColors.wood} 0%, ${boardColors.woodDeep} 100%)`,
+		backgroundColor: colors.primary,
 		boxShadow: shadow.floating,
 		cursor: "pointer",
 		pointerEvents: "auto" as const,
@@ -191,7 +193,7 @@ export default function ManagePage() {
 					onClick={() => navigate("/charge/new")}
 				>
 					<span style={s.fabPencil}>
-						<IconPencil size={19} color={boardColors.woodDeep} />
+						<IconPencil size={19} color={colors.primary} />
 					</span>
 					<Paragraph
 						typography="t6"
