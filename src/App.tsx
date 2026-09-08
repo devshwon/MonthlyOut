@@ -1,7 +1,7 @@
 import { closeView, graniteEvent } from "@apps-in-toss/web-framework";
 import { useEffect, useRef } from "react";
 import { Route, Routes, useLocation, useNavigate } from "react-router-dom";
-import { BottomNav } from "@/components/BottomNav";
+import { BottomNav, navSpace } from "@/components/BottomNav";
 import { FlowDebugPanel } from "@/components/FlowDebugPanel";
 import { colors } from "@/design/tokens";
 import { useSafeAreaInsets } from "@/hooks/useSafeAreaInsets";
@@ -19,9 +19,12 @@ const TAB_PATHS = ["/", "/manage", "/yearly"];
 
 const s = {
 	shell: {
+		// 탭바가 콘텐츠 위에 떠 있으므로(플로팅) 기준 컨테이너가 된다.
+		position: "relative" as const,
 		display: "flex",
 		flexDirection: "column" as const,
 		height: "100dvh",
+		overflow: "hidden" as const,
 		backgroundColor: colors.background,
 	} satisfies React.CSSProperties,
 	content: {
@@ -91,7 +94,8 @@ export default function App() {
 			<main
 				style={{
 					...s.content,
-					paddingBottom: showNav ? 0 : insets.bottom,
+					// 플로팅 탭바에 마지막 줄이 가리지 않도록 그만큼 비운다.
+					paddingBottom: showNav ? navSpace(insets.bottom) : insets.bottom,
 				}}
 			>
 				<Routes>

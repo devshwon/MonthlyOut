@@ -1,6 +1,7 @@
 import { Paragraph } from "@toss/tds-mobile";
 import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
+import { navSpace } from "@/components/BottomNav";
 import { ChargeRow } from "@/components/ChargeRow";
 import { CategoryIcon, IconChevronRight, IconPlus } from "@/components/icons";
 import {
@@ -12,6 +13,7 @@ import {
 	spacing,
 } from "@/design/tokens";
 import { useCharges } from "@/hooks/useCharges";
+import { useSafeAreaInsets } from "@/hooks/useSafeAreaInsets";
 import {
 	CATEGORY_LABEL,
 	currentYearMonth,
@@ -59,7 +61,6 @@ const s = {
 	emptyDescription: { marginTop: spacing.xs } satisfies React.CSSProperties,
 	fabRow: {
 		position: "sticky" as const,
-		bottom: spacing.md,
 		display: "flex",
 		justifyContent: "flex-end",
 		marginTop: spacing.md,
@@ -83,6 +84,7 @@ const s = {
 export default function ManagePage() {
 	const navigate = useNavigate();
 	const charges = useCharges();
+	const insets = useSafeAreaInsets();
 	const ym = useMemo(() => currentYearMonth(), []);
 	const groups = groupByCategory(charges);
 
@@ -169,7 +171,9 @@ export default function ManagePage() {
 				))
 			)}
 
-			<div style={s.fabRow}>
+			<div
+				style={{ ...s.fabRow, bottom: navSpace(insets.bottom) + spacing.xs }}
+			>
 				<button
 					type="button"
 					style={s.fab}

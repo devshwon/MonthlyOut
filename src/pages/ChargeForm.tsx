@@ -9,7 +9,6 @@ import {
 } from "@toss/tds-mobile";
 import { useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { IconChevronLeft } from "@/components/icons";
 import { colors, radius, shadow, spacing } from "@/design/tokens";
 import { useSafeAreaInsets } from "@/hooks/useSafeAreaInsets";
 import {
@@ -33,23 +32,6 @@ import type { ChargeCategory, ChargeDraft, PaymentMethodKind } from "@/types";
 const s = {
 	page: {
 		padding: `${spacing.xs}px ${spacing.md}px 0`,
-	} satisfies React.CSSProperties,
-	topBar: {
-		display: "flex",
-		alignItems: "center",
-		height: 48,
-	} satisfies React.CSSProperties,
-	backButton: {
-		display: "flex",
-		alignItems: "center",
-		justifyContent: "center",
-		width: 36,
-		height: 36,
-		marginLeft: -spacing.xs,
-		border: "none",
-		borderRadius: radius.full,
-		background: "none",
-		cursor: "pointer",
 	} satisfies React.CSSProperties,
 	title: {
 		padding: `${spacing.xs}px 0 ${spacing.lg}px`,
@@ -182,17 +164,6 @@ export default function ChargeFormPage() {
 
 	return (
 		<div style={s.page}>
-			<div style={s.topBar}>
-				<button
-					type="button"
-					style={s.backButton}
-					aria-label="뒤로"
-					onClick={() => navigate(-1)}
-				>
-					<IconChevronLeft size={22} color={colors.textSecondary} />
-				</button>
-			</div>
-
 			<Paragraph
 				typography="t4"
 				fontWeight="bold"

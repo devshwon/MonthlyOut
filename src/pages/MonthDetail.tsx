@@ -43,7 +43,9 @@ const s = {
 	topBar: {
 		display: "flex",
 		alignItems: "center",
-		justifyContent: "space-between",
+		// 월 이동만 남기고 가운데 정렬한다 — 왼쪽 끝에 두면 토스 내비바의
+		// 뒤로가기와 헷갈린다(검수 2-6: 뒤로가기 중복 노출 금지).
+		justifyContent: "center",
 		height: 48,
 	} satisfies React.CSSProperties,
 	iconButton: {
@@ -157,15 +159,6 @@ export default function MonthDetailPage() {
 	return (
 		<div style={s.page}>
 			<div style={s.topBar}>
-				<button
-					type="button"
-					style={s.iconButton}
-					aria-label="뒤로"
-					onClick={() => navigate(-1)}
-				>
-					<IconChevronLeft size={22} color={colors.textSecondary} />
-				</button>
-
 				<div style={s.monthSwitch}>
 					<button
 						type="button"
@@ -195,8 +188,6 @@ export default function MonthDetailPage() {
 						<IconChevronRight size={18} color={colors.textTertiary} />
 					</button>
 				</div>
-
-				<div style={{ width: 36 }} />
 			</div>
 
 			<div style={s.summary}>

@@ -1,7 +1,5 @@
 import { Button, Paragraph } from "@toss/tds-mobile";
 import { useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { IconChevronLeft } from "@/components/icons";
 import { colors, radius, shadow, spacing } from "@/design/tokens";
 import { useCharges } from "@/hooks/useCharges";
 import { clearCharges } from "@/services/chargeStore";
@@ -16,23 +14,6 @@ import { clearConfirmations } from "@/services/confirmStore";
 const s = {
 	page: {
 		padding: `${spacing.xs}px ${spacing.md}px ${spacing.xxl}px`,
-	} satisfies React.CSSProperties,
-	topBar: {
-		display: "flex",
-		alignItems: "center",
-		height: 48,
-	} satisfies React.CSSProperties,
-	backButton: {
-		display: "flex",
-		alignItems: "center",
-		justifyContent: "center",
-		width: 36,
-		height: 36,
-		marginLeft: -spacing.xs,
-		border: "none",
-		borderRadius: radius.full,
-		background: "none",
-		cursor: "pointer",
 	} satisfies React.CSSProperties,
 	title: {
 		padding: `${spacing.xs}px 0 ${spacing.lg}px`,
@@ -56,7 +37,6 @@ const s = {
 };
 
 export default function SettingsPage() {
-	const navigate = useNavigate();
 	const charges = useCharges();
 	const ym = useMemo(() => currentYearMonth(), []);
 	const [confirmingClear, setConfirmingClear] = useState(false);
@@ -73,17 +53,6 @@ export default function SettingsPage() {
 
 	return (
 		<div style={s.page}>
-			<div style={s.topBar}>
-				<button
-					type="button"
-					style={s.backButton}
-					aria-label="뒤로"
-					onClick={() => navigate(-1)}
-				>
-					<IconChevronLeft size={22} color={colors.textSecondary} />
-				</button>
-			</div>
-
 			<Paragraph
 				typography="t4"
 				fontWeight="bold"
