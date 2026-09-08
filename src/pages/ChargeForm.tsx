@@ -99,20 +99,12 @@ const s = {
 	presetTile: {
 		display: "flex",
 		alignItems: "center",
-		gap: spacing.xs,
-		padding: `${spacing.xs}px ${spacing.sm}px`,
+		justifyContent: "center",
+		gap: spacing.xxs,
+		minHeight: 38,
+		padding: `${spacing.xs}px ${spacing.xxs}px`,
 		borderRadius: radius.md,
 		cursor: "pointer",
-		textAlign: "left" as const,
-	} satisfies React.CSSProperties,
-	presetBadge: {
-		display: "flex",
-		flexShrink: 0,
-		alignItems: "center",
-		justifyContent: "center",
-		width: 24,
-		height: 24,
-		borderRadius: radius.full,
 	} satisfies React.CSSProperties,
 	presetName: {
 		overflow: "hidden",
@@ -191,7 +183,7 @@ export default function ChargeFormPage() {
 			return false;
 		}
 		const presets = findSubCategory(editing.subCategory)?.presets ?? [];
-		return !presets.some((preset) => preset.name === editing.name);
+		return !presets.includes(editing.name);
 	});
 	const [methodKind, setMethodKind] = useState<PaymentMethodKind>(
 		editing?.method?.kind ?? "card",
@@ -402,43 +394,27 @@ export default function ChargeFormPage() {
 					{presets.length > 0 ? (
 						<div style={s.presetGrid}>
 							{presets.map((preset) => {
-								const selected = !customName && name === preset.name;
+								const selected = !customName && name === preset;
 
 								return (
 									<button
-										key={preset.name}
+										key={preset}
 										type="button"
 										aria-pressed={selected}
 										style={{
 											...s.presetTile,
 											border: selected
-												? `1.5px solid ${preset.color}`
+												? `1.5px solid ${colors.primary}`
 												: "1.5px solid transparent",
 											backgroundColor: selected
-												? colors.surface
+												? colors.primarySoft
 												: colors.surfaceSunken,
 										}}
 										onClick={() => {
-											setName(preset.name);
+											setName(preset);
 											setCustomName(false);
 										}}
 									>
-										<span
-											style={{
-												...s.presetBadge,
-												backgroundColor: preset.color,
-											}}
-										>
-											<Paragraph
-												typography="t7"
-												fontWeight="bold"
-												color={colors.textOnDark}
-											>
-												<Paragraph.Text>
-													{preset.name.slice(0, 1)}
-												</Paragraph.Text>
-											</Paragraph>
-										</span>
 										<Paragraph
 											typography="t7"
 											fontWeight={selected ? "bold" : "regular"}
@@ -447,7 +423,7 @@ export default function ChargeFormPage() {
 											}
 											style={s.presetName}
 										>
-											<Paragraph.Text>{preset.name}</Paragraph.Text>
+											<Paragraph.Text>{preset}</Paragraph.Text>
 										</Paragraph>
 									</button>
 								);
@@ -462,7 +438,7 @@ export default function ChargeFormPage() {
 										? `1.5px solid ${colors.primary}`
 										: "1.5px solid transparent",
 									backgroundColor: customName
-										? colors.surface
+										? colors.primarySoft
 										: colors.surfaceSunken,
 								}}
 								onClick={() => {
@@ -470,14 +446,7 @@ export default function ChargeFormPage() {
 									setName("");
 								}}
 							>
-								<span
-									style={{
-										...s.presetBadge,
-										backgroundColor: colors.background,
-									}}
-								>
-									<IconPencil size={13} color={colors.textTertiary} />
-								</span>
+								<IconPencil size={13} color={colors.textTertiary} />
 								<Paragraph
 									typography="t7"
 									fontWeight={customName ? "bold" : "regular"}

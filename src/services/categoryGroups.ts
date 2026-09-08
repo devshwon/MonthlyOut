@@ -11,13 +11,11 @@ import type { ChargeCategory } from "@/types";
  * 세부를 고르면 통계에 쓰이는 `category`가 정해지고, 이름이 비어 있으면 자동으로 채워준다.
  */
 /**
- * 흔히 쓰는 서비스 프리셋. 이름을 타이핑하지 않고 고르게 하려고 둔다.
- * `color`는 배지 색일 뿐이고 로고는 쓰지 않는다(상표 문제 없이 알아보게).
+ * 흔히 쓰는 서비스 이름. 타이핑을 줄이려고 둔다.
+ * 로고·심볼은 쓰지 않는다 — 인터넷에서 가져온 이미지는 라이선스를 소명할 수 없고,
+ * 앱인토스는 저작권 신고가 들어오면 먼저 미노출 조치한다.
  */
-export interface PresetDef {
-	name: string;
-	color: string;
-}
+export type PresetDef = string;
 
 export interface SubCategoryDef {
 	id: string;
@@ -47,14 +45,14 @@ export const CATEGORY_GROUPS: CategoryGroupDef[] = [
 				label: "OTT·영상",
 				category: "subscription",
 				presets: [
-					{ name: "넷플릭스", color: "#E50914" },
-					{ name: "티빙", color: "#FF153C" },
-					{ name: "쿠팡플레이", color: "#4B6EF5" },
-					{ name: "디즈니+", color: "#1B2A6B" },
-					{ name: "웨이브", color: "#1A66FF" },
-					{ name: "왓챠", color: "#FF0558" },
-					{ name: "라프텔", color: "#6C5CE7" },
-					{ name: "유튜브 프리미엄", color: "#FF0000" },
+					"넷플릭스",
+					"티빙",
+					"쿠팡플레이",
+					"디즈니+",
+					"웨이브",
+					"왓챠",
+					"라프텔",
+					"유튜브 프리미엄",
 				],
 			},
 			{
@@ -62,56 +60,50 @@ export const CATEGORY_GROUPS: CategoryGroupDef[] = [
 				label: "음악",
 				category: "subscription",
 				presets: [
-					{ name: "멜론", color: "#00CD3C" },
-					{ name: "유튜브 뮤직", color: "#FF0000" },
-					{ name: "스포티파이", color: "#1DB954" },
-					{ name: "지니", color: "#3F53FF" },
-					{ name: "플로", color: "#6236FF" },
-					{ name: "바이브", color: "#2B2B2B" },
+					"멜론",
+					"유튜브 뮤직",
+					"스포티파이",
+					"지니",
+					"플로",
+					"바이브",
 				],
 			},
 			{
 				id: "cloud",
 				label: "클라우드·저장",
 				category: "subscription",
-				presets: [
-					{ name: "iCloud", color: "#3D8BFD" },
-					{ name: "구글 One", color: "#1A73E8" },
-					{ name: "네이버 마이박스", color: "#03C75A" },
-					{ name: "드롭박스", color: "#0061FF" },
-				],
+				presets: ["iCloud", "구글 One", "네이버 마이박스", "드롭박스"],
 			},
 			{
 				id: "membership",
 				label: "멤버십",
 				category: "subscription",
-				presets: [
-					{ name: "쿠팡 와우", color: "#E52528" },
-					{ name: "네이버플러스", color: "#03C75A" },
-					{ name: "배민클럽", color: "#2AC1BC" },
-					{ name: "신세계 유니버스", color: "#C41230" },
-				],
+				presets: ["쿠팡 와우", "네이버플러스", "배민클럽", "신세계 유니버스"],
 			},
 			{
 				id: "game",
 				label: "게임",
 				category: "subscription",
+				presets: ["PS 플러스", "Xbox 게임패스", "닌텐도 온라인"],
+			},
+			{
+				id: "ai",
+				label: "AI",
+				category: "subscription",
 				presets: [
-					{ name: "PS 플러스", color: "#0070D1" },
-					{ name: "Xbox 게임패스", color: "#107C10" },
-					{ name: "닌텐도 온라인", color: "#E60012" },
+					"ChatGPT",
+					"Claude",
+					"Gemini",
+					"Perplexity",
+					"코파일럿",
+					"미드저니",
 				],
 			},
 			{
 				id: "app",
 				label: "앱·소프트웨어",
 				category: "subscription",
-				presets: [
-					{ name: "ChatGPT", color: "#10A37F" },
-					{ name: "Microsoft 365", color: "#0F6CBD" },
-					{ name: "어도비", color: "#FA0F00" },
-					{ name: "노션", color: "#2F2F2F" },
-				],
+				presets: ["Microsoft 365", "어도비", "노션", "캔바"],
 			},
 		],
 	},
@@ -124,25 +116,15 @@ export const CATEGORY_GROUPS: CategoryGroupDef[] = [
 				id: "mobile",
 				label: "휴대폰",
 				category: "telecom",
-				presets: [
-					{ name: "SKT", color: "#EA1917" },
-					{ name: "KT", color: "#EA4B34" },
-					{ name: "LG U+", color: "#E6007E" },
-					{ name: "알뜰폰", color: "#5A67D8" },
-				],
+				presets: ["SKT", "KT", "LG U+", "알뜰폰"],
 			},
 			{
 				id: "internet",
 				label: "인터넷",
 				category: "telecom",
-				presets: [
-					{ name: "SK브로드밴드", color: "#EA1917" },
-					{ name: "KT 인터넷", color: "#EA4B34" },
-					{ name: "LG U+ 인터넷", color: "#E6007E" },
-				],
+				presets: ["SK브로드밴드", "KT 인터넷", "LG U+ 인터넷"],
 			},
 			{ id: "tv", label: "TV", category: "telecom" },
-			{ id: "data", label: "알뜰폰·데이터", category: "telecom" },
 		],
 	},
 	{
@@ -155,14 +137,9 @@ export const CATEGORY_GROUPS: CategoryGroupDef[] = [
 			{ id: "utility", label: "전기·가스·수도", category: "housing" },
 			{
 				id: "rental",
-				label: "렌탈",
+				label: "정수기·가전 렌탈",
 				category: "housing",
-				presets: [
-					{ name: "코웨이", color: "#0F5AA8" },
-					{ name: "SK매직", color: "#EA1917" },
-					{ name: "청호나이스", color: "#00A0E9" },
-					{ name: "LG 케어솔루션", color: "#A50034" },
-				],
+				presets: ["코웨이", "SK매직", "청호나이스", "LG 케어솔루션"],
 			},
 		],
 	},
@@ -176,11 +153,11 @@ export const CATEGORY_GROUPS: CategoryGroupDef[] = [
 				label: "실손",
 				category: "insurance",
 				presets: [
-					{ name: "삼성화재", color: "#1428A0" },
-					{ name: "현대해상", color: "#00A9CE" },
-					{ name: "DB손해보험", color: "#00A04A" },
-					{ name: "KB손해보험", color: "#FFB600" },
-					{ name: "메리츠화재", color: "#E2231A" },
+					"삼성화재",
+					"현대해상",
+					"DB손해보험",
+					"KB손해보험",
+					"메리츠화재",
 				],
 			},
 			{ id: "life", label: "종신", category: "insurance" },
@@ -205,13 +182,13 @@ export const CATEGORY_GROUPS: CategoryGroupDef[] = [
 				label: "주택·전세",
 				category: "loan",
 				presets: [
-					{ name: "국민은행", color: "#FFB600" },
-					{ name: "신한은행", color: "#0046FF" },
-					{ name: "우리은행", color: "#0067AC" },
-					{ name: "하나은행", color: "#008485" },
-					{ name: "농협은행", color: "#00A64F" },
-					{ name: "카카오뱅크", color: "#FEE500" },
-					{ name: "토스뱅크", color: "#3182F6" },
+					"국민은행",
+					"신한은행",
+					"우리은행",
+					"하나은행",
+					"농협은행",
+					"카카오뱅크",
+					"토스뱅크",
 				],
 			},
 			{ id: "creditLoan", label: "신용", category: "loan" },
@@ -239,11 +216,7 @@ export const CATEGORY_GROUPS: CategoryGroupDef[] = [
 				id: "daily",
 				label: "생필품",
 				category: "delivery",
-				presets: [
-					{ name: "쿠팡 정기배송", color: "#E52528" },
-					{ name: "마켓컬리", color: "#5F0080" },
-					{ name: "오아시스", color: "#7BB026" },
-				],
+				presets: ["쿠팡 정기배송", "마켓컬리", "오아시스"],
 			},
 			{ id: "food", label: "식품·밀키트", category: "delivery" },
 			{ id: "supplement", label: "건강식품", category: "delivery" },
