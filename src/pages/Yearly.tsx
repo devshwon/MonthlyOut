@@ -3,7 +3,14 @@ import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { CategoryBar } from "@/components/CategoryBar";
 import { IconChevronLeft, IconChevronRight } from "@/components/icons";
-import { colors, radius, shadow, spacing } from "@/design/tokens";
+import {
+	boardColors,
+	boardSurface,
+	colors,
+	radius,
+	shadow,
+	spacing,
+} from "@/design/tokens";
 import { useCharges } from "@/hooks/useCharges";
 import {
 	currentYearMonth,
@@ -48,6 +55,15 @@ const s = {
 		backgroundColor: colors.surface,
 		boxShadow: shadow.card,
 	} satisfies React.CSSProperties,
+	/** 1~12월 막대는 칠판에 분필로 그린 것처럼 */
+	boardCard: {
+		padding: `${spacing.lg}px ${spacing.md}px ${spacing.md}px`,
+		marginBottom: spacing.sm,
+		border: `7px solid ${boardColors.wood}`,
+		borderRadius: radius.xl,
+		background: boardSurface,
+		boxShadow: `inset 0 0 24px rgba(0,0,0,0.35), ${shadow.card}`,
+	} satisfies React.CSSProperties,
 	summaryRow: {
 		display: "flex",
 		gap: spacing.md,
@@ -88,11 +104,12 @@ const s = {
 	cardTitle: { marginBottom: spacing.sm } satisfies React.CSSProperties,
 	insight: {
 		display: "flex",
+		justifyContent: "center",
 		gap: spacing.xxs,
 		marginTop: spacing.md,
 		padding: `${spacing.xs}px ${spacing.sm}px`,
 		borderRadius: radius.md,
-		backgroundColor: colors.primarySoft,
+		border: `1px dashed ${boardColors.chalkDim}`,
 	} satisfies React.CSSProperties,
 };
 
@@ -148,29 +165,29 @@ export default function YearlyPage() {
 				</div>
 			</div>
 
-			<div style={s.card}>
+			<div style={s.boardCard}>
 				<div style={s.summaryRow}>
 					<div style={s.summaryItem}>
-						<Paragraph typography="t7" color={colors.textTertiary}>
+						<Paragraph typography="t7" color={boardColors.chalkDim}>
 							<Paragraph.Text>올해 나가는 돈</Paragraph.Text>
 						</Paragraph>
 						<Paragraph
 							typography="t4"
 							fontWeight="bold"
-							color={colors.textPrimary}
+							color={boardColors.chalk}
 							style={s.summaryValue}
 						>
 							<Paragraph.Text>{formatKrw(yearTotal)}</Paragraph.Text>
 						</Paragraph>
 					</div>
 					<div style={s.summaryItem}>
-						<Paragraph typography="t7" color={colors.textTertiary}>
+						<Paragraph typography="t7" color={boardColors.chalkDim}>
 							<Paragraph.Text>월 평균</Paragraph.Text>
 						</Paragraph>
 						<Paragraph
 							typography="t4"
 							fontWeight="bold"
-							color={colors.textSecondary}
+							color={boardColors.chalkDim}
 							style={s.summaryValue}
 						>
 							<Paragraph.Text>{formatKrw(average)}</Paragraph.Text>
@@ -198,10 +215,10 @@ export default function YearlyPage() {
 										borderRadius: radius.sm,
 										backgroundColor:
 											month.total === 0
-												? colors.surfaceSunken
+												? boardColors.chalkFaint
 												: isThisMonth
-													? colors.primary
-													: "#C6DCFB",
+													? boardColors.chalk
+													: "rgba(244, 243, 236, 0.45)",
 									}}
 								/>
 							</button>
@@ -216,7 +233,7 @@ export default function YearlyPage() {
 								typography="t7"
 								fontWeight={month.ym === thisYm ? "bold" : "regular"}
 								color={
-									month.ym === thisYm ? colors.primary : colors.textTertiary
+									month.ym === thisYm ? boardColors.chalk : boardColors.chalkDim
 								}
 							>
 								<Paragraph.Text>{String(month.month)}</Paragraph.Text>
@@ -235,7 +252,7 @@ export default function YearlyPage() {
 
 				{maxTotal > 0 ? (
 					<div style={s.insight}>
-						<Paragraph typography="t7" color={colors.textSecondary}>
+						<Paragraph typography="t7" color={boardColors.chalk}>
 							<Paragraph.Text>
 								{`${peak.month}월이 가장 많아요 · ${formatKrw(peak.total)}`}
 							</Paragraph.Text>

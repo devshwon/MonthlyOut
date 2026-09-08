@@ -11,7 +11,14 @@ import {
 	IconSettings,
 } from "@/components/icons";
 import { MoneyBuddy } from "@/components/MoneyBuddy";
-import { colors, heroGradient, radius, shadow, spacing } from "@/design/tokens";
+import {
+	boardColors,
+	boardSurface,
+	colors,
+	radius,
+	shadow,
+	spacing,
+} from "@/design/tokens";
 import { useCharges } from "@/hooks/useCharges";
 import { useConfirmedIds } from "@/hooks/useConfirmations";
 import { useCountUp } from "@/hooks/useCountUp";
@@ -82,33 +89,82 @@ const s = {
 		backgroundColor: colors.primarySoft,
 		cursor: "pointer",
 	} satisfies React.CSSProperties,
-	hero: {
-		padding: `${spacing.xl}px ${spacing.lg}px`,
-		borderRadius: radius.xxl,
-		background: heroGradient,
-		boxShadow: shadow.hero,
+	boardWrap: {
+		position: "relative" as const,
+		paddingBottom: 30,
 	} satisfies React.CSSProperties,
-	heroCaption: {
+	board: {
+		padding: `${spacing.xl}px ${spacing.lg}px ${spacing.lg}px`,
+		border: `7px solid ${boardColors.wood}`,
+		borderRadius: radius.xl,
+		background: boardSurface,
+		boxShadow: `inset 0 0 24px rgba(0,0,0,0.35), ${shadow.card}`,
+	} satisfies React.CSSProperties,
+	/** 칠판 아래 분필 선반 */
+	tray: {
+		position: "absolute" as const,
+		left: spacing.sm,
+		right: spacing.sm,
+		bottom: 6,
+		height: 12,
+		borderRadius: `0 0 ${radius.sm}px ${radius.sm}px`,
+		background: `linear-gradient(180deg, ${boardColors.wood} 0%, ${boardColors.woodDeep} 100%)`,
+		boxShadow: "0 3px 6px rgba(0,0,0,0.14)",
+	} satisfies React.CSSProperties,
+	trayChalk: {
+		position: "absolute" as const,
+		left: spacing.xl,
+		bottom: 13,
+		width: 26,
+		height: 7,
+		borderRadius: radius.full,
+		backgroundColor: boardColors.chalk,
+		opacity: 0.9,
+	} satisfies React.CSSProperties,
+	trayChalkShort: {
+		position: "absolute" as const,
+		left: spacing.xl + 34,
+		bottom: 13,
+		width: 14,
+		height: 7,
+		borderRadius: radius.full,
+		backgroundColor: "#BFE0D6",
+		opacity: 0.85,
+	} satisfies React.CSSProperties,
+	/** 선반 위에 두 발로 서서 칠판 옆을 지킨다 */
+	buddyOnTray: {
+		position: "absolute" as const,
+		right: 2,
+		bottom: 13,
+		pointerEvents: "none" as const,
+	} satisfies React.CSSProperties,
+	chalkCaption: {
 		textAlign: "center" as const,
 		// "고 정 지 출" — 자간을 벌린 만큼 마지막 글자 뒤에 여백이 생겨서 들여쓰기로 보정한다.
 		letterSpacing: "0.4em",
 		textIndent: "0.4em",
-		opacity: 0.9,
+		textShadow: "0 0 8px rgba(244,243,236,0.35)",
+	} satisfies React.CSSProperties,
+	chalkRule: {
+		height: 1,
+		margin: `${spacing.sm}px auto 0`,
+		width: 132,
+		backgroundImage: `repeating-linear-gradient(90deg, ${boardColors.chalkDim} 0 6px, transparent 6px 12px)`,
 	} satisfies React.CSSProperties,
 	heroAmountRow: {
 		display: "grid",
 		gridTemplateColumns: "1fr auto 1fr",
 		alignItems: "baseline",
-		marginTop: spacing.sm,
+		marginTop: spacing.md,
 	} satisfies React.CSSProperties,
 	heroNumber: {
 		gridColumn: 2,
 		textAlign: "center" as const,
+		textShadow: "0 0 10px rgba(244,243,236,0.35)",
 	} satisfies React.CSSProperties,
 	heroUnit: {
 		gridColumn: 3,
 		justifySelf: "end" as const,
-		opacity: 0.9,
 	} satisfies React.CSSProperties,
 	heroFooter: {
 		display: "flex",
@@ -118,7 +174,7 @@ const s = {
 	heroPill: {
 		padding: `${spacing.xxs}px ${spacing.sm}px`,
 		borderRadius: radius.full,
-		backgroundColor: "rgba(255, 255, 255, 0.18)",
+		border: `1px dashed ${boardColors.chalkDim}`,
 	} satisfies React.CSSProperties,
 	methodRow: {
 		display: "flex",
@@ -190,30 +246,29 @@ const s = {
 	} satisfies React.CSSProperties,
 	buddyRow: {
 		display: "flex",
-		alignItems: "center",
-		gap: spacing.xs,
+		justifyContent: "flex-end",
 		width: "100%",
-		padding: `${spacing.md}px 0 0`,
+		padding: `${spacing.xs}px 0 0`,
 		border: "none",
 		background: "none",
-		textAlign: "left" as const,
 		cursor: "pointer",
 	} satisfies React.CSSProperties,
 	bubble: {
 		position: "relative" as const,
-		flex: 1,
+		maxWidth: "88%",
 		padding: `${spacing.sm}px ${spacing.md}px`,
 		borderRadius: radius.lg,
 		backgroundColor: colors.surface,
 		boxShadow: shadow.card,
+		textAlign: "left" as const,
 	} satisfies React.CSSProperties,
+	/** 칠판 위 캐릭터에서 말이 나오는 것처럼 꼬리를 오른쪽 위로 */
 	bubbleTail: {
 		position: "absolute" as const,
-		left: -5,
-		top: "50%",
+		right: 22,
+		top: -4,
 		width: 10,
 		height: 10,
-		marginTop: -5,
 		borderRadius: 2,
 		backgroundColor: colors.surface,
 		transform: "rotate(45deg)",
@@ -324,67 +379,89 @@ export default function HomePage() {
 				</div>
 			) : null}
 
-			<div style={s.hero}>
-				<Paragraph
-					typography="t7"
-					color={colors.textOnDark}
-					style={s.heroCaption}
-				>
-					<Paragraph.Text>고정지출</Paragraph.Text>
-				</Paragraph>
+			<div style={s.boardWrap}>
+				<div style={s.board}>
+					<Paragraph
+						typography="t7"
+						color={boardColors.chalk}
+						style={s.chalkCaption}
+					>
+						<Paragraph.Text>고정지출</Paragraph.Text>
+					</Paragraph>
+					<div style={s.chalkRule} />
 
-				<div style={s.heroAmountRow}>
-					<Paragraph
-						typography="t2"
-						fontWeight="bold"
-						color={colors.textOnDark}
-						style={s.heroNumber}
-					>
-						<Paragraph.Text>{formatAmount(shownTotal)}</Paragraph.Text>
-					</Paragraph>
-					<Paragraph
-						typography="t5"
-						fontWeight="bold"
-						color={colors.textOnDark}
-						style={s.heroUnit}
-					>
-						<Paragraph.Text>원</Paragraph.Text>
-					</Paragraph>
+					<div style={s.heroAmountRow}>
+						<Paragraph
+							typography="t2"
+							fontWeight="bold"
+							color={boardColors.chalk}
+							style={s.heroNumber}
+						>
+							<Paragraph.Text>{formatAmount(shownTotal)}</Paragraph.Text>
+						</Paragraph>
+						<Paragraph
+							typography="t5"
+							fontWeight="bold"
+							color={boardColors.chalkDim}
+							style={s.heroUnit}
+						>
+							<Paragraph.Text>원</Paragraph.Text>
+						</Paragraph>
+					</div>
+
+					{release ? (
+						<div style={s.heroFooter}>
+							<div style={s.heroPill}>
+								<Paragraph
+									typography="t7"
+									fontWeight="bold"
+									color={boardColors.chalk}
+								>
+									<Paragraph.Text>
+										{`${release.monthsLater}개월 뒤 ${formatAmount(release.amount)}원 풀려요`}
+									</Paragraph.Text>
+								</Paragraph>
+							</div>
+						</div>
+					) : (
+						<div style={s.heroFooter}>
+							<div style={s.heroPill}>
+								<Paragraph typography="t7" color={boardColors.chalkDim}>
+									<Paragraph.Text>
+										{visible.length > 0
+											? `고정지출 ${visible.length}개`
+											: "아직 적을 게 없어요"}
+									</Paragraph.Text>
+								</Paragraph>
+							</div>
+						</div>
+					)}
 				</div>
 
-				{release ? (
-					<div style={s.heroFooter}>
-						<div style={s.heroPill}>
-							<Paragraph
-								typography="t7"
-								fontWeight="bold"
-								color={colors.textOnDark}
-							>
-								<Paragraph.Text>
-									{`${release.monthsLater}개월 뒤 ${formatAmount(release.amount)}원 풀려요`}
-								</Paragraph.Text>
-							</Paragraph>
-						</div>
-					</div>
-				) : visible.length > 0 ? (
-					<div style={s.heroFooter}>
-						<div style={s.heroPill}>
-							<Paragraph typography="t7" color={colors.textOnDark}>
-								<Paragraph.Text>{`고정지출 ${visible.length}개`}</Paragraph.Text>
-							</Paragraph>
-						</div>
-					</div>
-				) : null}
+				<div style={s.tray} />
+				<span style={s.trayChalk} />
+				<span style={s.trayChalkShort} />
+				<div style={s.buddyOnTray}>
+					<MoneyBuddy size={72} holdingChalk />
+				</div>
 			</div>
+
+			<button
+				type="button"
+				style={s.buddyRow}
+				aria-label="다른 이야기 듣기"
+				onClick={() => setTip(pickNextTip(tips, currentTip))}
+			>
+				<div style={s.bubble}>
+					<span style={s.bubbleTail} />
+					<Paragraph typography="t7" color={colors.textSecondary}>
+						<Paragraph.Text>{currentTip}</Paragraph.Text>
+					</Paragraph>
+				</div>
+			</button>
 
 			{charges.length === 0 ? (
 				<div style={s.empty}>
-					<div style={s.emptyBubble}>
-						<Paragraph typography="t7" fontWeight="bold" color={colors.primary}>
-							<Paragraph.Text>{currentTip}</Paragraph.Text>
-						</Paragraph>
-					</div>
-					<MoneyBuddy size={88} />
 					<Paragraph
 						typography="t5"
 						fontWeight="bold"
@@ -548,21 +625,6 @@ export default function HomePage() {
 							</Paragraph>
 						</div>
 					)}
-
-					<button
-						type="button"
-						style={s.buddyRow}
-						aria-label="다른 이야기 듣기"
-						onClick={() => setTip(pickNextTip(tips, currentTip))}
-					>
-						<MoneyBuddy size={56} />
-						<div style={s.bubble}>
-							<span style={s.bubbleTail} />
-							<Paragraph typography="t7" color={colors.textSecondary}>
-								<Paragraph.Text>{currentTip}</Paragraph.Text>
-							</Paragraph>
-						</div>
-					</button>
 				</>
 			)}
 		</div>

@@ -37,12 +37,12 @@ export function radiusPx(key: RadiusKey): string {
  * (desigin/toss-look.md — "토큰만 사용")
  */
 export const colors = {
-	/** 화면 배경 */
-	background: "#F4F6F9",
+	/** 화면 배경 — 교실 종이 같은 따뜻한 밝은 톤 */
+	background: "#F6F4EF",
 	/** 카드·리스트 표면 */
 	surface: "#FFFFFF",
 	/** 한 단계 낮은 표면(칩·트랙) */
-	surfaceSunken: "#EEF1F5",
+	surfaceSunken: "#EFEDE7",
 	/** 구분선 */
 	border: "#E5E8EB",
 	/** 본문 강조 */
@@ -65,8 +65,29 @@ export const colors = {
 
 export type ColorKey = keyof typeof colors;
 
-/** 히어로 카드 배경. 총액을 앉히는 자리라 화면당 하나만 쓴다. */
-export const heroGradient = "linear-gradient(135deg, #3D7BF7 0%, #6A5AF9 100%)";
+/**
+ * 칠판. 총액처럼 "선생님이 칠판에 적어준 숫자" 느낌을 주는 자리에만 쓴다.
+ * 화면 전체를 어둡게 칠하지는 않는다 — 미니앱은 라이트 모드가 원칙이다
+ * (prompts/99-last-checklist.md 3-2).
+ */
+export const boardColors = {
+	/** 칠판 면 */
+	surface: "#2F4A40",
+	surfaceDeep: "#264037",
+	/** 나무 프레임 */
+	wood: "#C89257",
+	woodDeep: "#A9733C",
+	/** 분필 글씨 */
+	chalk: "#F4F3EC",
+	/** 흐린 분필(보조 텍스트·선) */
+	chalkDim: "rgba(244, 243, 236, 0.62)",
+	/** 분필 자국이 남은 면 */
+	chalkFaint: "rgba(244, 243, 236, 0.18)",
+} as const;
+
+/** 칠판 면 — 가운데가 살짝 밝은 진짜 칠판 느낌 */
+export const boardSurface =
+	"radial-gradient(120% 90% at 50% 35%, #35544A 0%, #2F4A40 45%, #26403F 100%)";
 
 export const shadow = {
 	card: "0 2px 8px rgba(25, 31, 40, 0.05)",
