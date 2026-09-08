@@ -8,6 +8,8 @@ import {
 	categoryColors,
 	categorySoftColors,
 	colors,
+	paperBackground,
+	paperColors,
 	radius,
 	shadow,
 	spacing,
@@ -28,13 +30,24 @@ const s = {
 		padding: `${spacing.xs}px ${spacing.md}px ${spacing.xs}px`,
 	} satisfies React.CSSProperties,
 	header: {
-		padding: `${spacing.xs}px 0 ${spacing.md}px`,
+		padding: `${spacing.xs}px 0 ${spacing.sm}px`,
+	} satisfies React.CSSProperties,
+	titleWrap: { display: "inline-block" } satisfies React.CSSProperties,
+	/** 제목 아래 손으로 그은 밑줄 */
+	titleUnderline: {
+		height: 5,
+		marginTop: -2,
+		borderRadius: radius.full,
+		backgroundColor: colors.accentSoft,
+		transform: "rotate(-0.6deg)",
 	} satisfies React.CSSProperties,
 	summary: { marginTop: spacing.xxs } satisfies React.CSSProperties,
+	/** 괘선 있는 노트 한 장 */
 	section: {
 		marginBottom: spacing.sm,
 		borderRadius: radius.xl,
-		backgroundColor: colors.surface,
+		backgroundColor: paperColors.surface,
+		backgroundImage: paperBackground,
 		boxShadow: shadow.card,
 		overflow: "hidden",
 	} satisfies React.CSSProperties,
@@ -43,6 +56,8 @@ const s = {
 		alignItems: "center",
 		gap: spacing.xs,
 		padding: `${spacing.sm}px ${spacing.md}px`,
+		// 헤더는 괘선 위에 덮어 흰 띠로 둔다 — 줄과 겹치면 지저분하다.
+		backgroundColor: colors.surface,
 		borderBottom: `1px solid ${colors.border}`,
 	} satisfies React.CSSProperties,
 	sectionDot: {
@@ -78,7 +93,7 @@ const s = {
 		padding: `0 ${spacing.lg}px 0 ${spacing.md}px`,
 		border: "none",
 		borderRadius: radius.full,
-		backgroundColor: colors.primary,
+		backgroundColor: colors.accent,
 		boxShadow: shadow.floating,
 		cursor: "pointer",
 		pointerEvents: "auto" as const,
@@ -104,9 +119,16 @@ export default function ManagePage() {
 	return (
 		<div style={s.page}>
 			<div style={s.header}>
-				<Paragraph typography="t4" fontWeight="bold" color={colors.textPrimary}>
-					<Paragraph.Text>관리</Paragraph.Text>
-				</Paragraph>
+				<div style={s.titleWrap}>
+					<Paragraph
+						typography="t4"
+						fontWeight="bold"
+						color={colors.textPrimary}
+					>
+						<Paragraph.Text>관리</Paragraph.Text>
+					</Paragraph>
+					<div style={s.titleUnderline} />
+				</div>
 				<Paragraph
 					typography="t7"
 					color={colors.textTertiary}
@@ -173,6 +195,7 @@ export default function ManagePage() {
 								key={charge.id}
 								charge={charge}
 								yearMonth={ym}
+								paper
 								dimmed={!isActive(charge, ym)}
 								onClick={() => navigate(`/charge/${charge.id}`)}
 								accessory={
@@ -193,7 +216,7 @@ export default function ManagePage() {
 					onClick={() => navigate("/charge/new")}
 				>
 					<span style={s.fabPencil}>
-						<IconPencil size={19} color={colors.primary} />
+						<IconPencil size={19} color={colors.accent} />
 					</span>
 					<Paragraph
 						typography="t6"

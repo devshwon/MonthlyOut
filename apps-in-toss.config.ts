@@ -11,7 +11,7 @@ export default defineConfig({
 
   // 3.x부터 brand는 primaryColor만 받습니다. displayName·icon은 콘솔에서 관리해요.
   brand: {
-    primaryColor: '#3182F6',
+    primaryColor: '#2F4A40',
   },
 
   // vite build의 산출물 디렉토리 (vite.config.ts의 build.outDir와 반드시 일치).

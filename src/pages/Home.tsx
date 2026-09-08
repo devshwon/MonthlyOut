@@ -1,4 +1,4 @@
-import { Button, Paragraph } from "@toss/tds-mobile";
+import { Paragraph } from "@toss/tds-mobile";
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { CategoryBar } from "@/components/CategoryBar";
@@ -12,6 +12,7 @@ import {
 	IconSettings,
 } from "@/components/icons";
 import { MoneyBuddy } from "@/components/MoneyBuddy";
+import { PrimaryButton } from "@/components/PrimaryButton";
 import {
 	boardColors,
 	boardSurface,
@@ -49,14 +50,14 @@ const EMPTY_PREVIEW = [
 
 const s = {
 	page: {
-		padding: `${spacing.xs}px ${spacing.md}px ${spacing.xl}px`,
+		padding: `${spacing.xs}px ${spacing.md}px ${spacing.lg}px`,
 	} satisfies React.CSSProperties,
 	header: {
 		position: "relative" as const,
 		display: "flex",
 		alignItems: "center",
 		justifyContent: "center",
-		height: 48,
+		height: 44,
 	} satisfies React.CSSProperties,
 	monthStepper: {
 		display: "flex",
@@ -104,7 +105,7 @@ const s = {
 		paddingBottom: 30,
 	} satisfies React.CSSProperties,
 	board: {
-		padding: `${spacing.xl}px ${spacing.lg}px ${spacing.lg}px`,
+		padding: `${spacing.lg}px ${spacing.lg}px ${spacing.md}px`,
 		border: `7px solid ${boardColors.wood}`,
 		borderRadius: radius.xl,
 		background: boardSurface,
@@ -192,7 +193,7 @@ const s = {
 	methodRow: {
 		display: "flex",
 		gap: spacing.xs,
-		marginTop: spacing.md,
+		marginTop: spacing.sm,
 	} satisfies React.CSSProperties,
 	methodCard: {
 		flex: 1,
@@ -209,7 +210,7 @@ const s = {
 	methodAmount: { marginTop: spacing.xs } satisfies React.CSSProperties,
 	card: {
 		padding: spacing.md,
-		marginTop: spacing.md,
+		marginTop: spacing.sm,
 		borderRadius: radius.xl,
 		backgroundColor: colors.surface,
 		boxShadow: shadow.card,
@@ -236,7 +237,7 @@ const s = {
 		overflow: "hidden",
 	} satisfies React.CSSProperties,
 	listCard: {
-		marginTop: spacing.md,
+		marginTop: spacing.sm,
 		borderRadius: radius.xl,
 		backgroundColor: colors.surface,
 		boxShadow: shadow.card,
@@ -287,8 +288,8 @@ const s = {
 		transform: "rotate(45deg)",
 	} satisfies React.CSSProperties,
 	empty: {
-		marginTop: spacing.md,
-		padding: `${spacing.xl}px ${spacing.lg}px ${spacing.xxl}px`,
+		marginTop: spacing.sm,
+		padding: `${spacing.lg}px ${spacing.lg}px ${spacing.xl}px`,
 		borderRadius: radius.xxl,
 		backgroundColor: colors.surface,
 		boxShadow: shadow.card,
@@ -327,7 +328,7 @@ const s = {
 		borderRadius: radius.sm,
 	} satisfies React.CSSProperties,
 	previewName: { flex: 1 } satisfies React.CSSProperties,
-	emptyCta: { marginTop: spacing.lg } satisfies React.CSSProperties,
+	emptyCta: { marginTop: spacing.md } satisfies React.CSSProperties,
 };
 
 export default function HomePage() {
@@ -553,15 +554,9 @@ export default function HomePage() {
 					</div>
 
 					<div style={s.emptyCta}>
-						<Button
-							size="large"
-							color="primary"
-							variant="fill"
-							display="block"
-							onClick={() => navigate("/manage")}
-						>
+						<PrimaryButton onClick={() => navigate("/manage")}>
 							관리에서 첫 항목 적기
-						</Button>
+						</PrimaryButton>
 					</div>
 				</div>
 			) : (

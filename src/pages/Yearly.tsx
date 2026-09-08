@@ -23,13 +23,13 @@ const CHART_HEIGHT = 132;
 
 const s = {
 	page: {
-		padding: `${spacing.xs}px ${spacing.md}px ${spacing.xxl}px`,
+		padding: `${spacing.xs}px ${spacing.md}px ${spacing.lg}px`,
 	} satisfies React.CSSProperties,
 	header: {
 		display: "flex",
 		alignItems: "center",
 		justifyContent: "space-between",
-		padding: `${spacing.xs}px 0 ${spacing.md}px`,
+		padding: `${spacing.xs}px 0 ${spacing.sm}px`,
 	} satisfies React.CSSProperties,
 	yearSwitch: {
 		display: "flex",
@@ -57,7 +57,7 @@ const s = {
 	} satisfies React.CSSProperties,
 	/** 1~12월 막대는 칠판에 분필로 그린 것처럼 */
 	boardCard: {
-		padding: `${spacing.lg}px ${spacing.md}px ${spacing.md}px`,
+		padding: `${spacing.md}px ${spacing.md}px ${spacing.sm}px`,
 		marginBottom: spacing.sm,
 		border: `7px solid ${boardColors.wood}`,
 		borderRadius: radius.xl,

@@ -13,10 +13,10 @@ import { clearConfirmations } from "@/services/confirmStore";
 
 const s = {
 	page: {
-		padding: `${spacing.xs}px ${spacing.md}px ${spacing.xxl}px`,
+		padding: `${spacing.xs}px ${spacing.md}px ${spacing.lg}px`,
 	} satisfies React.CSSProperties,
 	title: {
-		padding: `${spacing.xs}px 0 ${spacing.lg}px`,
+		padding: `${spacing.sm}px 0 ${spacing.md}px`,
 	} satisfies React.CSSProperties,
 	card: {
 		padding: spacing.md,

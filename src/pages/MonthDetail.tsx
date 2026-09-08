@@ -38,7 +38,7 @@ import { toggleConfirmed } from "@/services/confirmStore";
 
 const s = {
 	page: {
-		padding: `${spacing.xs}px ${spacing.md}px ${spacing.xxl}px`,
+		padding: `${spacing.xs}px ${spacing.md}px ${spacing.lg}px`,
 	} satisfies React.CSSProperties,
 	topBar: {
 		display: "flex",
@@ -46,7 +46,7 @@ const s = {
 		// 월 이동만 남기고 가운데 정렬한다 — 왼쪽 끝에 두면 토스 내비바의
 		// 뒤로가기와 헷갈린다(검수 2-6: 뒤로가기 중복 노출 금지).
 		justifyContent: "center",
-		height: 48,
+		height: 44,
 	} satisfies React.CSSProperties,
 	iconButton: {
 		display: "flex",
@@ -65,7 +65,7 @@ const s = {
 		gap: spacing.xxs,
 	} satisfies React.CSSProperties,
 	summary: {
-		padding: spacing.lg,
+		padding: spacing.md,
 		marginBottom: spacing.sm,
 		borderRadius: radius.xxl,
 		backgroundColor: colors.surface,

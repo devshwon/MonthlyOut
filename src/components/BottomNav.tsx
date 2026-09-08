@@ -75,7 +75,7 @@ export function BottomNav() {
 			<nav style={s.bar}>
 				{TABS.map(({ path, label, Icon }) => {
 					const active = current === path;
-					const color = active ? colors.primary : colors.textTertiary;
+					const color = active ? colors.accent : colors.textTertiary;
 
 					return (
 						<button

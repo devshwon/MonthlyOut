@@ -1,5 +1,4 @@
 import {
-	Button,
 	Chip,
 	ChipItem,
 	Paragraph,
@@ -10,11 +9,15 @@ import {
 } from "@toss/tds-mobile";
 import { useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { CategoryIcon, IconPencil } from "@/components/icons";
+import { CategoryIcon, IconChevronRight, IconPencil } from "@/components/icons";
+import { PrimaryButton } from "@/components/PrimaryButton";
 import {
 	categoryColors,
 	categorySoftColors,
 	colors,
+	handDrawnRadius,
+	paperBackground,
+	paperColors,
 	radius,
 	shadow,
 	spacing,
@@ -49,13 +52,15 @@ const s = {
 		padding: `${spacing.xs}px ${spacing.md}px 0`,
 	} satisfies React.CSSProperties,
 	title: {
-		padding: `${spacing.xs}px 0 ${spacing.lg}px`,
+		padding: `${spacing.sm}px 0 ${spacing.md}px`,
 	} satisfies React.CSSProperties,
+	/** 등록도 "내가 적는 곳"이라 관리와 같은 노트 종이로 맞춘다 */
 	card: {
-		padding: spacing.md,
+		padding: `${spacing.xs}px ${spacing.md}px ${spacing.md}px ${spacing.xl}px`,
 		marginBottom: spacing.sm,
 		borderRadius: radius.xl,
-		backgroundColor: colors.surface,
+		backgroundColor: paperColors.surface,
+		backgroundImage: paperBackground,
 		boxShadow: shadow.card,
 	} satisfies React.CSSProperties,
 	field: { marginBottom: spacing.sm } satisfies React.CSSProperties,
@@ -74,6 +79,37 @@ const s = {
 		padding: `${spacing.sm}px 0`,
 		borderRadius: radius.md,
 		cursor: "pointer",
+	} satisfies React.CSSProperties,
+	/** 고른 것에 슥 그은 동그라미 */
+	circled: {
+		borderRadius: handDrawnRadius,
+		transform: "rotate(-1.2deg)",
+	} satisfies React.CSSProperties,
+	stepRow: {
+		display: "flex",
+		alignItems: "center",
+		gap: spacing.sm,
+		width: "100%",
+		padding: `${spacing.sm}px 0`,
+		border: "none",
+		background: "none",
+		cursor: "pointer",
+	} satisfies React.CSSProperties,
+	stepLabel: {
+		flexShrink: 0,
+		width: 34,
+		textAlign: "left" as const,
+	} satisfies React.CSSProperties,
+	stepValue: {
+		flex: 1,
+		textAlign: "left" as const,
+		overflow: "hidden",
+		textOverflow: "ellipsis",
+		whiteSpace: "nowrap" as const,
+	} satisfies React.CSSProperties,
+	rowDivider: {
+		height: 1,
+		backgroundColor: colors.border,
 	} satisfies React.CSSProperties,
 	subSection: { marginTop: spacing.md } satisfies React.CSSProperties,
 	subGrid: {
@@ -142,6 +178,55 @@ const s = {
 	} satisfies React.CSSProperties,
 };
 
+/** 접힌 단계 한 줄. 누르면 그 단계만 펼쳐진다. */
+function StepRow({
+	label,
+	value,
+	open,
+	muted = false,
+	onToggle,
+}: {
+	label: string;
+	value: string;
+	open: boolean;
+	muted?: boolean;
+	onToggle: () => void;
+}) {
+	return (
+		<button
+			type="button"
+			aria-expanded={open}
+			style={s.stepRow}
+			onClick={onToggle}
+		>
+			<Paragraph
+				typography="t7"
+				color={colors.textTertiary}
+				style={s.stepLabel}
+			>
+				<Paragraph.Text>{label}</Paragraph.Text>
+			</Paragraph>
+			<Paragraph
+				typography="t6"
+				fontWeight="bold"
+				color={muted ? colors.textTertiary : colors.textPrimary}
+				style={s.stepValue}
+			>
+				<Paragraph.Text>{value}</Paragraph.Text>
+			</Paragraph>
+			<span
+				style={{
+					display: "flex",
+					transform: open ? "rotate(90deg)" : "none",
+					transition: "transform 120ms ease",
+				}}
+			>
+				<IconChevronRight size={16} color={colors.textTertiary} />
+			</span>
+		</button>
+	);
+}
+
 function onlyDigits(value: string, maxLength: number): string {
 	return value.replace(/\D/g, "").slice(0, maxLength);
 }
@@ -197,6 +282,10 @@ export default function ChargeFormPage() {
 		editing?.term?.startMonth ?? thisMonth,
 	);
 	const [confirmingDelete, setConfirmingDelete] = useState(false);
+	// 고르면 접히고 다음 단계가 열린다. 수정할 때는 전부 접힌 채로 시작한다.
+	const [openSection, setOpenSection] = useState<
+		"group" | "sub" | "name" | null
+	>(editing ? null : "group");
 
 	// 세부를 골랐으면 그쪽 카테고리가, 아니면 대분류의 기본 카테고리가 통계 기준이 된다.
 	const selectedSub = findSubCategory(subCategoryId);
@@ -219,6 +308,7 @@ export default function ChargeFormPage() {
 		setSubCategoryId(undefined);
 		setName("");
 		setCustomName(false);
+		setOpenSection("sub");
 		// 할부·대출은 기본이 유기한이다 — 사용자가 직접 끄기 전까지 켜준다.
 		if (!editing && TERM_DEFAULT_CATEGORIES.includes(next.category)) {
 			setHasTerm(true);
@@ -226,9 +316,14 @@ export default function ChargeFormPage() {
 	};
 
 	const handleSubCategory = (id: string) => {
-		setSubCategoryId(subCategoryId === id ? undefined : id);
+		const next = subCategoryId === id ? undefined : id;
+		setSubCategoryId(next);
 		setName("");
 		setCustomName(false);
+		// 프리셋이 있는 세부를 골랐으면 이름 고르기로 넘어간다.
+		setOpenSection(
+			next && (findSubCategory(next)?.presets?.length ?? 0) > 0 ? "name" : null,
+		);
 	};
 
 	const handleSave = () => {
@@ -284,136 +379,89 @@ export default function ChargeFormPage() {
 			</Paragraph>
 
 			<div style={s.card}>
-				<Paragraph typography="t7" color={colors.textSecondary} style={s.label}>
-					<Paragraph.Text>어떤 종류인가요</Paragraph.Text>
-				</Paragraph>
-
-				<div style={s.categoryGrid}>
-					{CATEGORY_GROUPS.map((value) => {
-						const selected = group.id === value.id;
-
-						return (
-							<button
-								key={value.id}
-								type="button"
-								aria-pressed={selected}
-								style={{
-									...s.categoryTile,
-									border: selected
-										? `1.5px solid ${categoryColors[value.category]}`
-										: "1.5px solid transparent",
-									backgroundColor: selected
-										? categorySoftColors[value.category]
-										: colors.surfaceSunken,
-								}}
-								onClick={() => handleGroup(value)}
-							>
-								<CategoryIcon
-									category={value.category}
-									size={22}
-									color={
-										selected
-											? categoryColors[value.category]
-											: colors.textTertiary
-									}
-								/>
-								<Paragraph
-									typography="t7"
-									fontWeight={selected ? "bold" : "regular"}
-									color={selected ? colors.textPrimary : colors.textSecondary}
-								>
-									<Paragraph.Text>{value.label}</Paragraph.Text>
-								</Paragraph>
-							</button>
-						);
-					})}
-				</div>
-
-				<div style={s.subSection}>
-					<Paragraph
-						typography="t7"
-						color={colors.textTertiary}
-						style={s.subLabel}
-					>
-						<Paragraph.Text>
-							{selectedSub ? "골라둔 세부 항목" : "세부 항목 (건너뛰어도 돼요)"}
-						</Paragraph.Text>
-					</Paragraph>
-					<div style={s.subGrid}>
-						{group.items.map((item) => {
-							const selected = subCategoryId === item.id;
+				<StepRow
+					label="종류"
+					value={group.label}
+					open={openSection === "group"}
+					onToggle={() =>
+						setOpenSection(openSection === "group" ? null : "group")
+					}
+				/>
+				{openSection === "group" ? (
+					<div style={s.categoryGrid}>
+						{CATEGORY_GROUPS.map((value) => {
+							const selected = group.id === value.id;
 
 							return (
 								<button
-									key={item.id}
+									key={value.id}
 									type="button"
 									aria-pressed={selected}
 									style={{
-										...s.subTile,
+										...s.categoryTile,
+										...(selected ? s.circled : null),
 										border: selected
-											? `1.5px solid ${categoryColors[item.category]}`
-											: "1.5px solid transparent",
+											? `2px solid ${categoryColors[value.category]}`
+											: "2px solid transparent",
 										backgroundColor: selected
-											? categorySoftColors[item.category]
+											? categorySoftColors[value.category]
 											: colors.surfaceSunken,
 									}}
-									onClick={() => handleSubCategory(item.id)}
+									onClick={() => handleGroup(value)}
 								>
+									<CategoryIcon
+										category={value.category}
+										size={22}
+										color={
+											selected
+												? categoryColors[value.category]
+												: colors.textTertiary
+										}
+									/>
 									<Paragraph
 										typography="t7"
 										fontWeight={selected ? "bold" : "regular"}
 										color={selected ? colors.textPrimary : colors.textSecondary}
 									>
-										<Paragraph.Text>{item.label}</Paragraph.Text>
+										<Paragraph.Text>{value.label}</Paragraph.Text>
 									</Paragraph>
 								</button>
 							);
 						})}
 					</div>
-				</div>
+				) : null}
 
-				<Paragraph
-					typography="t7"
-					color={colors.textTertiary}
-					style={s.categoryHint}
-				>
-					<Paragraph.Text>{CATEGORY_HINT[category]}</Paragraph.Text>
-				</Paragraph>
-			</div>
+				<div style={s.rowDivider} />
 
-			<div style={s.card}>
-				<div style={s.field}>
-					<Paragraph
-						typography="t7"
-						color={colors.textSecondary}
-						style={s.label}
-					>
-						<Paragraph.Text>이름 (선택)</Paragraph.Text>
-					</Paragraph>
-
-					{presets.length > 0 ? (
-						<div style={s.presetGrid}>
-							{presets.map((preset) => {
-								const selected = !customName && name === preset;
+				<StepRow
+					label="세부"
+					value={selectedSub?.label ?? "고르지 않음"}
+					muted={!selectedSub}
+					open={openSection === "sub"}
+					onToggle={() => setOpenSection(openSection === "sub" ? null : "sub")}
+				/>
+				{openSection === "sub" ? (
+					<>
+						<div style={s.subGrid}>
+							{group.items.map((item) => {
+								const selected = subCategoryId === item.id;
 
 								return (
 									<button
-										key={preset}
+										key={item.id}
 										type="button"
 										aria-pressed={selected}
 										style={{
-											...s.presetTile,
+											...s.subTile,
+											...(selected ? s.circled : null),
 											border: selected
-												? `1.5px solid ${colors.primary}`
-												: "1.5px solid transparent",
+												? `2px solid ${categoryColors[item.category]}`
+												: "2px solid transparent",
 											backgroundColor: selected
-												? colors.primarySoft
+												? categorySoftColors[item.category]
 												: colors.surfaceSunken,
 										}}
-										onClick={() => {
-											setName(preset);
-											setCustomName(false);
-										}}
+										onClick={() => handleSubCategory(item.id)}
 									>
 										<Paragraph
 											typography="t7"
@@ -421,67 +469,135 @@ export default function ChargeFormPage() {
 											color={
 												selected ? colors.textPrimary : colors.textSecondary
 											}
-											style={s.presetName}
 										>
-											<Paragraph.Text>{preset}</Paragraph.Text>
+											<Paragraph.Text>{item.label}</Paragraph.Text>
 										</Paragraph>
 									</button>
 								);
 							})}
-
-							<button
-								type="button"
-								aria-pressed={customName}
-								style={{
-									...s.presetTile,
-									border: customName
-										? `1.5px solid ${colors.primary}`
-										: "1.5px solid transparent",
-									backgroundColor: customName
-										? colors.primarySoft
-										: colors.surfaceSunken,
-								}}
-								onClick={() => {
-									setCustomName(true);
-									setName("");
-								}}
-							>
-								<IconPencil size={13} color={colors.textTertiary} />
-								<Paragraph
-									typography="t7"
-									fontWeight={customName ? "bold" : "regular"}
-									color={customName ? colors.textPrimary : colors.textSecondary}
-								>
-									<Paragraph.Text>직접 입력</Paragraph.Text>
-								</Paragraph>
-							</button>
 						</div>
-					) : null}
-
-					{presets.length === 0 || customName ? (
-						<TextField
-							variant="box"
-							labelOption="sustain"
-							label="이름"
-							placeholder={fallbackName}
-							value={name}
-							onChange={(event) => setName(event.target.value)}
-						/>
-					) : null}
-
-					{name.trim().length === 0 ? (
 						<Paragraph
 							typography="t7"
 							color={colors.textTertiary}
-							style={s.hint}
+							style={s.categoryHint}
 						>
-							<Paragraph.Text>
-								{`안 적으면 '${fallbackName}'${josa(fallbackName, "으로", "로")} 저장돼요`}
-							</Paragraph.Text>
+							<Paragraph.Text>{CATEGORY_HINT[category]}</Paragraph.Text>
 						</Paragraph>
-					) : null}
-				</div>
+					</>
+				) : null}
 
+				<div style={s.rowDivider} />
+
+				<StepRow
+					label="이름"
+					value={name.trim() || fallbackName}
+					muted={name.trim().length === 0}
+					open={openSection === "name"}
+					onToggle={() =>
+						setOpenSection(openSection === "name" ? null : "name")
+					}
+				/>
+				{openSection === "name" ? (
+					<>
+						{presets.length > 0 ? (
+							<div style={s.presetGrid}>
+								{presets.map((preset) => {
+									const selected = !customName && name === preset;
+
+									return (
+										<button
+											key={preset}
+											type="button"
+											aria-pressed={selected}
+											style={{
+												...s.presetTile,
+												...(selected ? s.circled : null),
+												border: selected
+													? `2px solid ${colors.accent}`
+													: "2px solid transparent",
+												backgroundColor: selected
+													? colors.accentSoft
+													: colors.surfaceSunken,
+											}}
+											onClick={() => {
+												setName(preset);
+												setCustomName(false);
+												setOpenSection(null);
+											}}
+										>
+											<Paragraph
+												typography="t7"
+												fontWeight={selected ? "bold" : "regular"}
+												color={
+													selected ? colors.textPrimary : colors.textSecondary
+												}
+												style={s.presetName}
+											>
+												<Paragraph.Text>{preset}</Paragraph.Text>
+											</Paragraph>
+										</button>
+									);
+								})}
+
+								<button
+									type="button"
+									aria-pressed={customName}
+									style={{
+										...s.presetTile,
+										...(customName ? s.circled : null),
+										border: customName
+											? `2px solid ${colors.accent}`
+											: "2px solid transparent",
+										backgroundColor: customName
+											? colors.accentSoft
+											: colors.surfaceSunken,
+									}}
+									onClick={() => {
+										setCustomName(true);
+										setName("");
+									}}
+								>
+									<IconPencil size={13} color={colors.textTertiary} />
+									<Paragraph
+										typography="t7"
+										fontWeight={customName ? "bold" : "regular"}
+										color={
+											customName ? colors.textPrimary : colors.textSecondary
+										}
+									>
+										<Paragraph.Text>직접 입력</Paragraph.Text>
+									</Paragraph>
+								</button>
+							</div>
+						) : null}
+
+						{presets.length === 0 || customName ? (
+							<TextField
+								variant="box"
+								labelOption="sustain"
+								label="이름"
+								placeholder={fallbackName}
+								value={name}
+								onChange={(event) => setName(event.target.value)}
+							/>
+						) : null}
+
+						{name.trim().length === 0 ? (
+							<Paragraph
+								typography="t7"
+								color={colors.textTertiary}
+								style={s.hint}
+							>
+								<Paragraph.Text>
+									{`안 적으면 '${fallbackName}'${josa(fallbackName, "으로", "로")} 저장돼요`}
+								</Paragraph.Text>
+							</Paragraph>
+						) : null}
+					</>
+				) : null}
+			</div>
+
+			<div style={s.card}>
 				<div style={s.field}>
 					<TextField
 						variant="box"
@@ -625,16 +741,9 @@ export default function ChargeFormPage() {
 			</div>
 
 			<div style={{ ...s.cta, paddingBottom: spacing.sm + insets.bottom }}>
-				<Button
-					size="large"
-					color="primary"
-					variant="fill"
-					display="block"
-					disabled={!canSave}
-					onClick={handleSave}
-				>
+				<PrimaryButton disabled={!canSave} onClick={handleSave}>
 					저장
-				</Button>
+				</PrimaryButton>
 			</div>
 
 			{editing ? (

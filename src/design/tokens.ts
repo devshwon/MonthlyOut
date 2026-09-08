@@ -56,6 +56,13 @@ export const colors = {
 	/** 브랜드 */
 	primary: "#3182F6",
 	primarySoft: "#E8F1FE",
+	/**
+	 * 액션 색. 칠판에서 가져온 초록이라 이 앱의 색으로 읽힌다.
+	 * 토스 파랑(primary)은 링크·선택 표시처럼 시스템 신호에만 남긴다.
+	 */
+	accent: "#2F4A40",
+	accentPressed: "#264037",
+	accentSoft: "#E9EFEC",
 	/** 금액이 풀리는 등 긍정 신호 */
 	positive: "#12B76A",
 	positiveSoft: "#E4F7EE",
@@ -138,3 +145,31 @@ export const characterColors = {
 	blush: "#FF9E9E",
 	bubble: "#FFFFFF",
 } as const;
+
+/**
+ * 노트. 칠판(홈·연간)이 "누가 적어준 숫자"라면, 관리·등록은 "내가 적는 곳"이라
+ * 괘선 있는 종이로 잡는다.
+ */
+export const paperColors = {
+	/** 종이 면 */
+	surface: "#FFFDF7",
+	/** 가로 괘선 */
+	rule: "#DDE7F1",
+	/** 왼쪽 여백선(빨간 줄) */
+	margin: "#F0C9C9",
+} as const;
+
+/** 괘선 간격. 행 높이를 여기에 맞추면 글씨가 줄 위에 앉은 것처럼 보인다. */
+export const paperRuleHeight = 32;
+
+/** 괘선 + 왼쪽 여백선을 한 번에 그리는 배경. */
+export const paperBackground = [
+	`repeating-linear-gradient(180deg, transparent 0 ${paperRuleHeight - 1}px, ${paperColors.rule} ${paperRuleHeight - 1}px ${paperRuleHeight}px)`,
+	`linear-gradient(90deg, transparent 0 21px, ${paperColors.margin} 21px 22px, transparent 22px)`,
+].join(", ");
+
+/**
+ * 손으로 슥 그린 동그라미 느낌의 테두리 반경.
+ * 네 모서리를 서로 다르게 줘서 컴퍼스로 그린 원처럼 보이지 않게 한다.
+ */
+export const handDrawnRadius = "46% 54% 50% 50% / 55% 45% 55% 45%";

@@ -77,6 +77,8 @@ interface Props {
 	accessory?: React.ReactNode;
 	/** 이번 달에 빠지지 않는 항목이면 흐리게 */
 	dimmed?: boolean;
+	/** 노트(괘선) 위에 놓일 때 — 왼쪽 여백선을 침범하지 않게 들여쓴다 */
+	paper?: boolean;
 }
 
 /** 항목 한 줄. 카테고리 색·아이콘이 화면 전체에서 같은 의미로 반복된다. */
@@ -86,6 +88,7 @@ export function ChargeRow({
 	onClick,
 	accessory,
 	dimmed = false,
+	paper = false,
 }: Props) {
 	const round = installmentRound(charge, yearMonth);
 	const meta = [
@@ -97,7 +100,12 @@ export function ChargeRow({
 	return (
 		<button
 			type="button"
-			style={{ ...s.row, ...(dimmed ? s.ended : null) }}
+			style={{
+				...s.row,
+				// 괘선 두 칸(32px × 2)에 딱 맞춰 글씨가 줄 위에 앉게 한다.
+				...(paper ? { paddingLeft: 30, minHeight: 64 } : null),
+				...(dimmed ? s.ended : null),
+			}}
 			onClick={onClick}
 			disabled={!onClick}
 		>
