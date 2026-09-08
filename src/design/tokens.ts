@@ -98,18 +98,32 @@ export const shadow = {
 /** 카테고리 색. 비율 바·아이콘·배지가 같은 색을 공유해야 한눈에 읽힌다. */
 export const categoryColors = {
 	subscription: "#7C5CFF",
-	installment: "#3182F6",
+	telecom: "#22A6F2",
+	housing: "#F08C3A",
 	insurance: "#12B5A5",
-	loan: "#FF8A3D",
+	loan: "#F2564D",
+	installment: "#3182F6",
+	health: "#EC5F9B",
+	education: "#57A93A",
+	transport: "#5A67D8",
+	pet: "#B87333",
+	saving: "#E0A400",
 	etc: "#98A2B3",
 } as const;
 
 /** 카테고리 아이콘 배경용 옅은 색. */
 export const categorySoftColors = {
 	subscription: "#F0ECFF",
-	installment: "#E8F1FE",
+	telecom: "#E4F4FE",
+	housing: "#FEF0E4",
 	insurance: "#E3F7F5",
-	loan: "#FFF0E5",
+	loan: "#FDEAE9",
+	installment: "#E8F1FE",
+	health: "#FDEBF3",
+	education: "#EDF6E8",
+	transport: "#ECEEFB",
+	pet: "#F7EEE4",
+	saving: "#FDF3DC",
 	etc: "#F0F2F5",
 } as const;
 

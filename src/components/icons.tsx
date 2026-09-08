@@ -172,12 +172,108 @@ function IconDots(props: IconProps) {
 	);
 }
 
+/** 통신 */
+function IconAntenna(props: IconProps) {
+	return (
+		<Svg {...props}>
+			<rect x="7" y="3" width="10" height="18" rx="2.5" />
+			<path d="M10.5 18h3" />
+			<path d="M9.5 6.5h5" />
+		</Svg>
+	);
+}
+
+/** 주거 */
+function IconHouse(props: IconProps) {
+	return (
+		<Svg {...props}>
+			<path d="M4 10.5 12 4l8 6.5" />
+			<path d="M6 10v9.5h12V10" />
+			<path d="M10.5 19.5V13h3v6.5" />
+		</Svg>
+	);
+}
+
+/** 건강 */
+function IconHeart(props: IconProps) {
+	return (
+		<Svg {...props}>
+			<path d="M12 19.5S4.5 15 4.5 9.8A3.8 3.8 0 0 1 12 8a3.8 3.8 0 0 1 7.5 1.8c0 5.2-7.5 9.7-7.5 9.7Z" />
+		</Svg>
+	);
+}
+
+/** 교육 */
+function IconBook(props: IconProps) {
+	return (
+		<Svg {...props}>
+			<path d="M4 5.5A2 2 0 0 1 6 4h5v15.5H6a2 2 0 0 0-2 2V5.5Z" />
+			<path d="M20 5.5A2 2 0 0 0 18 4h-5v15.5h5a2 2 0 0 1 2 2V5.5Z" />
+		</Svg>
+	);
+}
+
+/** 교통 */
+function IconBus(props: IconProps) {
+	return (
+		<Svg {...props}>
+			<rect x="4.5" y="4" width="15" height="13" rx="3" />
+			<path d="M4.5 11h15" />
+			<path d="M8 20v-3M16 20v-3" />
+			<path d="M8 14h.01M16 14h.01" />
+		</Svg>
+	);
+}
+
+/** 반려동물 */
+function IconPaw(props: IconProps) {
+	return (
+		<Svg {...props}>
+			<ellipse cx="8" cy="8.5" rx="1.9" ry="2.4" />
+			<ellipse cx="12" cy="7" rx="1.9" ry="2.4" />
+			<ellipse cx="16" cy="8.5" rx="1.9" ry="2.4" />
+			<path d="M12 12c-2.6 0-4.6 2-4.6 4.1 0 1.6 1.3 2.6 3 2.6.7 0 1.1-.3 1.6-.3s.9.3 1.6.3c1.7 0 3-1 3-2.6C16.6 14 14.6 12 12 12Z" />
+		</Svg>
+	);
+}
+
+/** 저축 — 돼지 저금통 */
+function IconPiggy(props: IconProps) {
+	return (
+		<Svg {...props}>
+			<ellipse cx="11.5" cy="13" rx="7.5" ry="5.5" />
+			<path d="M7.8 8.2 6.2 5.2l3.6 1.3" />
+			<ellipse cx="19.6" cy="12.4" rx="2.2" ry="2" />
+			<path d="M7.5 18.2v1.8M15 18.2v1.8" />
+			<path d="M10.5 8.4h3.4" />
+			<path d="M9.2 11.8h.01" />
+		</Svg>
+	);
+}
+
+/** 연필 — "적는다"는 동작을 나타내는 버튼용 */
+export function IconPencil(props: IconProps) {
+	return (
+		<Svg {...props}>
+			<path d="M15.6 4.4a2.1 2.1 0 0 1 3 3L9.4 16.6l-4 1 1-4 9.2-9.2Z" />
+			<path d="m14.2 5.8 3 3" />
+		</Svg>
+	);
+}
+
 const CATEGORY_ICON: Record<ChargeCategory, (props: IconProps) => JSX.Element> =
 	{
 		subscription: IconPlay,
-		installment: IconCard,
+		telecom: IconAntenna,
+		housing: IconHouse,
 		insurance: IconShield,
 		loan: IconLoan,
+		installment: IconCard,
+		health: IconHeart,
+		education: IconBook,
+		transport: IconBus,
+		pet: IconPaw,
+		saving: IconPiggy,
 		etc: IconDots,
 	};
 

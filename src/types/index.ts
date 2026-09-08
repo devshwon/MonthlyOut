@@ -1,9 +1,16 @@
 /** 고정과금 항목의 분류. 기획서 5장 "항목 등록/수정" 기준. */
 export type ChargeCategory =
 	| "subscription"
-	| "installment"
+	| "telecom"
+	| "housing"
 	| "insurance"
 	| "loan"
+	| "installment"
+	| "health"
+	| "education"
+	| "transport"
+	| "pet"
+	| "saving"
 	| "etc";
 
 /** 출금 층(기획서 4-2): 실제로 돈이 빠지는 수단. */

@@ -1,19 +1,23 @@
-import { Button, Paragraph } from "@toss/tds-mobile";
+import { Paragraph } from "@toss/tds-mobile";
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { CategoryBar } from "@/components/CategoryBar";
 import { ChargeRow } from "@/components/ChargeRow";
 import {
+	CategoryIcon,
 	IconBank,
 	IconCard,
 	IconChevronLeft,
 	IconChevronRight,
+	IconPencil,
 	IconSettings,
 } from "@/components/icons";
 import { MoneyBuddy } from "@/components/MoneyBuddy";
 import {
 	boardColors,
 	boardSurface,
+	categoryColors,
+	categorySoftColors,
 	colors,
 	radius,
 	shadow,
@@ -36,6 +40,13 @@ import {
 	transferCharges,
 } from "@/services/charges";
 import { buildTips, pickNextTip } from "@/services/tips";
+
+/** 빈 화면에서 "이렇게 채워져요"를 보여주는 예시. 저장되는 값이 아니다. */
+const EMPTY_PREVIEW = [
+	{ category: "subscription", name: "넷플릭스", amount: 17000 },
+	{ category: "insurance", name: "실손보험", amount: 45000 },
+	{ category: "installment", name: "자동차 할부", amount: 320000 },
+] as const;
 
 const s = {
 	page: {
@@ -131,12 +142,15 @@ const s = {
 		backgroundColor: "#BFE0D6",
 		opacity: 0.85,
 	} satisfies React.CSSProperties,
-	/** 선반 위에 두 발로 서서 칠판 옆을 지킨다 */
+	/** 선반 위에 두 발로 서서 칠판 옆을 지킨다. 눌러도 말풍선이 바뀐다. */
 	buddyOnTray: {
 		position: "absolute" as const,
 		right: 2,
 		bottom: 13,
-		pointerEvents: "none" as const,
+		padding: 0,
+		border: "none",
+		background: "none",
+		cursor: "pointer",
 	} satisfies React.CSSProperties,
 	chalkCaption: {
 		textAlign: "center" as const,
@@ -288,9 +302,55 @@ const s = {
 		borderRadius: radius.full,
 		backgroundColor: colors.primarySoft,
 	} satisfies React.CSSProperties,
-	emptyTitle: { marginTop: spacing.sm } satisfies React.CSSProperties,
+	emptyTitle: { marginTop: spacing.xxs } satisfies React.CSSProperties,
 	emptyDescription: { marginTop: spacing.xs } satisfies React.CSSProperties,
+	/** "이렇게 채워져요" 미리보기 — 점선 안에 흐린 예시 줄 */
+	previewBox: {
+		marginTop: spacing.lg,
+		padding: `${spacing.sm}px ${spacing.md}px`,
+		border: `1px dashed ${colors.border}`,
+		borderRadius: radius.lg,
+		backgroundColor: colors.background,
+	} satisfies React.CSSProperties,
+	previewRow: {
+		display: "flex",
+		alignItems: "center",
+		gap: spacing.xs,
+		padding: `${spacing.xs}px 0`,
+		opacity: 0.65,
+	} satisfies React.CSSProperties,
+	previewIcon: {
+		display: "flex",
+		alignItems: "center",
+		justifyContent: "center",
+		width: 28,
+		height: 28,
+		borderRadius: radius.sm,
+	} satisfies React.CSSProperties,
+	previewName: { flex: 1 } satisfies React.CSSProperties,
 	emptyCta: { marginTop: spacing.lg } satisfies React.CSSProperties,
+	woodButton: {
+		display: "flex",
+		alignItems: "center",
+		justifyContent: "center",
+		gap: spacing.xs,
+		width: "100%",
+		height: 54,
+		border: `2px solid ${boardColors.woodDeep}`,
+		borderRadius: radius.full,
+		background: `linear-gradient(180deg, ${boardColors.wood} 0%, ${boardColors.woodDeep} 100%)`,
+		boxShadow: shadow.card,
+		cursor: "pointer",
+	} satisfies React.CSSProperties,
+	woodButtonPencil: {
+		display: "flex",
+		alignItems: "center",
+		justifyContent: "center",
+		width: 30,
+		height: 30,
+		borderRadius: radius.full,
+		backgroundColor: "rgba(255,255,255,0.9)",
+	} satisfies React.CSSProperties,
 };
 
 export default function HomePage() {
@@ -325,6 +385,8 @@ export default function HomePage() {
 	});
 	const [tip, setTip] = useState(() => tips[0]);
 	const currentTip = tips.includes(tip) ? tip : tips[0];
+	// 캐릭터와 말풍선 어느 쪽을 눌러도 다음 이야기로 넘어간다.
+	const showNextTip = () => setTip(pickNextTip(tips, currentTip));
 
 	return (
 		<div style={s.page}>
@@ -441,16 +503,21 @@ export default function HomePage() {
 				<div style={s.tray} />
 				<span style={s.trayChalk} />
 				<span style={s.trayChalkShort} />
-				<div style={s.buddyOnTray}>
+				<button
+					type="button"
+					style={s.buddyOnTray}
+					aria-label="다른 이야기 듣기"
+					onClick={showNextTip}
+				>
 					<MoneyBuddy size={72} holdingChalk />
-				</div>
+				</button>
 			</div>
 
 			<button
 				type="button"
 				style={s.buddyRow}
 				aria-label="다른 이야기 듣기"
-				onClick={() => setTip(pickNextTip(tips, currentTip))}
+				onClick={showNextTip}
 			>
 				<div style={s.bubble}>
 					<span style={s.bubbleTail} />
@@ -468,29 +535,63 @@ export default function HomePage() {
 						color={colors.textPrimary}
 						style={s.emptyTitle}
 					>
-						<Paragraph.Text>아직 넣은 항목이 없어요</Paragraph.Text>
+						<Paragraph.Text>칠판이 아직 비어 있어요</Paragraph.Text>
 					</Paragraph>
 					<Paragraph
 						typography="t7"
 						color={colors.textTertiary}
 						style={s.emptyDescription}
 					>
-						<Paragraph.Text>
-							아래 <b>관리</b> 탭에서 넷플릭스, 보험, 할부처럼
-							<br />
-							매달 알아서 빠지는 것부터 넣어보세요.
-						</Paragraph.Text>
+						<Paragraph.Text>하나씩 적어두면 이렇게 채워져요</Paragraph.Text>
 					</Paragraph>
+
+					<div style={s.previewBox}>
+						{EMPTY_PREVIEW.map((item) => (
+							<div key={item.name} style={s.previewRow}>
+								<span
+									style={{
+										...s.previewIcon,
+										backgroundColor: categorySoftColors[item.category],
+									}}
+								>
+									<CategoryIcon
+										category={item.category}
+										size={16}
+										color={categoryColors[item.category]}
+									/>
+								</span>
+								<Paragraph
+									typography="t7"
+									fontWeight="bold"
+									color={colors.textSecondary}
+									style={s.previewName}
+								>
+									<Paragraph.Text>{item.name}</Paragraph.Text>
+								</Paragraph>
+								<Paragraph typography="t7" color={colors.textTertiary}>
+									<Paragraph.Text>{formatKrw(item.amount)}</Paragraph.Text>
+								</Paragraph>
+							</div>
+						))}
+					</div>
+
 					<div style={s.emptyCta}>
-						<Button
-							size="large"
-							color="primary"
-							variant="fill"
-							display="block"
+						<button
+							type="button"
+							style={s.woodButton}
 							onClick={() => navigate("/manage")}
 						>
-							관리로 가기
-						</Button>
+							<span style={s.woodButtonPencil}>
+								<IconPencil size={18} color={boardColors.woodDeep} />
+							</span>
+							<Paragraph
+								typography="t6"
+								fontWeight="bold"
+								color={colors.textOnDark}
+							>
+								<Paragraph.Text>관리에서 첫 항목 적기</Paragraph.Text>
+							</Paragraph>
+						</button>
 					</div>
 				</div>
 			) : (

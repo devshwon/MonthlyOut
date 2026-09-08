@@ -8,17 +8,47 @@ import type {
 
 export const CATEGORY_LABEL: Record<ChargeCategory, string> = {
 	subscription: "구독",
-	installment: "할부",
+	telecom: "통신",
+	housing: "주거",
 	insurance: "보험",
 	loan: "대출",
+	installment: "할부",
+	health: "건강",
+	education: "교육",
+	transport: "교통",
+	pet: "반려동물",
+	saving: "저축",
 	etc: "기타",
+};
+
+/** 폼에서 보여줄 때 쓰는 한 줄 예시. 사용자가 "내 것이 어디 들어가지?"를 덜 고민하게. */
+export const CATEGORY_HINT: Record<ChargeCategory, string> = {
+	subscription: "넷플릭스 · 음악 · 멤버십",
+	telecom: "휴대폰 · 인터넷 · TV",
+	housing: "월세 · 관리비 · 공과금",
+	insurance: "실손 · 종신 · 자동차",
+	loan: "원리금 · 이자",
+	installment: "자동차 · 가전 · 휴대폰",
+	health: "헬스장 · 필라테스 · 약",
+	education: "학원 · 강의 · 학습지",
+	transport: "정기권 · 주차 · 리스",
+	pet: "사료 정기배송 · 펫보험",
+	saving: "적금 · 청약 · 연금",
+	etc: "그 밖에 매달 나가는 것",
 };
 
 export const CATEGORY_ORDER: ChargeCategory[] = [
 	"subscription",
-	"installment",
+	"telecom",
+	"housing",
 	"insurance",
 	"loan",
+	"installment",
+	"health",
+	"education",
+	"transport",
+	"pet",
+	"saving",
 	"etc",
 ];
 

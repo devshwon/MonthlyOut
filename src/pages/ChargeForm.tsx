@@ -9,7 +9,15 @@ import {
 } from "@toss/tds-mobile";
 import { useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { colors, radius, shadow, spacing } from "@/design/tokens";
+import { CategoryIcon } from "@/components/icons";
+import {
+	categoryColors,
+	categorySoftColors,
+	colors,
+	radius,
+	shadow,
+	spacing,
+} from "@/design/tokens";
 import { useSafeAreaInsets } from "@/hooks/useSafeAreaInsets";
 import {
 	addCharge,
@@ -18,6 +26,7 @@ import {
 	updateCharge,
 } from "@/services/chargeStore";
 import {
+	CATEGORY_HINT,
 	CATEGORY_LABEL,
 	CATEGORY_ORDER,
 	currentYearMonth,
@@ -45,6 +54,25 @@ const s = {
 	} satisfies React.CSSProperties,
 	field: { marginBottom: spacing.sm } satisfies React.CSSProperties,
 	label: { marginBottom: spacing.xs } satisfies React.CSSProperties,
+	categoryGrid: {
+		display: "grid",
+		gridTemplateColumns: "repeat(4, 1fr)",
+		gap: spacing.xs,
+	} satisfies React.CSSProperties,
+	categoryTile: {
+		display: "flex",
+		flexDirection: "column" as const,
+		alignItems: "center",
+		justifyContent: "center",
+		gap: spacing.xxs,
+		padding: `${spacing.sm}px 0`,
+		borderRadius: radius.md,
+		cursor: "pointer",
+	} satisfies React.CSSProperties,
+	categoryHint: {
+		marginTop: spacing.sm,
+		textAlign: "center" as const,
+	} satisfies React.CSSProperties,
 	hint: { marginTop: spacing.xs } satisfies React.CSSProperties,
 	switchRow: {
 		display: "flex",
@@ -176,6 +204,57 @@ export default function ChargeFormPage() {
 			</Paragraph>
 
 			<div style={s.card}>
+				<Paragraph typography="t7" color={colors.textSecondary} style={s.label}>
+					<Paragraph.Text>어떤 종류인가요</Paragraph.Text>
+				</Paragraph>
+
+				<div style={s.categoryGrid}>
+					{CATEGORY_ORDER.map((value) => {
+						const selected = category === value;
+
+						return (
+							<button
+								key={value}
+								type="button"
+								aria-pressed={selected}
+								style={{
+									...s.categoryTile,
+									border: selected
+										? `1.5px solid ${categoryColors[value]}`
+										: "1.5px solid transparent",
+									backgroundColor: selected
+										? categorySoftColors[value]
+										: colors.surfaceSunken,
+								}}
+								onClick={() => handleCategory(value)}
+							>
+								<CategoryIcon
+									category={value}
+									size={22}
+									color={selected ? categoryColors[value] : colors.textTertiary}
+								/>
+								<Paragraph
+									typography="t7"
+									fontWeight={selected ? "bold" : "regular"}
+									color={selected ? colors.textPrimary : colors.textSecondary}
+								>
+									<Paragraph.Text>{CATEGORY_LABEL[value]}</Paragraph.Text>
+								</Paragraph>
+							</button>
+						);
+					})}
+				</div>
+
+				<Paragraph
+					typography="t7"
+					color={colors.textTertiary}
+					style={s.categoryHint}
+				>
+					<Paragraph.Text>{CATEGORY_HINT[category]}</Paragraph.Text>
+				</Paragraph>
+			</div>
+
+			<div style={s.card}>
 				<div style={s.field}>
 					<TextField
 						variant="box"
@@ -219,23 +298,6 @@ export default function ChargeFormPage() {
 						setBillingDayText(onlyDigits(event.target.value, 2))
 					}
 				/>
-			</div>
-
-			<div style={s.card}>
-				<Paragraph typography="t7" color={colors.textSecondary} style={s.label}>
-					<Paragraph.Text>분류</Paragraph.Text>
-				</Paragraph>
-				<Chip kind="select" wrap margin="none">
-					{CATEGORY_ORDER.map((value) => (
-						<ChipItem
-							key={value}
-							selected={category === value}
-							onClick={() => handleCategory(value)}
-						>
-							{CATEGORY_LABEL[value]}
-						</ChipItem>
-					))}
-				</Chip>
 			</div>
 
 			<div style={s.card}>

@@ -3,8 +3,9 @@ import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { navSpace } from "@/components/BottomNav";
 import { ChargeRow } from "@/components/ChargeRow";
-import { CategoryIcon, IconChevronRight, IconPlus } from "@/components/icons";
+import { CategoryIcon, IconChevronRight, IconPencil } from "@/components/icons";
 import {
+	boardColors,
 	categoryColors,
 	categorySoftColors,
 	colors,
@@ -66,18 +67,28 @@ const s = {
 		marginTop: spacing.md,
 		pointerEvents: "none" as const,
 	} satisfies React.CSSProperties,
+	/** 분필/연필로 칠판에 적는 느낌의 커스텀 버튼 */
 	fab: {
 		display: "flex",
 		alignItems: "center",
-		gap: spacing.xxs,
-		height: 52,
-		padding: `0 ${spacing.lg}px`,
-		border: "none",
+		gap: spacing.xs,
+		height: 54,
+		padding: `0 ${spacing.lg}px 0 ${spacing.md}px`,
+		border: `2px solid ${boardColors.woodDeep}`,
 		borderRadius: radius.full,
-		backgroundColor: colors.primary,
+		background: `linear-gradient(180deg, ${boardColors.wood} 0%, ${boardColors.woodDeep} 100%)`,
 		boxShadow: shadow.floating,
 		cursor: "pointer",
 		pointerEvents: "auto" as const,
+	} satisfies React.CSSProperties,
+	fabPencil: {
+		display: "flex",
+		alignItems: "center",
+		justifyContent: "center",
+		width: 32,
+		height: 32,
+		borderRadius: radius.full,
+		backgroundColor: "rgba(255,255,255,0.9)",
 	} satisfies React.CSSProperties,
 };
 
@@ -179,13 +190,15 @@ export default function ManagePage() {
 					style={s.fab}
 					onClick={() => navigate("/charge/new")}
 				>
-					<IconPlus size={20} color={colors.textOnDark} />
+					<span style={s.fabPencil}>
+						<IconPencil size={19} color={boardColors.woodDeep} />
+					</span>
 					<Paragraph
 						typography="t6"
 						fontWeight="bold"
 						color={colors.textOnDark}
 					>
-						<Paragraph.Text>항목 추가</Paragraph.Text>
+						<Paragraph.Text>항목 적기</Paragraph.Text>
 					</Paragraph>
 				</button>
 			</div>
