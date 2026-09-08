@@ -103,7 +103,7 @@ export function ChargeRow({
 			style={{
 				...s.row,
 				// 괘선 두 칸(32px × 2)에 딱 맞춰 글씨가 줄 위에 앉게 한다.
-				...(paper ? { paddingLeft: 30, minHeight: 64 } : null),
+				...(paper ? { minHeight: 64 } : null),
 				...(dimmed ? s.ended : null),
 			}}
 			onClick={onClick}

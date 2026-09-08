@@ -7,20 +7,21 @@ import {
 	TextButton,
 	TextField,
 } from "@toss/tds-mobile";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { HandDrawnCircle } from "@/components/HandDrawnCircle";
 import { CategoryIcon, IconChevronRight, IconPencil } from "@/components/icons";
 import { PrimaryButton } from "@/components/PrimaryButton";
 import {
 	categoryColors,
 	categorySoftColors,
 	colors,
-	handDrawnRadius,
 	paperColors,
 	radius,
 	shadow,
 	spacing,
 } from "@/design/tokens";
+import { useCharges } from "@/hooks/useCharges";
 import { useSafeAreaInsets } from "@/hooks/useSafeAreaInsets";
 import {
 	CATEGORY_GROUPS,
@@ -43,6 +44,7 @@ import {
 	josa,
 	METHOD_KIND_LABEL,
 	TERM_DEFAULT_CATEGORIES,
+	usedMethods,
 } from "@/services/charges";
 import type { ChargeCategory, ChargeDraft, PaymentMethodKind } from "@/types";
 
@@ -56,14 +58,12 @@ const s = {
 	/**
 	 * 등록도 "내가 적는 곳"이라 종이로 맞춘다.
 	 * 다만 **괘선은 깔지 않는다** — 입력 요소 높이가 제각각이라 줄과 절대 안 맞는다.
-	 * 종이 색과 왼쪽 여백선만으로 노트 느낌을 낸다.
 	 */
 	card: {
-		padding: `${spacing.xs}px ${spacing.md}px ${spacing.md}px ${spacing.xl}px`,
+		padding: `${spacing.xs}px ${spacing.md}px ${spacing.md}px`,
 		marginBottom: spacing.sm,
 		borderRadius: radius.xl,
 		backgroundColor: paperColors.surface,
-		backgroundImage: `linear-gradient(90deg, transparent 0 21px, ${paperColors.margin} 21px 22px, transparent 22px)`,
 		boxShadow: shadow.card,
 	} satisfies React.CSSProperties,
 	field: { marginBottom: spacing.sm } satisfies React.CSSProperties,
@@ -82,11 +82,6 @@ const s = {
 		padding: `${spacing.sm}px 0`,
 		borderRadius: radius.md,
 		cursor: "pointer",
-	} satisfies React.CSSProperties,
-	/** 고른 것에 슥 그은 동그라미 */
-	circled: {
-		borderRadius: handDrawnRadius,
-		transform: "rotate(-1.2deg)",
 	} satisfies React.CSSProperties,
 	stepRow: {
 		display: "flex",
@@ -115,12 +110,10 @@ const s = {
 	} satisfies React.CSSProperties,
 	/** 고른 값에는 동그라미가 그대로 남는다 — 접히고 나서도 뭘 골랐는지 보이게 */
 	stepValueCircled: {
+		position: "relative" as const,
 		minWidth: 0,
 		padding: `${spacing.xxs}px ${spacing.sm}px`,
 		marginRight: "auto",
-		border: `2px solid ${colors.accent}`,
-		borderRadius: handDrawnRadius,
-		transform: "rotate(-1deg)",
 	} satisfies React.CSSProperties,
 	rowDivider: {
 		height: 1,
@@ -133,7 +126,9 @@ const s = {
 		gap: spacing.xs,
 	} satisfies React.CSSProperties,
 	subTile: {
+		position: "relative" as const,
 		display: "flex",
+		border: "none",
 		alignItems: "center",
 		justifyContent: "center",
 		minHeight: 38,
@@ -148,7 +143,9 @@ const s = {
 		marginBottom: spacing.sm,
 	} satisfies React.CSSProperties,
 	presetTile: {
+		position: "relative" as const,
 		display: "flex",
+		border: "none",
 		alignItems: "center",
 		justifyContent: "center",
 		gap: spacing.xxs,
@@ -222,6 +219,7 @@ function StepRow({
 				<Paragraph.Text>{label}</Paragraph.Text>
 			</Paragraph>
 			<span style={muted ? s.stepValueWrap : s.stepValueCircled}>
+				{muted ? null : <HandDrawnCircle />}
 				<Paragraph
 					typography="t6"
 					fontWeight="bold"
@@ -243,6 +241,8 @@ function StepRow({
 		</button>
 	);
 }
+
+type Step = "group" | "sub" | "name";
 
 function onlyDigits(value: string, maxLength: number): string {
 	return value.replace(/\D/g, "").slice(0, maxLength);
@@ -287,10 +287,29 @@ export default function ChargeFormPage() {
 		const presets = findSubCategory(editing.subCategory)?.presets ?? [];
 		return !presets.includes(editing.name);
 	});
+	// 카드·통장은 보통 한두 개다. 이미 쓰던 걸 기본으로 골라두고, 필요할 때만 추가한다.
+	const charges = useCharges();
+	const methodOptions = useMemo(() => usedMethods(charges), [charges]);
+	const defaultMethod = methodOptions[0];
+
 	const [methodKind, setMethodKind] = useState<PaymentMethodKind>(
-		editing?.method?.kind ?? "card",
+		editing?.method?.kind ?? defaultMethod?.kind ?? "card",
 	);
-	const [methodName, setMethodName] = useState(editing?.method?.name ?? "");
+	const [methodName, setMethodName] = useState(
+		editing ? (editing.method?.name ?? "") : (defaultMethod?.name ?? ""),
+	);
+	const [customMethod, setCustomMethod] = useState(() => {
+		if (!editing) {
+			return methodOptions.length === 0;
+		}
+		const name = editing.method?.name?.trim();
+		if (!name) {
+			return true;
+		}
+		return !methodOptions.some(
+			(option) => option.kind === editing.method?.kind && option.name === name,
+		);
+	});
 	const [hasTerm, setHasTerm] = useState(Boolean(editing?.term));
 	const [totalCountText, setTotalCountText] = useState(
 		editing?.term ? String(editing.term.totalCount) : "",
@@ -299,31 +318,16 @@ export default function ChargeFormPage() {
 		editing?.term?.startMonth ?? thisMonth,
 	);
 	const [confirmingDelete, setConfirmingDelete] = useState(false);
-	// 고르면 접히고 다음 단계가 열린다. 수정할 때는 전부 접힌 채로 시작한다.
-	const [openSection, setOpenSection] = useState<
-		"group" | "sub" | "name" | null
-	>(editing ? null : "group");
-
-	// 바로 접으면 동그라미가 쳐지는 걸 못 본다 — 잠깐 보여준 뒤 넘어간다.
-	const advanceTimer = useRef<number | null>(null);
-	const advanceTo = (section: "group" | "sub" | "name" | null) => {
-		if (advanceTimer.current !== null) {
-			window.clearTimeout(advanceTimer.current);
-		}
-		advanceTimer.current = window.setTimeout(() => {
-			setOpenSection(section);
-			advanceTimer.current = null;
-		}, 420);
-	};
-
-	useEffect(
-		() => () => {
-			if (advanceTimer.current !== null) {
-				window.clearTimeout(advanceTimer.current);
-			}
-		},
-		[],
+	/**
+	 * 열려 있는 단계들. 지연 없이 바로 반영하되, **다음 단계에서 고를 때**
+	 * 이전 단계가 닫힌다 — 고르자마자 접히면 뭘 골랐는지 확인할 틈이 없다.
+	 */
+	const [openSections, setOpenSections] = useState<Step[]>(
+		editing ? [] : ["group"],
 	);
+	const isOpen = (step: Step) => openSections.includes(step);
+	const toggleSection = (step: Step) =>
+		setOpenSections(isOpen(step) ? [] : [step]);
 
 	// 세부를 골랐으면 그쪽 카테고리가, 아니면 대분류의 기본 카테고리가 통계 기준이 된다.
 	const selectedSub = findSubCategory(subCategoryId);
@@ -341,12 +345,24 @@ export default function ChargeFormPage() {
 		!hasTerm || (totalCount > 0 && isValidYearMonth(startMonth));
 	const canSave = amount > 0 && termValid;
 
+	const methodsForKind = methodOptions.filter(
+		(option) => option.kind === methodKind,
+	);
+
+	const handleMethodKind = (kind: PaymentMethodKind) => {
+		setMethodKind(kind);
+		const first = methodOptions.find((option) => option.kind === kind);
+		setMethodName(first?.name ?? "");
+		setCustomMethod(!first);
+	};
+
 	const handleGroup = (next: CategoryGroupDef) => {
 		setGroup(next);
 		setSubCategoryId(undefined);
 		setName("");
 		setCustomName(false);
-		advanceTo("sub");
+		// 종류는 열어둔 채 세부를 연다. 세부를 고를 때 종류가 닫힌다.
+		setOpenSections(["group", "sub"]);
 		// 할부·대출은 기본이 유기한이다 — 사용자가 직접 끄기 전까지 켜준다.
 		if (!editing && TERM_DEFAULT_CATEGORIES.includes(next.category)) {
 			setHasTerm(true);
@@ -358,10 +374,9 @@ export default function ChargeFormPage() {
 		setSubCategoryId(next);
 		setName("");
 		setCustomName(false);
-		// 프리셋이 있는 세부를 골랐으면 이름 고르기로 넘어간다.
-		advanceTo(
-			next && (findSubCategory(next)?.presets?.length ?? 0) > 0 ? "name" : null,
-		);
+		// 세부를 고르면 종류가 닫히고, 프리셋이 있으면 이름 고르기가 열린다.
+		const hasPresets = (findSubCategory(next ?? "")?.presets?.length ?? 0) > 0;
+		setOpenSections(next && hasPresets ? ["sub", "name"] : ["sub"]);
 	};
 
 	const handleSave = () => {
@@ -420,12 +435,10 @@ export default function ChargeFormPage() {
 				<StepRow
 					label="종류"
 					value={group.label}
-					open={openSection === "group"}
-					onToggle={() =>
-						setOpenSection(openSection === "group" ? null : "group")
-					}
+					open={isOpen("group")}
+					onToggle={() => toggleSection("group")}
 				/>
-				{openSection === "group" ? (
+				{isOpen("group") ? (
 					<div style={s.categoryGrid}>
 						{CATEGORY_GROUPS.map((value) => {
 							const selected = group.id === value.id;
@@ -437,7 +450,6 @@ export default function ChargeFormPage() {
 									aria-pressed={selected}
 									style={{
 										...s.categoryTile,
-										...(selected ? s.circled : null),
 										border: selected
 											? `2px solid ${categoryColors[value.category]}`
 											: "2px solid transparent",
@@ -475,10 +487,10 @@ export default function ChargeFormPage() {
 					label="세부"
 					value={selectedSub?.label ?? "고르지 않음"}
 					muted={!selectedSub}
-					open={openSection === "sub"}
-					onToggle={() => setOpenSection(openSection === "sub" ? null : "sub")}
+					open={isOpen("sub")}
+					onToggle={() => toggleSection("sub")}
 				/>
-				{openSection === "sub" ? (
+				{isOpen("sub") ? (
 					<>
 						<div style={s.subGrid}>
 							{group.items.map((item) => {
@@ -491,16 +503,13 @@ export default function ChargeFormPage() {
 										aria-pressed={selected}
 										style={{
 											...s.subTile,
-											...(selected ? s.circled : null),
-											border: selected
-												? `2px solid ${categoryColors[item.category]}`
-												: "2px solid transparent",
 											backgroundColor: selected
 												? categorySoftColors[item.category]
 												: colors.surfaceSunken,
 										}}
 										onClick={() => handleSubCategory(item.id)}
 									>
+										{selected ? <HandDrawnCircle /> : null}
 										<Paragraph
 											typography="t7"
 											fontWeight={selected ? "bold" : "regular"}
@@ -530,12 +539,10 @@ export default function ChargeFormPage() {
 					label="이름"
 					value={name.trim() || fallbackName}
 					muted={name.trim().length === 0}
-					open={openSection === "name"}
-					onToggle={() =>
-						setOpenSection(openSection === "name" ? null : "name")
-					}
+					open={isOpen("name")}
+					onToggle={() => toggleSection("name")}
 				/>
-				{openSection === "name" ? (
+				{isOpen("name") ? (
 					<>
 						{presets.length > 0 ? (
 							<div style={s.presetGrid}>
@@ -549,10 +556,6 @@ export default function ChargeFormPage() {
 											aria-pressed={selected}
 											style={{
 												...s.presetTile,
-												...(selected ? s.circled : null),
-												border: selected
-													? `2px solid ${colors.accent}`
-													: "2px solid transparent",
 												backgroundColor: selected
 													? colors.accentSoft
 													: colors.surfaceSunken,
@@ -560,9 +563,11 @@ export default function ChargeFormPage() {
 											onClick={() => {
 												setName(preset);
 												setCustomName(false);
-												advanceTo(null);
+												// 이름을 정하면 세부가 닫힌다.
+												setOpenSections(["name"]);
 											}}
 										>
+											{selected ? <HandDrawnCircle /> : null}
 											<Paragraph
 												typography="t7"
 												fontWeight={selected ? "bold" : "regular"}
@@ -582,10 +587,6 @@ export default function ChargeFormPage() {
 									aria-pressed={customName}
 									style={{
 										...s.presetTile,
-										...(customName ? s.circled : null),
-										border: customName
-											? `2px solid ${colors.accent}`
-											: "2px solid transparent",
 										backgroundColor: customName
 											? colors.accentSoft
 											: colors.surfaceSunken,
@@ -595,6 +596,7 @@ export default function ChargeFormPage() {
 										setName("");
 									}}
 								>
+									{customName ? <HandDrawnCircle /> : null}
 									<IconPencil size={13} color={colors.textTertiary} />
 									<Paragraph
 										typography="t7"
@@ -679,24 +681,88 @@ export default function ChargeFormPage() {
 						<ChipItem
 							key={kind}
 							selected={methodKind === kind}
-							onClick={() => setMethodKind(kind)}
+							onClick={() => handleMethodKind(kind)}
 						>
 							{METHOD_KIND_LABEL[kind]}
 						</ChipItem>
 					))}
 				</Chip>
-				<div style={{ marginTop: spacing.sm }}>
-					<TextField
-						variant="box"
-						labelOption="sustain"
-						label={methodKind === "card" ? "카드 이름" : "통장 이름"}
-						placeholder={
-							methodKind === "card" ? "예: 신한카드" : "예: 국민은행 통장"
-						}
-						value={methodName}
-						onChange={(event) => setMethodName(event.target.value)}
-					/>
-				</div>
+
+				{methodsForKind.length > 0 ? (
+					<div style={{ ...s.presetGrid, marginTop: spacing.sm }}>
+						{methodsForKind.map((option) => {
+							const selected = !customMethod && methodName === option.name;
+
+							return (
+								<button
+									key={option.name}
+									type="button"
+									aria-pressed={selected}
+									style={{
+										...s.presetTile,
+										backgroundColor: selected
+											? colors.accentSoft
+											: colors.surfaceSunken,
+									}}
+									onClick={() => {
+										setMethodName(option.name);
+										setCustomMethod(false);
+									}}
+								>
+									{selected ? <HandDrawnCircle /> : null}
+									<Paragraph
+										typography="t7"
+										fontWeight={selected ? "bold" : "regular"}
+										color={selected ? colors.textPrimary : colors.textSecondary}
+										style={s.presetName}
+									>
+										<Paragraph.Text>{option.name}</Paragraph.Text>
+									</Paragraph>
+								</button>
+							);
+						})}
+
+						<button
+							type="button"
+							aria-pressed={customMethod}
+							style={{
+								...s.presetTile,
+								backgroundColor: customMethod
+									? colors.accentSoft
+									: colors.surfaceSunken,
+							}}
+							onClick={() => {
+								setCustomMethod(true);
+								setMethodName("");
+							}}
+						>
+							{customMethod ? <HandDrawnCircle /> : null}
+							<IconPencil size={13} color={colors.textTertiary} />
+							<Paragraph
+								typography="t7"
+								fontWeight={customMethod ? "bold" : "regular"}
+								color={customMethod ? colors.textPrimary : colors.textSecondary}
+							>
+								<Paragraph.Text>새로 적기</Paragraph.Text>
+							</Paragraph>
+						</button>
+					</div>
+				) : null}
+
+				{methodsForKind.length === 0 || customMethod ? (
+					<div style={{ marginTop: spacing.sm }}>
+						<TextField
+							variant="box"
+							labelOption="sustain"
+							label={methodKind === "card" ? "카드 이름" : "통장 이름"}
+							placeholder={
+								methodKind === "card" ? "예: 신한카드" : "예: 국민은행 통장"
+							}
+							value={methodName}
+							onChange={(event) => setMethodName(event.target.value)}
+						/>
+					</div>
+				) : null}
 			</div>
 
 			<div style={s.card}>

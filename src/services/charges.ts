@@ -1,6 +1,7 @@
 import type {
 	ChargeCategory,
 	FixedCharge,
+	PaymentMethod,
 	PaymentMethodKind,
 	WithdrawalGroup,
 	YearMonth,
@@ -470,4 +471,31 @@ export function josa(
 		return withoutBatchim;
 	}
 	return (code - 0xac00) % 28 !== 0 ? withBatchim : withoutBatchim;
+}
+
+/**
+ * 이미 등록한 항목들이 쓰는 결제수단 목록. 많이 쓴 순서.
+ * 카드·통장은 보통 한두 개라, 다음 등록 때 다시 타이핑하지 않게 하려고 뽑는다.
+ */
+export function usedMethods(charges: FixedCharge[]): PaymentMethod[] {
+	const counts = new Map<string, { method: PaymentMethod; count: number }>();
+
+	for (const charge of charges) {
+		const name = charge.method?.name?.trim();
+		if (!charge.method || !name) {
+			continue;
+		}
+		const key = `${charge.method.kind}:${name}`;
+		const prev = counts.get(key);
+		counts.set(key, {
+			method: { kind: charge.method.kind, name },
+			count: (prev?.count ?? 0) + 1,
+		});
+	}
+
+	return [...counts.values()]
+		.sort(
+			(a, b) => b.count - a.count || a.method.name.localeCompare(b.method.name),
+		)
+		.map((entry) => entry.method);
 }

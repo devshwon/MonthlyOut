@@ -154,19 +154,20 @@ export const paperColors = {
 	/** 종이 면 */
 	surface: "#FFFDF7",
 	/** 가로 괘선 */
-	rule: "#DDE7F1",
-	/** 왼쪽 여백선(빨간 줄) */
-	margin: "#F0C9C9",
+	rule: "#E2EAF2",
+	/** 채점하듯 긋는 빨간펜 */
+	redPen: "#E5484D",
 } as const;
 
 /** 괘선 간격. 행 높이를 여기에 맞추면 글씨가 줄 위에 앉은 것처럼 보인다. */
 export const paperRuleHeight = 32;
 
-/** 괘선 + 왼쪽 여백선을 한 번에 그리는 배경. */
-export const paperBackground = [
-	`repeating-linear-gradient(180deg, transparent 0 ${paperRuleHeight - 1}px, ${paperColors.rule} ${paperRuleHeight - 1}px ${paperRuleHeight}px)`,
-	`linear-gradient(90deg, transparent 0 21px, ${paperColors.margin} 21px 22px, transparent 22px)`,
-].join(", ");
+/**
+ * 가로 괘선만 그린다.
+ * 왼쪽 빨간 여백선은 뺐다 — 목록 왼쪽이 아이콘으로 이미 정렬돼 있어서 선이 하나 더 있으면
+ * 애매하게 겹쳐 보인다.
+ */
+export const paperBackground = `repeating-linear-gradient(180deg, transparent 0 ${paperRuleHeight - 1}px, ${paperColors.rule} ${paperRuleHeight - 1}px ${paperRuleHeight}px)`;
 
 /**
  * 손으로 슥 그린 동그라미 느낌의 테두리 반경.
