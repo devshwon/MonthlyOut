@@ -1,6 +1,4 @@
 import {
-	Chip,
-	ChipItem,
 	Paragraph,
 	Switch,
 	TextArea,
@@ -10,7 +8,13 @@ import {
 import { useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { HandDrawnCircle } from "@/components/HandDrawnCircle";
-import { CategoryIcon, IconChevronRight, IconPencil } from "@/components/icons";
+import {
+	CategoryIcon,
+	IconBank,
+	IconCard,
+	IconChevronRight,
+	IconPencil,
+} from "@/components/icons";
 import { PrimaryButton } from "@/components/PrimaryButton";
 import {
 	categoryColors,
@@ -71,6 +75,12 @@ const s = {
 	categoryGrid: {
 		display: "grid",
 		gridTemplateColumns: "repeat(4, 1fr)",
+		gap: spacing.xs,
+	} satisfies React.CSSProperties,
+	/** 카드/통장도 종류와 같은 네모 타일로 — 칩만 혼자 다른 모양이면 겉돈다 */
+	methodGrid: {
+		display: "grid",
+		gridTemplateColumns: "repeat(2, 1fr)",
 		gap: spacing.xs,
 	} satisfies React.CSSProperties,
 	categoryTile: {
@@ -676,17 +686,40 @@ export default function ChargeFormPage() {
 				<Paragraph typography="t7" color={colors.textSecondary} style={s.label}>
 					<Paragraph.Text>어디서 빠지나요</Paragraph.Text>
 				</Paragraph>
-				<Chip kind="select" margin="none">
-					{(["card", "account"] as PaymentMethodKind[]).map((kind) => (
-						<ChipItem
-							key={kind}
-							selected={methodKind === kind}
-							onClick={() => handleMethodKind(kind)}
-						>
-							{METHOD_KIND_LABEL[kind]}
-						</ChipItem>
-					))}
-				</Chip>
+				<div style={s.methodGrid}>
+					{(["card", "account"] as PaymentMethodKind[]).map((kind) => {
+						const selected = methodKind === kind;
+						const tone = kind === "card" ? colors.primary : colors.positive;
+						const toneSoft =
+							kind === "card" ? colors.primarySoft : colors.positiveSoft;
+						const Icon = kind === "card" ? IconCard : IconBank;
+
+						return (
+							<button
+								key={kind}
+								type="button"
+								aria-pressed={selected}
+								style={{
+									...s.categoryTile,
+									border: selected
+										? `2px solid ${tone}`
+										: "2px solid transparent",
+									backgroundColor: selected ? toneSoft : colors.surfaceSunken,
+								}}
+								onClick={() => handleMethodKind(kind)}
+							>
+								<Icon size={22} color={selected ? tone : colors.textTertiary} />
+								<Paragraph
+									typography="t7"
+									fontWeight={selected ? "bold" : "regular"}
+									color={selected ? colors.textPrimary : colors.textSecondary}
+								>
+									<Paragraph.Text>{METHOD_KIND_LABEL[kind]}</Paragraph.Text>
+								</Paragraph>
+							</button>
+						);
+					})}
+				</div>
 
 				{methodsForKind.length > 0 ? (
 					<div style={{ ...s.presetGrid, marginTop: spacing.sm }}>

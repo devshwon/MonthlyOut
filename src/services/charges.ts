@@ -478,7 +478,10 @@ export function josa(
  * 카드·통장은 보통 한두 개라, 다음 등록 때 다시 타이핑하지 않게 하려고 뽑는다.
  */
 export function usedMethods(charges: FixedCharge[]): PaymentMethod[] {
-	const counts = new Map<string, { method: PaymentMethod; count: number }>();
+	const counts = new Map<
+		string,
+		{ method: PaymentMethod; count: number; lastUsed: number }
+	>();
 
 	for (const charge of charges) {
 		const name = charge.method?.name?.trim();
@@ -490,12 +493,12 @@ export function usedMethods(charges: FixedCharge[]): PaymentMethod[] {
 		counts.set(key, {
 			method: { kind: charge.method.kind, name },
 			count: (prev?.count ?? 0) + 1,
+			lastUsed: Math.max(prev?.lastUsed ?? 0, charge.updatedAt),
 		});
 	}
 
+	// 많이 쓴 것 먼저, 같으면 최근에 쓴 것 먼저.
 	return [...counts.values()]
-		.sort(
-			(a, b) => b.count - a.count || a.method.name.localeCompare(b.method.name),
-		)
+		.sort((a, b) => b.count - a.count || b.lastUsed - a.lastUsed)
 		.map((entry) => entry.method);
 }
