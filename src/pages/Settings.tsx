@@ -1,5 +1,6 @@
-import { Button, Paragraph } from "@toss/tds-mobile";
+import { Paragraph } from "@toss/tds-mobile";
 import { useMemo, useState } from "react";
+import { MoneyBuddy } from "@/components/MoneyBuddy";
 import { colors, radius, shadow, spacing } from "@/design/tokens";
 import { useCharges } from "@/hooks/useCharges";
 import { clearCharges } from "@/services/chargeStore";
@@ -34,6 +35,24 @@ const s = {
 	} satisfies React.CSSProperties,
 	hint: { marginTop: spacing.xs } satisfies React.CSSProperties,
 	action: { marginTop: spacing.md } satisfies React.CSSProperties,
+	/** 되돌릴 수 없는 동작이라 중립색 대신 위험색으로 */
+	dangerButton: {
+		display: "flex",
+		alignItems: "center",
+		justifyContent: "center",
+		width: "100%",
+		height: 48,
+		border: "none",
+		borderRadius: radius.full,
+	} satisfies React.CSSProperties,
+	footer: {
+		display: "flex",
+		flexDirection: "column" as const,
+		alignItems: "center",
+		gap: spacing.xs,
+		padding: `${spacing.xxl}px 0 ${spacing.md}px`,
+	} satisfies React.CSSProperties,
+	footerText: { textAlign: "center" as const } satisfies React.CSSProperties,
 };
 
 export default function SettingsPage() {
@@ -97,9 +116,30 @@ export default function SettingsPage() {
 			</div>
 
 			<div style={s.card}>
-				<Paragraph typography="t6" fontWeight="bold" color={colors.textPrimary}>
-					<Paragraph.Text>데이터는 이 기기에만 있어요</Paragraph.Text>
-				</Paragraph>
+				<div style={s.row}>
+					<Paragraph typography="t6" color={colors.textSecondary}>
+						<Paragraph.Text>저장 위치</Paragraph.Text>
+					</Paragraph>
+					<Paragraph
+						typography="t6"
+						fontWeight="bold"
+						color={colors.textPrimary}
+					>
+						<Paragraph.Text>이 기기</Paragraph.Text>
+					</Paragraph>
+				</div>
+				<div style={s.row}>
+					<Paragraph typography="t6" color={colors.textSecondary}>
+						<Paragraph.Text>버전</Paragraph.Text>
+					</Paragraph>
+					<Paragraph
+						typography="t6"
+						fontWeight="bold"
+						color={colors.textPrimary}
+					>
+						<Paragraph.Text>{__APP_VERSION__}</Paragraph.Text>
+					</Paragraph>
+				</div>
 				<Paragraph typography="t7" color={colors.textTertiary} style={s.hint}>
 					<Paragraph.Text>
 						서버에 보내지 않아요. 앱을 지우면 등록한 항목도 함께 사라져요.
@@ -117,19 +157,40 @@ export default function SettingsPage() {
 					</Paragraph.Text>
 				</Paragraph>
 				<div style={s.action}>
-					<Button
-						size="medium"
-						color="dark"
-						variant="weak"
-						display="block"
+					<button
+						type="button"
 						disabled={charges.length === 0}
+						style={{
+							...s.dangerButton,
+							backgroundColor:
+								charges.length === 0 ? colors.surfaceSunken : "#FDECEC",
+							cursor: charges.length === 0 ? "default" : "pointer",
+						}}
 						onClick={handleClear}
 					>
-						{confirmingClear
-							? "한 번 더 누르면 모두 삭제돼요"
-							: "모든 항목 삭제"}
-					</Button>
+						<Paragraph
+							typography="t6"
+							fontWeight="bold"
+							color={charges.length === 0 ? colors.textTertiary : colors.danger}
+						>
+							<Paragraph.Text>
+								{confirmingClear
+									? "한 번 더 누르면 모두 삭제돼요"
+									: "모든 항목 삭제"}
+							</Paragraph.Text>
+						</Paragraph>
+					</button>
 				</div>
+			</div>
+			<div style={s.footer}>
+				<MoneyBuddy size={54} />
+				<Paragraph
+					typography="t7"
+					color={colors.textTertiary}
+					style={s.footerText}
+				>
+					<Paragraph.Text>매달 나가는 돈, 여기 다 적어두면 돼요</Paragraph.Text>
+				</Paragraph>
 			</div>
 		</div>
 	);
