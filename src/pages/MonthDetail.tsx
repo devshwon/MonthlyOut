@@ -1,5 +1,5 @@
 import { Paragraph } from "@toss/tds-mobile";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { ChargeRow } from "@/components/ChargeRow";
 import {
@@ -14,6 +14,8 @@ import {
 	categoryColors,
 	categorySoftColors,
 	colors,
+	paperBackground,
+	paperColors,
 	radius,
 	shadow,
 	spacing,
@@ -85,6 +87,23 @@ const s = {
 		alignItems: "center",
 		gap: spacing.xs,
 	} satisfies React.CSSProperties,
+	/** 카테고리마다 카드를 쪼개면 같은 모양이 일곱 번 반복돼 스크롤만 길어진다 */
+	groupRows: {
+		backgroundColor: paperColors.surface,
+		backgroundImage: paperBackground,
+	} satisfies React.CSSProperties,
+	todayRow: {
+		display: "flex",
+		justifyContent: "center",
+		marginBottom: spacing.xs,
+	} satisfies React.CSSProperties,
+	todayButton: {
+		padding: `${spacing.xxs}px ${spacing.sm}px`,
+		border: "none",
+		borderRadius: radius.full,
+		backgroundColor: colors.accentSoft,
+		cursor: "pointer",
+	} satisfies React.CSSProperties,
 	card: {
 		marginBottom: spacing.sm,
 		borderRadius: radius.xl,
@@ -97,6 +116,8 @@ const s = {
 		alignItems: "center",
 		gap: spacing.xs,
 		padding: `${spacing.sm}px ${spacing.md}px`,
+		// 괘선 위에 흰 띠로 덮어 줄과 겹치지 않게 한다.
+		backgroundColor: colors.surface,
 		borderBottom: `1px solid ${colors.border}`,
 	} satisfies React.CSSProperties,
 	headLabel: { flex: 1 } satisfies React.CSSProperties,
@@ -132,6 +153,15 @@ const s = {
 		height: 26,
 		borderRadius: radius.full,
 	} satisfies React.CSSProperties,
+	expandRow: {
+		display: "flex",
+		justifyContent: "center",
+		width: "100%",
+		padding: `${spacing.xs}px 0 ${spacing.sm}px`,
+		border: "none",
+		background: "none",
+		cursor: "pointer",
+	} satisfies React.CSSProperties,
 	empty: {
 		padding: `${spacing.xxl}px ${spacing.md}px`,
 		textAlign: "center" as const,
@@ -154,6 +184,10 @@ export default function MonthDetailPage() {
 	const confirmedCount = transfers.filter((charge) =>
 		confirmed.has(charge.id),
 	).length;
+	// 다 확인한 달은 목록을 접어둔다 — 할 일이 남았을 때만 펼쳐 보이면 된다.
+	const allConfirmed =
+		transfers.length > 0 && confirmedCount === transfers.length;
+	const [showConfirmedList, setShowConfirmedList] = useState(false);
 	const groups = groupByCategory(active);
 
 	return (
@@ -189,6 +223,20 @@ export default function MonthDetailPage() {
 					</button>
 				</div>
 			</div>
+
+			{ym !== fallback ? (
+				<div style={s.todayRow}>
+					<button
+						type="button"
+						style={s.todayButton}
+						onClick={() => navigate(`/month/${fallback}`, { replace: true })}
+					>
+						<Paragraph typography="t7" fontWeight="bold" color={colors.accent}>
+							<Paragraph.Text>이번 달로</Paragraph.Text>
+						</Paragraph>
+					</button>
+				</div>
+			) : null}
 
 			<div style={s.summary}>
 				<Paragraph typography="t7" color={colors.textTertiary}>
@@ -269,62 +317,80 @@ export default function MonthDetailPage() {
 					<div style={s.hint}>
 						<Paragraph typography="t7" color={colors.textTertiary}>
 							<Paragraph.Text>
-								빠져나간 걸 확인했으면 체크해 두세요. 잔고가 모자라 못 빠진 달을
-								찾기 쉬워져요.
+								{allConfirmed
+									? "이 달 이체는 모두 확인했어요."
+									: "빠져나간 걸 확인했으면 체크해 두세요. 잔고가 모자라 못 빠진 달을 찾기 쉬워져요."}
 							</Paragraph.Text>
 						</Paragraph>
 					</div>
 
-					{transfers.map((charge) => {
-						const done = confirmed.has(charge.id);
+					{(allConfirmed && !showConfirmedList ? [] : transfers).map(
+						(charge) => {
+							const done = confirmed.has(charge.id);
 
-						return (
-							<div key={charge.id} style={s.transferRow}>
-								<div style={s.day}>
-									<Paragraph
-										typography="t6"
-										fontWeight="bold"
-										color={done ? colors.textTertiary : colors.textSecondary}
+							return (
+								<div key={charge.id} style={s.transferRow}>
+									<div style={s.day}>
+										<Paragraph
+											typography="t6"
+											fontWeight="bold"
+											color={done ? colors.textTertiary : colors.textSecondary}
+										>
+											<Paragraph.Text>
+												{formatBillingDay(charge.billingDay)}
+											</Paragraph.Text>
+										</Paragraph>
+									</div>
+
+									<div style={s.transferBody}>
+										<Paragraph
+											typography="t6"
+											fontWeight="bold"
+											color={done ? colors.textTertiary : colors.textPrimary}
+										>
+											<Paragraph.Text>{charge.name}</Paragraph.Text>
+										</Paragraph>
+										<Paragraph typography="t7" color={colors.textTertiary}>
+											<Paragraph.Text>
+												{`${formatKrw(charge.amount)}${charge.method?.name ? ` · ${charge.method.name}` : ""}`}
+											</Paragraph.Text>
+										</Paragraph>
+									</div>
+
+									<button
+										type="button"
+										aria-label={done ? "이체 확인 취소" : "이체 확인"}
+										aria-pressed={done}
+										style={{
+											...s.checkButton,
+											border: done ? "none" : `1.5px solid ${colors.border}`,
+											backgroundColor: done ? colors.positive : colors.surface,
+										}}
+										onClick={() => toggleConfirmed(ym, charge.id)}
 									>
-										<Paragraph.Text>
-											{formatBillingDay(charge.billingDay)}
-										</Paragraph.Text>
-									</Paragraph>
+										{done ? (
+											<IconCheck size={16} color={colors.textOnDark} />
+										) : null}
+									</button>
 								</div>
-
-								<div style={s.transferBody}>
-									<Paragraph
-										typography="t6"
-										fontWeight="bold"
-										color={done ? colors.textTertiary : colors.textPrimary}
-									>
-										<Paragraph.Text>{charge.name}</Paragraph.Text>
-									</Paragraph>
-									<Paragraph typography="t7" color={colors.textTertiary}>
-										<Paragraph.Text>
-											{`${formatKrw(charge.amount)}${charge.method?.name ? ` · ${charge.method.name}` : ""}`}
-										</Paragraph.Text>
-									</Paragraph>
-								</div>
-
-								<button
-									type="button"
-									aria-label={done ? "이체 확인 취소" : "이체 확인"}
-									aria-pressed={done}
-									style={{
-										...s.checkButton,
-										border: done ? "none" : `1.5px solid ${colors.border}`,
-										backgroundColor: done ? colors.positive : colors.surface,
-									}}
-									onClick={() => toggleConfirmed(ym, charge.id)}
-								>
-									{done ? (
-										<IconCheck size={16} color={colors.textOnDark} />
-									) : null}
-								</button>
-							</div>
-						);
-					})}
+							);
+						},
+					)}
+					{allConfirmed ? (
+						<button
+							type="button"
+							style={s.expandRow}
+							onClick={() => setShowConfirmedList((open) => !open)}
+						>
+							<Paragraph typography="t7" color={colors.textTertiary}>
+								<Paragraph.Text>
+									{showConfirmedList
+										? "접기"
+										: `확인한 ${transfers.length}건 보기`}
+								</Paragraph.Text>
+							</Paragraph>
+						</button>
+					) : null}
 				</div>
 			) : null}
 
@@ -339,50 +405,62 @@ export default function MonthDetailPage() {
 					</Paragraph>
 				</div>
 			) : (
-				groups.map((group) => (
-					<div key={group.category} style={s.card}>
-						<div style={s.cardHead}>
-							<span
+				<div style={s.card}>
+					{groups.map((group, index) => (
+						<div key={group.category}>
+							<div
 								style={{
-									...s.sectionDot,
-									backgroundColor: categorySoftColors[group.category],
+									...s.cardHead,
+									...(index > 0
+										? { borderTop: `1px solid ${colors.border}` }
+										: null),
 								}}
 							>
-								<CategoryIcon
-									category={group.category}
-									size={16}
-									color={categoryColors[group.category]}
-								/>
-							</span>
-							<Paragraph
-								typography="t6"
-								fontWeight="bold"
-								color={colors.textPrimary}
-								style={s.headLabel}
-							>
-								<Paragraph.Text>
-									{CATEGORY_LABEL[group.category]}
-								</Paragraph.Text>
-							</Paragraph>
-							<Paragraph
-								typography="t7"
-								fontWeight="bold"
-								color={colors.textSecondary}
-							>
-								<Paragraph.Text>{formatKrw(group.amount)}</Paragraph.Text>
-							</Paragraph>
-						</div>
+								<span
+									style={{
+										...s.sectionDot,
+										backgroundColor: categorySoftColors[group.category],
+									}}
+								>
+									<CategoryIcon
+										category={group.category}
+										size={16}
+										color={categoryColors[group.category]}
+									/>
+								</span>
+								<Paragraph
+									typography="t6"
+									fontWeight="bold"
+									color={colors.textPrimary}
+									style={s.headLabel}
+								>
+									<Paragraph.Text>
+										{CATEGORY_LABEL[group.category]}
+									</Paragraph.Text>
+								</Paragraph>
+								<Paragraph
+									typography="t7"
+									fontWeight="bold"
+									color={colors.textSecondary}
+								>
+									<Paragraph.Text>{formatKrw(group.amount)}</Paragraph.Text>
+								</Paragraph>
+							</div>
 
-						{group.charges.map((charge) => (
-							<ChargeRow
-								key={charge.id}
-								charge={charge}
-								yearMonth={ym}
-								onClick={() => navigate(`/charge/${charge.id}`)}
-							/>
-						))}
-					</div>
-				))
+							<div style={s.groupRows}>
+								{group.charges.map((charge) => (
+									<ChargeRow
+										key={charge.id}
+										charge={charge}
+										yearMonth={ym}
+										paper
+										onClick={() => navigate(`/charge/${charge.id}`)}
+									/>
+								))}
+							</div>
+						</div>
+					))}
+				</div>
 			)}
 		</div>
 	);
