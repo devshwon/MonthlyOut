@@ -112,10 +112,11 @@ const s = {
 		boxShadow: `inset 0 0 24px rgba(0,0,0,0.35), ${shadow.card}`,
 	} satisfies React.CSSProperties,
 	/** 칠판 아래 분필 선반 */
+	/** 칠판과 같은 폭으로 — 좁으면 단차가 생겨 어긋나 보인다 */
 	tray: {
 		position: "absolute" as const,
-		left: spacing.sm,
-		right: spacing.sm,
+		left: 0,
+		right: 0,
 		bottom: 6,
 		height: 12,
 		borderRadius: `0 0 ${radius.sm}px ${radius.sm}px`,
@@ -145,8 +146,9 @@ const s = {
 	/** 선반 위에 두 발로 서서 칠판 옆을 지킨다. 눌러도 말풍선이 바뀐다. */
 	buddyOnTray: {
 		position: "absolute" as const,
-		right: 2,
-		bottom: 13,
+		// 칠판 밖으로 삐져나가면 잘려 보인다 — 선반 위 안쪽에 세운다.
+		right: spacing.xl,
+		bottom: 14,
 		padding: 0,
 		border: "none",
 		background: "none",
@@ -487,7 +489,7 @@ export default function HomePage() {
 					aria-label="다른 이야기 듣기"
 					onClick={showNextTip}
 				>
-					<MoneyBuddy size={72} holdingChalk />
+					<MoneyBuddy size={66} holdingChalk />
 				</button>
 			</div>
 

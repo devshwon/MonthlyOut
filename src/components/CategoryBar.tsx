@@ -50,19 +50,29 @@ export function CategoryBar({ slices, legendLimit = 3 }: Props) {
 	const shown = slices.slice(0, legendLimit);
 	const rest = slices.slice(legendLimit);
 	const restAmount = rest.reduce((sum, slice) => sum + slice.amount, 0);
+	const restRatio = rest.reduce((sum, slice) => sum + slice.ratio, 0);
 
 	return (
 		<div>
+			{/* 바도 레전드와 같은 묶음으로 그린다 — 조각이 잘게 쪼개지면 알록달록해서 안 읽힌다 */}
 			<div style={s.bar}>
-				{slices.map((slice) => (
+				{shown.map((slice) => (
 					<div
 						key={slice.category}
 						style={{
-							width: `${Math.max(slice.ratio * 100, 1.5)}%`,
+							width: `${Math.max(slice.ratio * 100, 2)}%`,
 							backgroundColor: categoryColors[slice.category],
 						}}
 					/>
 				))}
+				{rest.length > 0 ? (
+					<div
+						style={{
+							width: `${Math.max(restRatio * 100, 2)}%`,
+							backgroundColor: colors.textTertiary,
+						}}
+					/>
+				) : null}
 			</div>
 
 			<div style={s.legend}>

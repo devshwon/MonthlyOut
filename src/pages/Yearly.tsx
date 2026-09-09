@@ -76,6 +76,8 @@ const s = {
 		gap: spacing.xxs,
 		height: CHART_HEIGHT,
 		marginTop: spacing.md,
+		// 분필로 그은 바닥선 — 막대가 허공에 뜨지 않게 기준을 준다.
+		borderBottom: `1px solid ${boardColors.chalkDim}`,
 	} satisfies React.CSSProperties,
 	barButton: {
 		display: "flex",
@@ -104,8 +106,9 @@ const s = {
 	cardTitle: { marginBottom: spacing.sm } satisfies React.CSSProperties,
 	insight: {
 		display: "flex",
-		justifyContent: "center",
-		gap: spacing.xxs,
+		flexDirection: "column" as const,
+		alignItems: "center",
+		gap: 2,
 		marginTop: spacing.md,
 		padding: `${spacing.xs}px ${spacing.sm}px`,
 		borderRadius: radius.md,
@@ -130,7 +133,13 @@ export default function YearlyPage() {
 		(max, month) => (month.total > max.total ? month : max),
 		months[0],
 	);
+	const low = months.reduce(
+		(min, month) => (month.total < min.total ? month : min),
+		months[0],
+	);
 	const maxTotal = peak?.total ?? 0;
+	// 열두 달이 다 같으면 "가장 많은 달"은 알려줄 게 없는 정보다.
+	const hasSpread = maxTotal > 0 && peak.total !== low.total;
 
 	return (
 		<div style={s.page}>
@@ -212,7 +221,7 @@ export default function YearlyPage() {
 								<div
 									style={{
 										height: `${height}%`,
-										borderRadius: radius.sm,
+										borderRadius: `${radius.sm}px ${radius.sm}px 0 0`,
 										backgroundColor:
 											month.total === 0
 												? boardColors.chalkFaint
@@ -250,11 +259,16 @@ export default function YearlyPage() {
 					<Paragraph.Text>월을 누르면 그 달 상세를 볼 수 있어요</Paragraph.Text>
 				</Paragraph>
 
-				{maxTotal > 0 ? (
+				{hasSpread ? (
 					<div style={s.insight}>
 						<Paragraph typography="t7" color={boardColors.chalk}>
 							<Paragraph.Text>
-								{`${peak.month}월이 가장 많아요 · ${formatKrw(peak.total)}`}
+								{`많은 달 ${peak.month}월 ${formatKrw(peak.total)}`}
+							</Paragraph.Text>
+						</Paragraph>
+						<Paragraph typography="t7" color={boardColors.chalkDim}>
+							<Paragraph.Text>
+								{`적은 달 ${low.month}월 ${formatKrw(low.total)}`}
 							</Paragraph.Text>
 						</Paragraph>
 					</div>
