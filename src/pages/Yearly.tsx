@@ -93,16 +93,6 @@ const s = {
 		textAlign: "center" as const,
 	} satisfies React.CSSProperties,
 	cardTitle: { marginBottom: spacing.sm } satisfies React.CSSProperties,
-	insight: {
-		display: "flex",
-		flexDirection: "column" as const,
-		alignItems: "center",
-		gap: 2,
-		marginTop: spacing.md,
-		padding: `${spacing.xs}px ${spacing.sm}px`,
-		borderRadius: radius.md,
-		border: `1px dashed ${boardColors.chalkDim}`,
-	} satisfies React.CSSProperties,
 };
 
 export default function YearlyPage() {
@@ -118,18 +108,6 @@ export default function YearlyPage() {
 	const paidMonths = months.filter((month) => month.total > 0);
 	const average =
 		paidMonths.length > 0 ? Math.round(yearTotal / paidMonths.length) : 0;
-	const peak = months.reduce(
-		(max, month) => (month.total > max.total ? month : max),
-		months[0],
-	);
-	// 기록이 없는 달(0원)을 "적은 달"이라 하면 오해다 — 실제로 나간 달끼리만 비교한다.
-	const low = paidMonths.reduce(
-		(min, month) => (month.total < min.total ? month : min),
-		paidMonths[0],
-	);
-	const maxTotal = peak?.total ?? 0;
-	// 열두 달이 다 같으면 "가장 많은 달"은 알려줄 게 없는 정보다.
-	const hasSpread = maxTotal > 0 && low != null && peak.total !== low.total;
 
 	return (
 		<div style={s.page}>
@@ -249,21 +227,6 @@ export default function YearlyPage() {
 						기록돼요
 					</Paragraph.Text>
 				</Paragraph>
-
-				{hasSpread ? (
-					<div style={s.insight}>
-						<Paragraph typography="t7" color={boardColors.chalk}>
-							<Paragraph.Text>
-								{`많은 달 ${peak.month}월 ${formatKrw(peak.total)}`}
-							</Paragraph.Text>
-						</Paragraph>
-						<Paragraph typography="t7" color={boardColors.chalkDim}>
-							<Paragraph.Text>
-								{`적은 달 ${low.month}월 ${formatKrw(low.total)}`}
-							</Paragraph.Text>
-						</Paragraph>
-					</div>
-				) : null}
 			</div>
 
 			{slices.length > 0 ? (

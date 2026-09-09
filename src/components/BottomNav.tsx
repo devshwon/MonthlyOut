@@ -13,7 +13,7 @@ const TABS = [
 /** 플로팅 탭바 높이 */
 export const NAV_HEIGHT = 60;
 /** 화면 하단(세이프에어리어 위)과 탭바 사이 간격 */
-export const NAV_GAP = 12;
+export const NAV_GAP = 4;
 
 /** 탭바에 가리지 않으려면 콘텐츠 하단에 이만큼 비워야 한다. */
 export function navSpace(insetBottom: number): number {

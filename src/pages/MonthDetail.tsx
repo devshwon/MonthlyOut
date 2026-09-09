@@ -173,7 +173,10 @@ export default function MonthDetailPage() {
 						style={s.iconButton}
 						aria-label="이전 달"
 						onClick={() =>
-							navigate(`/month/${addMonths(ym, -1)}`, { replace: true })
+							navigate(`/month/${addMonths(ym, -1)}`, {
+								replace: true,
+								state: { stackReplace: true },
+							})
 						}
 					>
 						<IconChevronLeft size={18} color={colors.textTertiary} />
@@ -190,7 +193,10 @@ export default function MonthDetailPage() {
 						style={s.iconButton}
 						aria-label="다음 달"
 						onClick={() =>
-							navigate(`/month/${addMonths(ym, 1)}`, { replace: true })
+							navigate(`/month/${addMonths(ym, 1)}`, {
+								replace: true,
+								state: { stackReplace: true },
+							})
 						}
 					>
 						<IconChevronRight size={18} color={colors.textTertiary} />
@@ -203,7 +209,12 @@ export default function MonthDetailPage() {
 					<button
 						type="button"
 						style={s.todayButton}
-						onClick={() => navigate(`/month/${fallback}`, { replace: true })}
+						onClick={() =>
+							navigate(`/month/${fallback}`, {
+								replace: true,
+								state: { stackReplace: true },
+							})
+						}
 					>
 						<Paragraph typography="t7" fontWeight="bold" color={colors.accent}>
 							<Paragraph.Text>이번 달로</Paragraph.Text>

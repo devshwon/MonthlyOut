@@ -1,4 +1,4 @@
-import { IconCheck } from "@/components/icons";
+import { HandDrawnCheck } from "@/components/HandDrawnCheck";
 import { colors, radius } from "@/design/tokens";
 
 /**
@@ -25,13 +25,14 @@ export function ConfirmButton({
 				width: 30,
 				height: 30,
 				borderRadius: radius.full,
+				// 체크가 그려지면 동그라미는 지운다 — 펜 자국만 남은 것처럼 보이게.
 				border: done ? "none" : `1.5px solid ${colors.border}`,
-				backgroundColor: done ? colors.positive : colors.surface,
+				background: "none",
 				cursor: "pointer",
 			}}
 			onClick={onToggle}
 		>
-			{done ? <IconCheck size={16} color={colors.textOnDark} /> : null}
+			{done ? <HandDrawnCheck size={24} /> : null}
 		</button>
 	);
 }

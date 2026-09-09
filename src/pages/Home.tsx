@@ -2,7 +2,6 @@ import { Paragraph } from "@toss/tds-mobile";
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { CategoryBar } from "@/components/CategoryBar";
-import { ChargeRow } from "@/components/ChargeRow";
 import { ConfirmButton } from "@/components/ConfirmButton";
 import {
 	CategoryIcon,
@@ -222,26 +221,12 @@ const s = {
 		backgroundColor: colors.surface,
 		boxShadow: shadow.card,
 	} satisfies React.CSSProperties,
-	cardButton: {
-		display: "block",
-		width: "100%",
-		border: "none",
-		textAlign: "left" as const,
-		cursor: "pointer",
-	} satisfies React.CSSProperties,
 	cardHead: {
 		display: "flex",
 		alignItems: "center",
 		justifyContent: "space-between",
 		gap: spacing.xs,
 		marginBottom: spacing.sm,
-	} satisfies React.CSSProperties,
-	progressTrack: {
-		height: 8,
-		marginTop: spacing.sm,
-		borderRadius: radius.full,
-		backgroundColor: colors.surfaceSunken,
-		overflow: "hidden",
 	} satisfies React.CSSProperties,
 	savingNote: {
 		padding: `${spacing.xs}px ${spacing.xxs}px 0`,
@@ -263,28 +248,6 @@ const s = {
 		borderRadius: radius.sm,
 	} satisfies React.CSSProperties,
 	dueBody: { flex: 1, minWidth: 0 } satisfies React.CSSProperties,
-	listCard: {
-		marginTop: spacing.sm,
-		borderRadius: radius.xl,
-		backgroundColor: colors.surface,
-		boxShadow: shadow.card,
-		overflow: "hidden",
-	} satisfies React.CSSProperties,
-	listHead: {
-		display: "flex",
-		alignItems: "center",
-		justifyContent: "space-between",
-		padding: `${spacing.md}px ${spacing.md}px ${spacing.xs}px`,
-	} satisfies React.CSSProperties,
-	moreButton: {
-		display: "flex",
-		alignItems: "center",
-		gap: 2,
-		padding: 0,
-		border: "none",
-		background: "none",
-		cursor: "pointer",
-	} satisfies React.CSSProperties,
 	buddyRow: {
 		display: "flex",
 		justifyContent: "flex-end",
@@ -709,47 +672,6 @@ export default function HomePage() {
 						</div>
 					) : null}
 
-					{transfers.length > 0 ? (
-						<button
-							type="button"
-							style={{ ...s.card, ...s.cardButton }}
-							onClick={() => navigate(`/month/${ym}`)}
-						>
-							<div style={s.cardHead}>
-								<Paragraph
-									typography="t6"
-									fontWeight="bold"
-									color={colors.textPrimary}
-								>
-									<Paragraph.Text>이체 확인</Paragraph.Text>
-								</Paragraph>
-								<div style={{ display: "flex", alignItems: "center", gap: 2 }}>
-									<Paragraph typography="t7" color={colors.textTertiary}>
-										<Paragraph.Text>{`${confirmedCount}/${transfers.length}건`}</Paragraph.Text>
-									</Paragraph>
-									<IconChevronRight size={16} color={colors.textTertiary} />
-								</div>
-							</div>
-							<Paragraph typography="t7" color={colors.textTertiary}>
-								<Paragraph.Text>
-									{confirmedCount === transfers.length
-										? "이 달 이체는 모두 확인했어요"
-										: `아직 ${transfers.length - confirmedCount}건이 남았어요`}
-								</Paragraph.Text>
-							</Paragraph>
-							<div style={s.progressTrack}>
-								<div
-									style={{
-										width: `${(confirmedCount / transfers.length) * 100}%`,
-										height: "100%",
-										borderRadius: radius.full,
-										backgroundColor: colors.positive,
-									}}
-								/>
-							</div>
-						</button>
-					) : null}
-
 					{slices.length > 0 ? (
 						<div style={s.card}>
 							<div style={s.cardHead}>
@@ -764,45 +686,6 @@ export default function HomePage() {
 							<CategoryBar slices={slices} />
 						</div>
 					) : null}
-
-					{visible.length > 0 ? (
-						<div style={s.listCard}>
-							<div style={s.listHead}>
-								<Paragraph
-									typography="t6"
-									fontWeight="bold"
-									color={colors.textPrimary}
-								>
-									<Paragraph.Text>많이 나가는 항목</Paragraph.Text>
-								</Paragraph>
-								<button
-									type="button"
-									style={s.moreButton}
-									onClick={() => navigate(`/month/${ym}`)}
-								>
-									<Paragraph typography="t7" color={colors.textTertiary}>
-										<Paragraph.Text>전체 보기</Paragraph.Text>
-									</Paragraph>
-									<IconChevronRight size={14} color={colors.textTertiary} />
-								</button>
-							</div>
-
-							{visible.slice(0, 3).map((charge) => (
-								<ChargeRow
-									key={charge.id}
-									charge={charge}
-									yearMonth={ym}
-									onClick={() => navigate(`/charge/${charge.id}`)}
-								/>
-							))}
-						</div>
-					) : (
-						<div style={s.card}>
-							<Paragraph typography="t7" color={colors.textTertiary}>
-								<Paragraph.Text>이 달에 빠지는 항목이 없어요.</Paragraph.Text>
-							</Paragraph>
-						</div>
-					)}
 				</>
 			)}
 		</div>

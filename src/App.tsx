@@ -14,8 +14,16 @@ import SettingsPage from "@/pages/Settings";
 import YearlyPage from "@/pages/Yearly";
 import { pushFlowDebugEvent } from "@/utils/flowDebug";
 
-/** 하단 탭을 띄우는 화면. 나머지(등록·상세·설정)는 스스로 뒤로가기를 가진다. */
+/**
+ * 하단 탭을 띄우는 화면.
+ * 상세(/month/:ym)도 포함한다 — 연간에서 들어간 뒤 뒤로가기를 여러 번 누르지 않고
+ * 탭으로 바로 돌아갈 수 있어야 한다.
+ */
 const TAB_PATHS = ["/", "/manage", "/yearly"];
+
+function showsTabs(pathname: string): boolean {
+	return TAB_PATHS.includes(pathname) || pathname.startsWith("/month/");
+}
 
 const s = {
 	shell: {
@@ -40,7 +48,12 @@ export default function App() {
 	const pathStackRef = useRef<string[]>([location.pathname || "/"]);
 	const insets = useSafeAreaInsets();
 	const currentPath = location.pathname || "/";
-	const showNav = TAB_PATHS.includes(currentPath);
+	const showNav = showsTabs(currentPath);
+
+	// 같은 화면 안에서 월만 바꾸는 이동은 스택을 쌓지 않는다(뒤로가기 한 번이면 나가야 한다).
+	const stackReplace = Boolean(
+		(location.state as { stackReplace?: boolean } | null)?.stackReplace,
+	);
 
 	useEffect(() => {
 		pushFlowDebugEvent("navigate", currentPath);
@@ -50,13 +63,17 @@ export default function App() {
 		if (top === currentPath) {
 			return;
 		}
+		if (stackReplace) {
+			stack[stack.length - 1] = currentPath;
+			return;
+		}
 		// 뒤로 간 경우(이전 항목으로 돌아옴)에는 쌓지 않고 걷어낸다.
 		if (stack[stack.length - 2] === currentPath) {
 			stack.pop();
 			return;
 		}
 		stack.push(currentPath);
-	}, [currentPath]);
+	}, [currentPath, stackReplace]);
 
 	useEffect(() => {
 		const subscription = graniteEvent.addEventListener("backEvent", {

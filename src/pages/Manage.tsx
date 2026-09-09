@@ -3,12 +3,8 @@ import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { navSpace } from "@/components/BottomNav";
 import { ChargeRow } from "@/components/ChargeRow";
-import {
-	CategoryIcon,
-	IconCheck,
-	IconChevronRight,
-	IconPencil,
-} from "@/components/icons";
+import { HandDrawnCheck } from "@/components/HandDrawnCheck";
+import { CategoryIcon, IconChevronRight, IconPencil } from "@/components/icons";
 import {
 	categoryColors,
 	categorySoftColors,
@@ -92,16 +88,6 @@ const s = {
 		alignItems: "center",
 		gap: spacing.xxs,
 	} satisfies React.CSSProperties,
-	/** 이번 달에 빠진 걸 확인한 항목 */
-	doneMark: {
-		display: "flex",
-		alignItems: "center",
-		justifyContent: "center",
-		width: 18,
-		height: 18,
-		borderRadius: radius.full,
-		backgroundColor: colors.positive,
-	} satisfies React.CSSProperties,
 	empty: {
 		marginTop: spacing.xxl,
 		textAlign: "center" as const,
@@ -114,31 +100,19 @@ const s = {
 		marginTop: spacing.md,
 		pointerEvents: "none" as const,
 	} satisfies React.CSSProperties,
-	/**
-	 * "적는다"는 동작을 연필로 보여주는 추가 버튼.
-	 * 나무색은 칠판 프레임에만 쓴다 — 액션 버튼까지 나무로 하면 화면에서 겉돈다.
-	 */
+	/** 연필만으로도 "적는다"는 게 읽힌다 — 목록을 덜 가리게 원형으로 둔다 */
 	fab: {
 		display: "flex",
 		alignItems: "center",
-		gap: spacing.xs,
-		height: 54,
-		padding: `0 ${spacing.lg}px 0 ${spacing.md}px`,
+		justifyContent: "center",
+		width: 56,
+		height: 56,
 		border: "none",
 		borderRadius: radius.full,
 		backgroundColor: colors.accent,
 		boxShadow: shadow.floating,
 		cursor: "pointer",
 		pointerEvents: "auto" as const,
-	} satisfies React.CSSProperties,
-	fabPencil: {
-		display: "flex",
-		alignItems: "center",
-		justifyContent: "center",
-		width: 32,
-		height: 32,
-		borderRadius: radius.full,
-		backgroundColor: "rgba(255,255,255,0.9)",
 	} satisfies React.CSSProperties,
 };
 
@@ -243,9 +217,7 @@ export default function ManagePage() {
 									accessory={
 										<div style={s.rowTail}>
 											{confirmed.has(charge.id) ? (
-												<span style={s.doneMark}>
-													<IconCheck size={12} color={colors.textOnDark} />
-												</span>
+												<HandDrawnCheck size={18} />
 											) : null}
 											<IconChevronRight size={16} color={colors.textTertiary} />
 										</div>
@@ -263,18 +235,10 @@ export default function ManagePage() {
 				<button
 					type="button"
 					style={s.fab}
+					aria-label="항목 적기"
 					onClick={() => navigate("/charge/new")}
 				>
-					<span style={s.fabPencil}>
-						<IconPencil size={19} color={colors.accent} />
-					</span>
-					<Paragraph
-						typography="t6"
-						fontWeight="bold"
-						color={colors.textOnDark}
-					>
-						<Paragraph.Text>항목 적기</Paragraph.Text>
-					</Paragraph>
+					<IconPencil size={24} color={colors.textOnDark} />
 				</button>
 			</div>
 		</div>
