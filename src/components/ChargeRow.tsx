@@ -22,6 +22,15 @@ const s = {
 		gap: spacing.sm,
 		width: "100%",
 		padding: `${spacing.sm}px ${spacing.md}px`,
+	} satisfies React.CSSProperties,
+	/** 행 본문(누르면 수정으로) — 액세서리가 버튼일 수 있어 따로 둔다 */
+	main: {
+		display: "flex",
+		alignItems: "center",
+		gap: spacing.sm,
+		flex: 1,
+		minWidth: 0,
+		padding: 0,
 		border: "none",
 		background: "none",
 		textAlign: "left" as const,
@@ -98,64 +107,71 @@ export function ChargeRow({
 	].filter(Boolean);
 
 	return (
-		<button
-			type="button"
+		<div
 			style={{
 				...s.row,
 				// 괘선 두 칸(32px × 2)에 딱 맞춰 글씨가 줄 위에 앉게 한다.
 				...(paper ? { minHeight: 64 } : null),
 				...(dimmed ? s.ended : null),
 			}}
-			onClick={onClick}
-			disabled={!onClick}
 		>
-			<div
-				style={{
-					...s.iconWrap,
-					backgroundColor: categorySoftColors[charge.category],
-				}}
+			<button
+				type="button"
+				style={s.main}
+				onClick={onClick}
+				disabled={!onClick}
 			>
-				<CategoryIcon
-					category={charge.category}
-					size={22}
-					color={categoryColors[charge.category]}
-				/>
-			</div>
+				<div
+					style={{
+						...s.iconWrap,
+						backgroundColor: categorySoftColors[charge.category],
+					}}
+				>
+					<CategoryIcon
+						category={charge.category}
+						size={22}
+						color={categoryColors[charge.category]}
+					/>
+				</div>
 
-			<div style={s.body}>
-				<div style={s.nameLine}>
-					<Paragraph
-						typography="t6"
-						fontWeight="bold"
-						color={colors.textPrimary}
-						style={s.name}
-					>
-						<Paragraph.Text>{charge.name}</Paragraph.Text>
+				<div style={s.body}>
+					<div style={s.nameLine}>
+						<Paragraph
+							typography="t6"
+							fontWeight="bold"
+							color={colors.textPrimary}
+							style={s.name}
+						>
+							<Paragraph.Text>{charge.name}</Paragraph.Text>
+						</Paragraph>
+						{charge.term && round ? (
+							<span style={s.badge}>
+								<Paragraph typography="t7" color={colors.textTertiary}>
+									<Paragraph.Text>{`${round}/${charge.term.totalCount}회차`}</Paragraph.Text>
+								</Paragraph>
+							</span>
+						) : null}
+					</div>
+					<Paragraph typography="t7" color={colors.textTertiary} style={s.meta}>
+						<Paragraph.Text>{meta.join(" · ")}</Paragraph.Text>
 					</Paragraph>
-					{charge.term && round ? (
-						<span style={s.badge}>
-							<Paragraph typography="t7" color={colors.textTertiary}>
-								<Paragraph.Text>{`${round}/${charge.term.totalCount}회차`}</Paragraph.Text>
-							</Paragraph>
-						</span>
+					{charge.memo ? (
+						<Paragraph
+							typography="t7"
+							color={colors.textTertiary}
+							style={s.memo}
+						>
+							<Paragraph.Text>{charge.memo}</Paragraph.Text>
+						</Paragraph>
 					) : null}
 				</div>
-				<Paragraph typography="t7" color={colors.textTertiary} style={s.meta}>
-					<Paragraph.Text>{meta.join(" · ")}</Paragraph.Text>
-				</Paragraph>
-				{charge.memo ? (
-					<Paragraph typography="t7" color={colors.textTertiary} style={s.memo}>
-						<Paragraph.Text>{charge.memo}</Paragraph.Text>
-					</Paragraph>
-				) : null}
-			</div>
 
-			<div style={s.tail}>
 				<Paragraph typography="t6" fontWeight="bold" color={colors.textPrimary}>
 					<Paragraph.Text>{formatKrw(charge.amount)}</Paragraph.Text>
 				</Paragraph>
-				{accessory}
-			</div>
-		</button>
+			</button>
+
+			{accessory ? <div style={s.tail}>{accessory}</div> : null}
+		</div>
 	);
 }
