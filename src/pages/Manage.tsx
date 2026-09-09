@@ -5,6 +5,7 @@ import { navSpace } from "@/components/BottomNav";
 import { ChargeRow } from "@/components/ChargeRow";
 import { HandDrawnCheck } from "@/components/HandDrawnCheck";
 import { CategoryIcon, IconChevronRight, IconPencil } from "@/components/icons";
+import { MoneyBuddy } from "@/components/MoneyBuddy";
 import {
 	categoryColors,
 	categorySoftColors,
@@ -88,6 +89,19 @@ const s = {
 		alignItems: "center",
 		gap: spacing.xxs,
 	} satisfies React.CSSProperties,
+	footer: {
+		display: "flex",
+		alignItems: "center",
+		gap: spacing.xs,
+		padding: `${spacing.md}px ${spacing.xxs}px 0`,
+	} satisfies React.CSSProperties,
+	footerBubble: {
+		flex: 1,
+		padding: `${spacing.xs}px ${spacing.sm}px`,
+		borderRadius: radius.lg,
+		backgroundColor: colors.surface,
+		boxShadow: shadow.card,
+	} satisfies React.CSSProperties,
 	empty: {
 		marginTop: spacing.xxl,
 		textAlign: "center" as const,
@@ -123,6 +137,32 @@ export default function ManagePage() {
 	const ym = useMemo(() => currentYearMonth(), []);
 	const confirmed = useConfirmedIds(ym);
 	const groups = groupByCategory(charges);
+
+	/**
+	 * 목록 끝에서 캐릭터가 건네는 한 줄. **사실만 말한다** — 무엇을 줄이라는 조언은
+	 * 하지 않는다(기획서 2장: 추천·상담은 이 앱이 하지 않는 일).
+	 */
+	const summaryLine = (() => {
+		const biggest = groups.reduce(
+			(max, group) => (group.amount > max.amount ? group : max),
+			groups[0],
+		);
+		const subscriptions = charges.filter(
+			(charge) => charge.category === "subscription",
+		);
+
+		if (subscriptions.length >= 3) {
+			const amount = subscriptions.reduce(
+				(sum, charge) => sum + charge.amount,
+				0,
+			);
+			return `구독만 ${subscriptions.length}개, 매달 ${formatKrw(amount)}이에요.`;
+		}
+		if (biggest) {
+			return `${CATEGORY_LABEL[biggest.category]}에 가장 많이 나가요 · ${formatKrw(biggest.amount)}`;
+		}
+		return `${charges.length}개를 적어뒀어요.`;
+	})();
 
 	return (
 		<div style={s.page}>
@@ -228,6 +268,17 @@ export default function ManagePage() {
 					</div>
 				))
 			)}
+
+			{groups.length > 0 ? (
+				<div style={s.footer}>
+					<MoneyBuddy size={48} />
+					<div style={s.footerBubble}>
+						<Paragraph typography="t7" color={colors.textSecondary}>
+							<Paragraph.Text>{summaryLine}</Paragraph.Text>
+						</Paragraph>
+					</div>
+				</div>
+			) : null}
 
 			<div
 				style={{ ...s.fabRow, bottom: navSpace(insets.bottom) + spacing.xs }}

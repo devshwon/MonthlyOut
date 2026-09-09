@@ -1,7 +1,6 @@
 import { Paragraph } from "@toss/tds-mobile";
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { CategoryBar } from "@/components/CategoryBar";
 import { ConfirmButton } from "@/components/ConfirmButton";
 import {
 	CategoryIcon,
@@ -29,6 +28,7 @@ import { useCountUp } from "@/hooks/useCountUp";
 import {
 	activeCharges,
 	addMonths,
+	CATEGORY_LABEL,
 	categoryBreakdown,
 	chargesDueOn,
 	currentYearMonth,
@@ -44,6 +44,7 @@ import {
 } from "@/services/charges";
 import { toggleConfirmed } from "@/services/confirmStore";
 import { buildTips, pickNextTip } from "@/services/tips";
+import type { ChargeCategory } from "@/types";
 
 /** 빈 화면에서 "이렇게 채워져요"를 보여주는 예시. 저장되는 값이 아니다. */
 const EMPTY_PREVIEW = [
@@ -228,9 +229,58 @@ const s = {
 		gap: spacing.xs,
 		marginBottom: spacing.sm,
 	} satisfies React.CSSProperties,
+	sliceRow: {
+		display: "flex",
+		alignItems: "center",
+		gap: spacing.xs,
+		width: "100%",
+		padding: `${spacing.xs}px 0`,
+		border: "none",
+		background: "none",
+		cursor: "pointer",
+	} satisfies React.CSSProperties,
+	sliceDot: {
+		flexShrink: 0,
+		width: 8,
+		height: 8,
+		borderRadius: radius.full,
+	} satisfies React.CSSProperties,
+	sliceLabel: {
+		flex: 1,
+		textAlign: "left" as const,
+	} satisfies React.CSSProperties,
+	sliceItems: {
+		padding: `${spacing.xxs}px 0 ${spacing.xs}px ${spacing.md}px`,
+	} satisfies React.CSSProperties,
+	sliceItem: {
+		display: "flex",
+		alignItems: "center",
+		gap: spacing.xs,
+		width: "100%",
+		padding: `${spacing.xxs}px 0`,
+		border: "none",
+		background: "none",
+		cursor: "pointer",
+	} satisfies React.CSSProperties,
+	sliceItemName: {
+		flex: 1,
+		textAlign: "left" as const,
+		overflow: "hidden",
+		textOverflow: "ellipsis",
+		whiteSpace: "nowrap" as const,
+	} satisfies React.CSSProperties,
 	savingNote: {
 		padding: `${spacing.xs}px ${spacing.xxs}px 0`,
 		textAlign: "center" as const,
+	} satisfies React.CSSProperties,
+	dueExpand: {
+		display: "flex",
+		justifyContent: "center",
+		width: "100%",
+		padding: `${spacing.xs}px 0 ${spacing.xxs}px`,
+		border: "none",
+		background: "none",
+		cursor: "pointer",
 	} satisfies React.CSSProperties,
 	dueRow: {
 		display: "flex",
@@ -347,6 +397,12 @@ export default function HomePage() {
 	const dueTodayDone = dueToday.filter((charge) =>
 		confirmed.has(charge.id),
 	).length;
+	// 확인한 건 아래로 내린다 — 남은 일이 위에 모이게.
+	const dueTodaySorted = [...dueToday].sort(
+		(a, b) => Number(confirmed.has(a.id)) - Number(confirmed.has(b.id)),
+	);
+	const dueTodayAllDone =
+		dueToday.length > 0 && dueTodayDone === dueToday.length;
 	const confirmedCount = transfers.filter((charge) =>
 		confirmed.has(charge.id),
 	).length;
@@ -364,6 +420,8 @@ export default function HomePage() {
 		total,
 		release,
 	});
+	const [openCategory, setOpenCategory] = useState<ChargeCategory | null>(null);
+	const [showDoneToday, setShowDoneToday] = useState(false);
 	const [tip, setTip] = useState(() => tips[0]);
 	const currentTip = tips.includes(tip) ? tip : tips[0];
 	// 캐릭터와 말풍선 어느 쪽을 눌러도 다음 이야기로 넘어간다.
@@ -635,40 +693,62 @@ export default function HomePage() {
 								</Paragraph>
 							</div>
 
-							{dueToday.map((charge) => (
-								<div key={charge.id} style={s.dueRow}>
-									<span
-										style={{
-											...s.dueIcon,
-											backgroundColor: categorySoftColors[charge.category],
-										}}
-									>
-										<CategoryIcon
-											category={charge.category}
-											size={16}
-											color={categoryColors[charge.category]}
-										/>
-									</span>
-									<div style={s.dueBody}>
-										<Paragraph
-											typography="t6"
-											fontWeight="bold"
-											color={colors.textPrimary}
+							{dueTodayAllDone && !showDoneToday ? (
+								<button
+									type="button"
+									style={s.dueExpand}
+									onClick={() => setShowDoneToday(true)}
+								>
+									<Paragraph typography="t7" color={colors.textTertiary}>
+										<Paragraph.Text>
+											{`오늘 건 다 확인했어요 · ${dueToday.length}건 보기`}
+										</Paragraph.Text>
+									</Paragraph>
+								</button>
+							) : null}
+
+							{dueTodayAllDone && !showDoneToday
+								? null
+								: dueTodaySorted.map((charge) => (
+										<div
+											key={charge.id}
+											style={{
+												...s.dueRow,
+												opacity: confirmed.has(charge.id) ? 0.5 : 1,
+											}}
 										>
-											<Paragraph.Text>{charge.name}</Paragraph.Text>
-										</Paragraph>
-										<Paragraph typography="t7" color={colors.textTertiary}>
-											<Paragraph.Text>
-												{`${formatKrw(charge.amount)}${charge.method?.name ? ` · ${charge.method.name}` : ""}`}
-											</Paragraph.Text>
-										</Paragraph>
-									</div>
-									<ConfirmButton
-										done={confirmed.has(charge.id)}
-										onToggle={() => toggleConfirmed(ym, charge.id)}
-									/>
-								</div>
-							))}
+											<span
+												style={{
+													...s.dueIcon,
+													backgroundColor: categorySoftColors[charge.category],
+												}}
+											>
+												<CategoryIcon
+													category={charge.category}
+													size={16}
+													color={categoryColors[charge.category]}
+												/>
+											</span>
+											<div style={s.dueBody}>
+												<Paragraph
+													typography="t6"
+													fontWeight="bold"
+													color={colors.textPrimary}
+												>
+													<Paragraph.Text>{charge.name}</Paragraph.Text>
+												</Paragraph>
+												<Paragraph typography="t7" color={colors.textTertiary}>
+													<Paragraph.Text>
+														{`${formatKrw(charge.amount)}${charge.method?.name ? ` · ${charge.method.name}` : ""}`}
+													</Paragraph.Text>
+												</Paragraph>
+											</div>
+											<ConfirmButton
+												done={confirmed.has(charge.id)}
+												onToggle={() => toggleConfirmed(ym, charge.id)}
+											/>
+										</div>
+									))}
 						</div>
 					) : null}
 
@@ -683,7 +763,92 @@ export default function HomePage() {
 									<Paragraph.Text>어디에 나가고 있나요</Paragraph.Text>
 								</Paragraph>
 							</div>
-							<CategoryBar slices={slices} />
+
+							{slices.map((slice) => {
+								const open = openCategory === slice.category;
+								const items = visible.filter(
+									(charge) => charge.category === slice.category,
+								);
+
+								return (
+									<div key={slice.category}>
+										<button
+											type="button"
+											aria-expanded={open}
+											style={s.sliceRow}
+											onClick={() =>
+												setOpenCategory(open ? null : slice.category)
+											}
+										>
+											<span
+												style={{
+													...s.sliceDot,
+													backgroundColor: categoryColors[slice.category],
+												}}
+											/>
+											<Paragraph
+												typography="t7"
+												color={colors.textSecondary}
+												style={s.sliceLabel}
+											>
+												<Paragraph.Text>
+													{`${CATEGORY_LABEL[slice.category]} ${Math.round(slice.ratio * 100)}%`}
+												</Paragraph.Text>
+											</Paragraph>
+											<Paragraph
+												typography="t7"
+												fontWeight="bold"
+												color={colors.textPrimary}
+											>
+												<Paragraph.Text>
+													{formatKrw(slice.amount)}
+												</Paragraph.Text>
+											</Paragraph>
+											<span
+												style={{
+													display: "flex",
+													transform: open ? "rotate(90deg)" : "none",
+													transition: "transform 120ms ease",
+												}}
+											>
+												<IconChevronRight
+													size={14}
+													color={colors.textTertiary}
+												/>
+											</span>
+										</button>
+
+										{open ? (
+											<div style={s.sliceItems}>
+												{items.map((charge) => (
+													<button
+														key={charge.id}
+														type="button"
+														style={s.sliceItem}
+														onClick={() => navigate(`/charge/${charge.id}`)}
+													>
+														<Paragraph
+															typography="t7"
+															color={colors.textSecondary}
+															style={s.sliceItemName}
+														>
+															<Paragraph.Text>{charge.name}</Paragraph.Text>
+														</Paragraph>
+														<Paragraph
+															typography="t7"
+															color={colors.textTertiary}
+														>
+															<Paragraph.Text>
+																{formatKrw(charge.amount)}
+															</Paragraph.Text>
+														</Paragraph>
+													</button>
+												))}
+											</div>
+										) : null}
+									</div>
+								);
+							})}
 						</div>
 					) : null}
 				</>
