@@ -129,8 +129,21 @@ export function installmentRound(
 	return round;
 }
 
-/** 이번 달에 실제로 돈이 빠지는 항목인지. 무기한 항목은 항상 true. */
+/**
+ * 이 항목을 기록하기 시작한 달. 등록한 달 이전은 집계하지 않는다.
+ *
+ * 정리를 시작한 달부터가 실제로 믿을 수 있는 수치다 — 그 전 달들은 무엇을
+ * 빠뜨렸는지 알 수 없어서, 채워 넣으면 오히려 틀린 숫자가 된다.
+ */
+export function trackedFromMonth(charge: FixedCharge): YearMonth {
+	return toYearMonth(new Date(charge.createdAt));
+}
+
+/** 이번 달에 실제로 돈이 빠지는 항목인지. 등록 이전 달은 언제나 false. */
 export function isActive(charge: FixedCharge, ym: YearMonth): boolean {
+	if (monthDiff(trackedFromMonth(charge), ym) < 0) {
+		return false;
+	}
 	if (!charge.term) {
 		return true;
 	}
@@ -166,6 +179,15 @@ export function remainingAmount(
 	return count === null ? null : count * charge.amount;
 }
 
+/**
+ * 저축은 **고정지출 총액에 넣지 않는다.**
+ * 적금·청약·연금은 사라지는 돈이 아니라 옮기는 돈이라, 총액에 섞으면
+ * "매달 이만큼 없어진다"는 숫자가 과장된다. 목록에는 그대로 보이고 따로 합산한다.
+ */
+export function isSaving(charge: FixedCharge): boolean {
+	return charge.category === "saving";
+}
+
 /** 이번 달 활성 항목을 금액 내림차순으로. 같은 금액이면 이름순. */
 export function activeCharges(
 	charges: FixedCharge[],
@@ -176,11 +198,18 @@ export function activeCharges(
 		.sort((a, b) => b.amount - a.amount || a.name.localeCompare(b.name));
 }
 
+/** 이번 달 고정지출 총액. 저축은 빠진다. */
 export function monthlyTotal(charges: FixedCharge[], ym: YearMonth): number {
-	return activeCharges(charges, ym).reduce(
-		(sum, charge) => sum + charge.amount,
-		0,
-	);
+	return activeCharges(charges, ym)
+		.filter((charge) => !isSaving(charge))
+		.reduce((sum, charge) => sum + charge.amount, 0);
+}
+
+/** 이번 달 저축으로 옮기는 금액. 총액과 따로 보여준다. */
+export function savingTotal(charges: FixedCharge[], ym: YearMonth): number {
+	return activeCharges(charges, ym)
+		.filter(isSaving)
+		.reduce((sum, charge) => sum + charge.amount, 0);
 }
 
 export interface ReleaseInfo {
@@ -261,7 +290,7 @@ export function withdrawalGroups(
 /** 카드로 빠지는 고정분 합계 — 카드값 역산(2차)의 재료. */
 export function cardFixedTotal(charges: FixedCharge[], ym: YearMonth): number {
 	return activeCharges(charges, ym)
-		.filter((charge) => charge.method?.kind === "card")
+		.filter((charge) => !isSaving(charge) && charge.method?.kind === "card")
 		.reduce((sum, charge) => sum + charge.amount, 0);
 }
 
@@ -305,7 +334,9 @@ export function totalByMethodKind(
 ): MethodTotals {
 	const totals: MethodTotals = { card: 0, account: 0, unset: 0 };
 
-	for (const charge of activeCharges(charges, ym)) {
+	for (const charge of activeCharges(charges, ym).filter(
+		(charge) => !isSaving(charge),
+	)) {
 		if (charge.method?.kind === "card") {
 			totals.card += charge.amount;
 		} else if (charge.method?.kind === "account") {
@@ -330,7 +361,7 @@ export function categoryBreakdown(
 	charges: FixedCharge[],
 	ym: YearMonth,
 ): CategorySlice[] {
-	const list = activeCharges(charges, ym);
+	const list = activeCharges(charges, ym).filter((charge) => !isSaving(charge));
 	const total = list.reduce((sum, charge) => sum + charge.amount, 0);
 	const byCategory = new Map<
 		ChargeCategory,
@@ -415,7 +446,9 @@ export function yearlyCategoryTotals(
 
 	for (let month = 1; month <= 12; month += 1) {
 		const ym = `${year}-${String(month).padStart(2, "0")}`;
-		for (const charge of activeCharges(charges, ym)) {
+		for (const charge of activeCharges(charges, ym).filter(
+			(charge) => !isSaving(charge),
+		)) {
 			const prev = byCategory.get(charge.category) ?? { amount: 0, count: 0 };
 			byCategory.set(charge.category, {
 				amount: prev.amount + charge.amount,

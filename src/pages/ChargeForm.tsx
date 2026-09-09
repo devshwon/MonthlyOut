@@ -191,12 +191,12 @@ const s = {
 		justifyContent: "center",
 		padding: `${spacing.md}px 0 ${spacing.xl}px`,
 	} satisfies React.CSSProperties,
+	/** 떠 있는 저장 버튼. 배경을 깔면 버튼이 판 위에 얹힌 것처럼 보여 그냥 띄운다. */
 	cta: {
 		position: "sticky" as const,
 		bottom: 0,
-		padding: `${spacing.sm}px 0`,
+		paddingTop: spacing.sm,
 		marginTop: spacing.md,
-		background: `linear-gradient(180deg, rgba(244,246,249,0) 0%, ${colors.background} 32%)`,
 	} satisfies React.CSSProperties,
 };
 
@@ -877,7 +877,7 @@ export default function ChargeFormPage() {
 				/>
 			</div>
 
-			<div style={{ ...s.cta, paddingBottom: spacing.sm + insets.bottom }}>
+			<div style={{ ...s.cta, paddingBottom: insets.bottom }}>
 				<PrimaryButton disabled={!canSave} onClick={handleSave}>
 					저장
 				</PrimaryButton>

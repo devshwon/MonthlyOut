@@ -36,8 +36,10 @@ import {
 	formatAmount,
 	formatKrw,
 	formatYearMonth,
+	isSaving,
 	monthlyTotal,
 	nextRelease,
+	savingTotal,
 	totalByMethodKind,
 	transferCharges,
 } from "@/services/charges";
@@ -241,6 +243,10 @@ const s = {
 		backgroundColor: colors.surfaceSunken,
 		overflow: "hidden",
 	} satisfies React.CSSProperties,
+	savingNote: {
+		padding: `${spacing.xs}px ${spacing.xxs}px 0`,
+		textAlign: "center" as const,
+	} satisfies React.CSSProperties,
 	dueRow: {
 		display: "flex",
 		alignItems: "center",
@@ -359,11 +365,14 @@ export default function HomePage() {
 	const [ym, setYm] = useState(thisMonth);
 	const confirmed = useConfirmedIds(ym);
 
-	const visible = activeCharges(charges, ym);
+	const visible = activeCharges(charges, ym).filter(
+		(charge) => !isSaving(charge),
+	);
 	const total = monthlyTotal(charges, ym);
 	const methods = totalByMethodKind(charges, ym);
 	const slices = categoryBreakdown(charges, ym);
 	const release = nextRelease(charges, ym);
+	const saving = savingTotal(charges, ym);
 	const transfers = transferCharges(charges, ym);
 	// 오늘 빠지는 것들 — 이번 달을 보고 있을 때만 의미가 있다.
 	const today = new Date().getDate();
@@ -627,6 +636,18 @@ export default function HomePage() {
 							</Paragraph>
 						</div>
 					</div>
+
+					{saving > 0 ? (
+						<Paragraph
+							typography="t7"
+							color={colors.textTertiary}
+							style={s.savingNote}
+						>
+							<Paragraph.Text>
+								{`저축 ${formatKrw(saving)}은 총액에 넣지 않았어요`}
+							</Paragraph.Text>
+						</Paragraph>
+					) : null}
 
 					{dueToday.length > 0 ? (
 						<div style={s.card}>

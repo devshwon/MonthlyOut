@@ -122,13 +122,14 @@ export default function YearlyPage() {
 		(max, month) => (month.total > max.total ? month : max),
 		months[0],
 	);
-	const low = months.reduce(
+	// 기록이 없는 달(0원)을 "적은 달"이라 하면 오해다 — 실제로 나간 달끼리만 비교한다.
+	const low = paidMonths.reduce(
 		(min, month) => (month.total < min.total ? month : min),
-		months[0],
+		paidMonths[0],
 	);
 	const maxTotal = peak?.total ?? 0;
 	// 열두 달이 다 같으면 "가장 많은 달"은 알려줄 게 없는 정보다.
-	const hasSpread = maxTotal > 0 && peak.total !== low.total;
+	const hasSpread = maxTotal > 0 && low != null && peak.total !== low.total;
 
 	return (
 		<div style={s.page}>
@@ -243,7 +244,10 @@ export default function YearlyPage() {
 					color={boardColors.chalkDim}
 					style={s.chartHint}
 				>
-					<Paragraph.Text>월을 누르면 그 달 상세를 볼 수 있어요</Paragraph.Text>
+					<Paragraph.Text>
+						월을 누르면 그 달 상세를 볼 수 있어요 · 항목을 등록한 달부터
+						기록돼요
+					</Paragraph.Text>
 				</Paragraph>
 
 				{hasSpread ? (

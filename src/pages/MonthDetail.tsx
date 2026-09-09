@@ -123,6 +123,12 @@ const s = {
 		borderBottom: `1px solid ${colors.border}`,
 	} satisfies React.CSSProperties,
 	headLabel: { flex: 1 } satisfies React.CSSProperties,
+	/** 저축처럼 총액에 넣지 않는 묶음 표시 */
+	exceptBadge: {
+		padding: `1px ${spacing.xs}px`,
+		borderRadius: radius.full,
+		backgroundColor: colors.surfaceSunken,
+	} satisfies React.CSSProperties,
 	sectionDot: {
 		display: "flex",
 		alignItems: "center",
@@ -315,6 +321,13 @@ export default function MonthDetailPage() {
 											{CATEGORY_LABEL[group.category]}
 										</Paragraph.Text>
 									</Paragraph>
+									{group.category === "saving" ? (
+										<span style={s.exceptBadge}>
+											<Paragraph typography="t7" color={colors.textTertiary}>
+												<Paragraph.Text>총액 제외</Paragraph.Text>
+											</Paragraph>
+										</span>
+									) : null}
 									<Paragraph
 										typography="t7"
 										fontWeight="bold"
