@@ -100,6 +100,19 @@
 - **SDK**: `@apps-in-toss/web-framework` 3.1.1 (위치·결제·광고·이벤트 등은 여기서 import). TDS는 `@toss/tds-mobile`·`@toss/tds-mobile-ait` 2.5.1. 브라우저 개발용 `@apps-in-toss/devtools` 3.1.1(devDependency).
 - **설정 파일**: `apps-in-toss.config.ts` (2.x의 `granite.config.ts`를 대체).
 
+### 광고 붙인 자리
+
+- **하단 고정 배너**(`variant="expanded"`): `App`에 한 번만 마운트한다. 라우트가 바뀌어도
+  다시 로드하지 않고, 세이프에어리어는 배너가 맡는다(`flushBottom`). 플로팅 탭바는
+  스크롤 영역 안에서 배너 **위에** 뜬다 — `navSpace()`는 인셋을 더하지 않는다.
+- **인라인 이미지 배너**(`variant="card"`): 월 상세에서 요약과 목록 사이. 읽는 흐름이
+  한 번 끊기는 자리라 덜 방해된다.
+- ⚠️ **출시 전 `src/constants/ads.ts`의 `PRODUCTION_AD_IDS`를 콘솔 발급 ID로 채운다.**
+  지금은 placeholder라 프로덕션 빌드에서는 광고가 안 뜬다(빈 자리는 접힌다).
+- ⚠️ 전면·리워드를 붙이면 **사전 로딩이 필수**다(검수 7-4: 재생 시점 실시간 로딩 금지).
+  `main.tsx`의 preload를 되살려야 한다. 노출 시점도 검수 7-2("예상하기 어려운 순간 금지")를
+  넘지 않아야 한다.
+
 ### 아직 쓰지 않는 코드
 
 수익 모델 없이 출시하는 게 기획(8장)이라 광고·포인트는 화면에 붙어 있지 않다.

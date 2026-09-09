@@ -1,10 +1,11 @@
 import { closeView, graniteEvent } from "@apps-in-toss/web-framework";
 import { useEffect, useRef } from "react";
 import { Route, Routes, useLocation, useNavigate } from "react-router-dom";
+import { BannerAd } from "@/components/BannerAd";
 import { BottomNav, navSpace } from "@/components/BottomNav";
 import { FlowDebugPanel } from "@/components/FlowDebugPanel";
+import { AD_GROUP_IDS } from "@/constants/ads";
 import { colors } from "@/design/tokens";
-import { useSafeAreaInsets } from "@/hooks/useSafeAreaInsets";
 import ChargeFormPage from "@/pages/ChargeForm";
 import HomePage from "@/pages/Home";
 import ManagePage from "@/pages/Manage";
@@ -35,8 +36,18 @@ const s = {
 		overflow: "hidden" as const,
 		backgroundColor: colors.background,
 	} satisfies React.CSSProperties,
-	content: {
+	/**
+	 * 스크롤 영역. 탭바는 이 안에서 떠 있고, 하단 고정 배너는 이 영역 **아래**에
+	 * 실제 공간을 차지한다 — 그래야 배너가 탭바를 가리지 않는다.
+	 * 배치 규칙: docs/bottom-banner-placement.md
+	 */
+	contentWrap: {
+		position: "relative" as const,
 		flex: 1,
+		minHeight: 0,
+	} satisfies React.CSSProperties,
+	content: {
+		height: "100%",
 		overflowY: "auto" as const,
 		WebkitOverflowScrolling: "touch" as const,
 	} satisfies React.CSSProperties,
@@ -46,7 +57,6 @@ export default function App() {
 	const location = useLocation();
 	const navigate = useNavigate();
 	const pathStackRef = useRef<string[]>([location.pathname || "/"]);
-	const insets = useSafeAreaInsets();
 	const currentPath = location.pathname || "/";
 	const showNav = showsTabs(currentPath);
 
@@ -108,26 +118,37 @@ export default function App() {
 
 	return (
 		<div style={s.shell}>
-			<main
-				style={{
-					...s.content,
-					// 플로팅 탭바에 마지막 줄이 가리지 않도록 그만큼 비운다.
-					paddingBottom: showNav ? navSpace(insets.bottom) : insets.bottom,
-				}}
-			>
-				<Routes>
-					<Route path="/" element={<HomePage />} />
-					<Route path="/manage" element={<ManagePage />} />
-					<Route path="/yearly" element={<YearlyPage />} />
-					<Route path="/month/:ym" element={<MonthDetailPage />} />
-					<Route path="/charge/new" element={<ChargeFormPage />} />
-					<Route path="/charge/:id" element={<ChargeFormPage />} />
-					<Route path="/settings" element={<SettingsPage />} />
-					<Route path="*" element={<NotFoundPage />} />
-				</Routes>
-			</main>
+			<div style={s.contentWrap}>
+				<main
+					style={{
+						...s.content,
+						// 플로팅 탭바에 마지막 줄이 가리지 않도록 그만큼 비운다.
+						// 하단 여백(세이프에어리어)은 배너가 맡는다.
+						paddingBottom: showNav ? navSpace(0) : 0,
+					}}
+				>
+					<Routes>
+						<Route path="/" element={<HomePage />} />
+						<Route path="/manage" element={<ManagePage />} />
+						<Route path="/yearly" element={<YearlyPage />} />
+						<Route path="/month/:ym" element={<MonthDetailPage />} />
+						<Route path="/charge/new" element={<ChargeFormPage />} />
+						<Route path="/charge/:id" element={<ChargeFormPage />} />
+						<Route path="/settings" element={<SettingsPage />} />
+						<Route path="*" element={<NotFoundPage />} />
+					</Routes>
+				</main>
 
-			{showNav ? <BottomNav /> : null}
+				{showNav ? <BottomNav /> : null}
+			</div>
+
+			{/* 하단 고정 배너 — App 최상위에 한 번만 마운트해 라우트가 바뀌어도 다시 로드하지 않는다 */}
+			<BannerAd
+				adGroupId={AD_GROUP_IDS.BANNER}
+				variant="expanded"
+				flushBottom
+			/>
+
 			<FlowDebugPanel />
 		</div>
 	);

@@ -1,6 +1,7 @@
 import { Paragraph } from "@toss/tds-mobile";
 import { useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { BannerAd } from "@/components/BannerAd";
 import { ChargeRow } from "@/components/ChargeRow";
 import { ConfirmButton } from "@/components/ConfirmButton";
 import {
@@ -10,6 +11,7 @@ import {
 	IconChevronLeft,
 	IconChevronRight,
 } from "@/components/icons";
+import { AD_GROUP_IDS } from "@/constants/ads";
 import {
 	categoryColors,
 	categorySoftColors,
@@ -90,6 +92,11 @@ const s = {
 	groupRows: {
 		backgroundColor: paperColors.surface,
 		backgroundImage: paperBackground,
+	} satisfies React.CSSProperties,
+	inlineAd: {
+		marginBottom: spacing.sm,
+		borderRadius: radius.xl,
+		overflow: "hidden",
 	} satisfies React.CSSProperties,
 	listHint: {
 		padding: `0 ${spacing.xxs}px ${spacing.xs}px`,
@@ -272,6 +279,11 @@ export default function MonthDetailPage() {
 						</div>
 					</div>
 				</div>
+			</div>
+
+			{/* 요약과 목록 사이 — 읽는 흐름이 한 번 끊기는 자리라 광고가 덜 방해된다 */}
+			<div style={s.inlineAd}>
+				<BannerAd adGroupId={AD_GROUP_IDS.BANNER_NATIVE} variant="card" />
 			</div>
 
 			{groups.length === 0 ? (

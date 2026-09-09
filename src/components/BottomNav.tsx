@@ -2,7 +2,6 @@ import { Paragraph } from "@toss/tds-mobile";
 import { useLocation, useNavigate } from "react-router-dom";
 import { IconHome, IconManage, IconYearly } from "@/components/icons";
 import { colors, radius, shadow, spacing } from "@/design/tokens";
-import { useSafeAreaInsets } from "@/hooks/useSafeAreaInsets";
 
 const TABS = [
 	{ path: "/", label: "홈", Icon: IconHome },
@@ -15,8 +14,11 @@ export const NAV_HEIGHT = 60;
 /** 화면 하단(세이프에어리어 위)과 탭바 사이 간격 */
 export const NAV_GAP = 4;
 
-/** 탭바에 가리지 않으려면 콘텐츠 하단에 이만큼 비워야 한다. */
-export function navSpace(insetBottom: number): number {
+/**
+ * 탭바에 가리지 않으려면 콘텐츠 하단에 이만큼 비워야 한다.
+ * 세이프에어리어는 아래 고정 배너가 맡으므로 여기서는 더하지 않는다.
+ */
+export function navSpace(insetBottom = 0): number {
 	return NAV_HEIGHT + NAV_GAP + insetBottom;
 }
 
@@ -67,11 +69,10 @@ const s = {
 export function BottomNav() {
 	const navigate = useNavigate();
 	const location = useLocation();
-	const insets = useSafeAreaInsets();
 	const current = location.pathname || "/";
 
 	return (
-		<div style={{ ...s.layer, bottom: NAV_GAP + insets.bottom }}>
+		<div style={{ ...s.layer, bottom: NAV_GAP }}>
 			<nav style={s.bar}>
 				{TABS.map(({ path, label, Icon }) => {
 					const active = current === path;

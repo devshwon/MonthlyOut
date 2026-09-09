@@ -18,7 +18,6 @@ import {
 } from "@/design/tokens";
 import { useCharges } from "@/hooks/useCharges";
 import { useConfirmedIds } from "@/hooks/useConfirmations";
-import { useSafeAreaInsets } from "@/hooks/useSafeAreaInsets";
 import {
 	CATEGORY_LABEL,
 	currentYearMonth,
@@ -133,7 +132,6 @@ const s = {
 export default function ManagePage() {
 	const navigate = useNavigate();
 	const charges = useCharges();
-	const insets = useSafeAreaInsets();
 	const ym = useMemo(() => currentYearMonth(), []);
 	const confirmed = useConfirmedIds(ym);
 	const groups = groupByCategory(charges);
@@ -280,9 +278,7 @@ export default function ManagePage() {
 				</div>
 			) : null}
 
-			<div
-				style={{ ...s.fabRow, bottom: navSpace(insets.bottom) + spacing.xs }}
-			>
+			<div style={{ ...s.fabRow, bottom: navSpace() + spacing.xs }}>
 				<button
 					type="button"
 					style={s.fab}
