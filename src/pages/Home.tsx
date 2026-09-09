@@ -3,6 +3,7 @@ import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { CategoryBar } from "@/components/CategoryBar";
 import { ChargeRow } from "@/components/ChargeRow";
+import { ConfirmButton } from "@/components/ConfirmButton";
 import {
 	CategoryIcon,
 	IconBank,
@@ -30,6 +31,7 @@ import {
 	activeCharges,
 	addMonths,
 	categoryBreakdown,
+	chargesDueOn,
 	currentYearMonth,
 	formatAmount,
 	formatKrw,
@@ -39,6 +41,7 @@ import {
 	totalByMethodKind,
 	transferCharges,
 } from "@/services/charges";
+import { toggleConfirmed } from "@/services/confirmStore";
 import { buildTips, pickNextTip } from "@/services/tips";
 
 /** 빈 화면에서 "이렇게 채워져요"를 보여주는 예시. 저장되는 값이 아니다. */
@@ -238,6 +241,22 @@ const s = {
 		backgroundColor: colors.surfaceSunken,
 		overflow: "hidden",
 	} satisfies React.CSSProperties,
+	dueRow: {
+		display: "flex",
+		alignItems: "center",
+		gap: spacing.xs,
+		padding: `${spacing.xs}px 0`,
+	} satisfies React.CSSProperties,
+	dueIcon: {
+		display: "flex",
+		flexShrink: 0,
+		alignItems: "center",
+		justifyContent: "center",
+		width: 28,
+		height: 28,
+		borderRadius: radius.sm,
+	} satisfies React.CSSProperties,
+	dueBody: { flex: 1, minWidth: 0 } satisfies React.CSSProperties,
 	listCard: {
 		marginTop: spacing.sm,
 		borderRadius: radius.xl,
@@ -346,6 +365,16 @@ export default function HomePage() {
 	const slices = categoryBreakdown(charges, ym);
 	const release = nextRelease(charges, ym);
 	const transfers = transferCharges(charges, ym);
+	// 오늘 빠지는 것들 — 이번 달을 보고 있을 때만 의미가 있다.
+	const today = new Date().getDate();
+	const dueToday = ym === thisMonth ? chargesDueOn(charges, ym, today) : [];
+	const dueTodayTotal = dueToday.reduce(
+		(sum, charge) => sum + charge.amount,
+		0,
+	);
+	const dueTodayDone = dueToday.filter((charge) =>
+		confirmed.has(charge.id),
+	).length;
 	const confirmedCount = transfers.filter((charge) =>
 		confirmed.has(charge.id),
 	).length;
@@ -598,6 +627,66 @@ export default function HomePage() {
 							</Paragraph>
 						</div>
 					</div>
+
+					{dueToday.length > 0 ? (
+						<div style={s.card}>
+							<div style={s.cardHead}>
+								<Paragraph
+									typography="t6"
+									fontWeight="bold"
+									color={colors.textPrimary}
+								>
+									<Paragraph.Text>{`오늘 빠지는 돈 ${formatKrw(dueTodayTotal)}`}</Paragraph.Text>
+								</Paragraph>
+								<Paragraph
+									typography="t7"
+									fontWeight="bold"
+									color={
+										dueTodayDone === dueToday.length
+											? colors.positive
+											: colors.textTertiary
+									}
+								>
+									<Paragraph.Text>{`${dueTodayDone}/${dueToday.length}`}</Paragraph.Text>
+								</Paragraph>
+							</div>
+
+							{dueToday.map((charge) => (
+								<div key={charge.id} style={s.dueRow}>
+									<span
+										style={{
+											...s.dueIcon,
+											backgroundColor: categorySoftColors[charge.category],
+										}}
+									>
+										<CategoryIcon
+											category={charge.category}
+											size={16}
+											color={categoryColors[charge.category]}
+										/>
+									</span>
+									<div style={s.dueBody}>
+										<Paragraph
+											typography="t6"
+											fontWeight="bold"
+											color={colors.textPrimary}
+										>
+											<Paragraph.Text>{charge.name}</Paragraph.Text>
+										</Paragraph>
+										<Paragraph typography="t7" color={colors.textTertiary}>
+											<Paragraph.Text>
+												{`${formatKrw(charge.amount)}${charge.method?.name ? ` · ${charge.method.name}` : ""}`}
+											</Paragraph.Text>
+										</Paragraph>
+									</div>
+									<ConfirmButton
+										done={confirmed.has(charge.id)}
+										onToggle={() => toggleConfirmed(ym, charge.id)}
+									/>
+								</div>
+							))}
+						</div>
+					) : null}
 
 					{transfers.length > 0 ? (
 						<button

@@ -2,11 +2,11 @@ import { Paragraph } from "@toss/tds-mobile";
 import { useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { ChargeRow } from "@/components/ChargeRow";
+import { ConfirmButton } from "@/components/ConfirmButton";
 import {
 	CategoryIcon,
 	IconBank,
 	IconCard,
-	IconCheck,
 	IconChevronLeft,
 	IconChevronRight,
 } from "@/components/icons";
@@ -123,21 +123,6 @@ const s = {
 		borderBottom: `1px solid ${colors.border}`,
 	} satisfies React.CSSProperties,
 	headLabel: { flex: 1 } satisfies React.CSSProperties,
-	checkPlaceholder: {
-		display: "block",
-		width: 30,
-		height: 30,
-	} satisfies React.CSSProperties,
-	checkButton: {
-		display: "flex",
-		flexShrink: 0,
-		alignItems: "center",
-		justifyContent: "center",
-		width: 30,
-		height: 30,
-		borderRadius: radius.full,
-		cursor: "pointer",
-	} satisfies React.CSSProperties,
 	sectionDot: {
 		display: "flex",
 		alignItems: "center",
@@ -151,31 +136,6 @@ const s = {
 		textAlign: "center" as const,
 	} satisfies React.CSSProperties,
 };
-
-/** 이체가 실제로 빠졌는지 표시하는 체크. 목록 오른쪽에 붙는다. */
-function ConfirmButton({
-	done,
-	onToggle,
-}: {
-	done: boolean;
-	onToggle: () => void;
-}) {
-	return (
-		<button
-			type="button"
-			aria-label={done ? "이체 확인 취소" : "이체 확인"}
-			aria-pressed={done}
-			style={{
-				...s.checkButton,
-				border: done ? "none" : `1.5px solid ${colors.border}`,
-				backgroundColor: done ? colors.positive : colors.surface,
-			}}
-			onClick={onToggle}
-		>
-			{done ? <IconCheck size={16} color={colors.textOnDark} /> : null}
-		</button>
-	);
-}
 
 export default function MonthDetailPage() {
 	const navigate = useNavigate();
@@ -191,6 +151,9 @@ export default function MonthDetailPage() {
 	const methods = totalByMethodKind(charges, ym);
 	const transfers = transferCharges(charges, ym);
 	const confirmedCount = transfers.filter((charge) =>
+		confirmed.has(charge.id),
+	).length;
+	const confirmedAllCount = active.filter((charge) =>
 		confirmed.has(charge.id),
 	).length;
 	const groups = groupByCategory(active);
@@ -306,7 +269,7 @@ export default function MonthDetailPage() {
 				</div>
 			) : (
 				<>
-					{transfers.length > confirmedCount ? (
+					{active.length > confirmedAllCount ? (
 						<Paragraph
 							typography="t7"
 							color={colors.textTertiary}
@@ -370,15 +333,10 @@ export default function MonthDetailPage() {
 											paper
 											onClick={() => navigate(`/charge/${charge.id}`)}
 											accessory={
-												charge.method?.kind === "account" ? (
-													<ConfirmButton
-														done={confirmed.has(charge.id)}
-														onToggle={() => toggleConfirmed(ym, charge.id)}
-													/>
-												) : (
-													// 체크가 없는 행에도 같은 자리를 비워 금액을 나란히 맞춘다.
-													<span style={s.checkPlaceholder} />
-												)
+												<ConfirmButton
+													done={confirmed.has(charge.id)}
+													onToggle={() => toggleConfirmed(ym, charge.id)}
+												/>
 											}
 										/>
 									))}

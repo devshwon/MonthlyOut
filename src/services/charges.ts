@@ -502,3 +502,37 @@ export function usedMethods(charges: FixedCharge[]): PaymentMethod[] {
 		.sort((a, b) => b.count - a.count || b.lastUsed - a.lastUsed)
 		.map((entry) => entry.method);
 }
+
+/** 그 달에 실제로 빠지는 날. 31일 설정인데 30일까지인 달이면 30일로 당긴다. */
+export function billingDayInMonth(charge: FixedCharge, ym: YearMonth): number {
+	const [year, month] = ym.split("-").map(Number);
+	const lastDay = new Date(year, month, 0).getDate();
+	return Math.min(charge.billingDay, lastDay);
+}
+
+/** 그 달의 특정 날짜에 빠지는 항목들. 금액 내림차순. */
+export function chargesDueOn(
+	charges: FixedCharge[],
+	ym: YearMonth,
+	day: number,
+): FixedCharge[] {
+	return activeCharges(charges, ym).filter(
+		(charge) => billingDayInMonth(charge, ym) === day,
+	);
+}
+
+/** 칸에 들어가게 줄인 금액. 886,000 → "88.6만" */
+export function formatCompact(amount: number): string {
+	if (amount === 0) {
+		return "0";
+	}
+	if (amount < 10000) {
+		return formatAmount(amount);
+	}
+	const man = amount / 10000;
+	if (man >= 100) {
+		return `${Math.round(man).toLocaleString("ko-KR")}만`;
+	}
+	const rounded = Math.round(man * 10) / 10;
+	return `${Number.isInteger(rounded) ? rounded : rounded.toFixed(1)}만`;
+}

@@ -3,7 +3,12 @@ import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { navSpace } from "@/components/BottomNav";
 import { ChargeRow } from "@/components/ChargeRow";
-import { CategoryIcon, IconChevronRight, IconPencil } from "@/components/icons";
+import {
+	CategoryIcon,
+	IconCheck,
+	IconChevronRight,
+	IconPencil,
+} from "@/components/icons";
 import {
 	categoryColors,
 	categorySoftColors,
@@ -15,6 +20,7 @@ import {
 	spacing,
 } from "@/design/tokens";
 import { useCharges } from "@/hooks/useCharges";
+import { useConfirmedIds } from "@/hooks/useConfirmations";
 import { useSafeAreaInsets } from "@/hooks/useSafeAreaInsets";
 import {
 	CATEGORY_LABEL,
@@ -75,6 +81,21 @@ const s = {
 		borderRadius: radius.full,
 	} satisfies React.CSSProperties,
 	sectionLabel: { flex: 1 } satisfies React.CSSProperties,
+	rowTail: {
+		display: "flex",
+		alignItems: "center",
+		gap: spacing.xxs,
+	} satisfies React.CSSProperties,
+	/** 이번 달에 빠진 걸 확인한 항목 */
+	doneMark: {
+		display: "flex",
+		alignItems: "center",
+		justifyContent: "center",
+		width: 18,
+		height: 18,
+		borderRadius: radius.full,
+		backgroundColor: colors.positive,
+	} satisfies React.CSSProperties,
 	empty: {
 		marginTop: spacing.xxl,
 		textAlign: "center" as const,
@@ -120,6 +141,7 @@ export default function ManagePage() {
 	const charges = useCharges();
 	const insets = useSafeAreaInsets();
 	const ym = useMemo(() => currentYearMonth(), []);
+	const confirmed = useConfirmedIds(ym);
 	const groups = groupByCategory(charges);
 
 	return (
@@ -206,7 +228,14 @@ export default function ManagePage() {
 									dimmed={!isActive(charge, ym)}
 									onClick={() => navigate(`/charge/${charge.id}`)}
 									accessory={
-										<IconChevronRight size={16} color={colors.textTertiary} />
+										<div style={s.rowTail}>
+											{confirmed.has(charge.id) ? (
+												<span style={s.doneMark}>
+													<IconCheck size={12} color={colors.textOnDark} />
+												</span>
+											) : null}
+											<IconChevronRight size={16} color={colors.textTertiary} />
+										</div>
 									}
 								/>
 							))}

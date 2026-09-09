@@ -14,12 +14,11 @@ import {
 import { useCharges } from "@/hooks/useCharges";
 import {
 	currentYearMonth,
+	formatCompact,
 	formatKrw,
 	yearlyCategoryTotals,
 	yearlyTotals,
 } from "@/services/charges";
-
-const CHART_HEIGHT = 132;
 
 const s = {
 	page: {
@@ -70,34 +69,24 @@ const s = {
 	} satisfies React.CSSProperties,
 	summaryItem: { flex: 1 } satisfies React.CSSProperties,
 	summaryValue: { marginTop: spacing.xxs } satisfies React.CSSProperties,
-	chart: {
-		display: "flex",
-		alignItems: "flex-end",
-		gap: spacing.xxs,
-		height: CHART_HEIGHT,
+	/** 분필로 칸을 그어 달마다 적어둔 느낌 */
+	monthGrid: {
+		display: "grid",
+		gridTemplateColumns: "repeat(3, 1fr)",
+		gap: spacing.xs,
 		marginTop: spacing.md,
-		// 분필로 그은 바닥선 — 막대가 허공에 뜨지 않게 기준을 준다.
-		borderBottom: `1px solid ${boardColors.chalkDim}`,
 	} satisfies React.CSSProperties,
-	barButton: {
+	monthCell: {
 		display: "flex",
-		flex: 1,
 		flexDirection: "column" as const,
-		justifyContent: "flex-end",
-		height: "100%",
-		padding: 0,
-		border: "none",
-		background: "none",
+		alignItems: "center",
+		gap: 2,
+		padding: `${spacing.sm}px ${spacing.xxs}px`,
+		borderRadius: radius.md,
 		cursor: "pointer",
 	} satisfies React.CSSProperties,
-	labelRow: {
-		display: "flex",
-		gap: spacing.xxs,
-		marginTop: spacing.xs,
-	} satisfies React.CSSProperties,
-	label: {
-		flex: 1,
-		textAlign: "center" as const,
+	monthAmount: {
+		textShadow: "0 0 8px rgba(244,243,236,0.3)",
 	} satisfies React.CSSProperties,
 	chartHint: {
 		marginTop: spacing.sm,
@@ -204,56 +193,54 @@ export default function YearlyPage() {
 					</div>
 				</div>
 
-				<div style={s.chart}>
+				<div style={s.monthGrid}>
 					{months.map((month) => {
 						const isThisMonth = month.ym === thisYm;
-						const height =
-							maxTotal > 0 ? Math.max((month.total / maxTotal) * 100, 2) : 2;
 
 						return (
 							<button
 								key={month.ym}
 								type="button"
-								style={s.barButton}
-								aria-label={`${month.month}월 ${formatKrw(month.total)}`}
+								style={{
+									...s.monthCell,
+									backgroundColor: isThisMonth
+										? "rgba(244, 243, 236, 0.14)"
+										: "transparent",
+									border: `1px ${isThisMonth ? "solid" : "dashed"} ${
+										isThisMonth ? boardColors.chalk : boardColors.chalkFaint
+									}`,
+								}}
 								onClick={() => navigate(`/month/${month.ym}`)}
 							>
-								<div
-									style={{
-										height: `${height}%`,
-										borderRadius: `${radius.sm}px ${radius.sm}px 0 0`,
-										backgroundColor:
-											month.total === 0
-												? boardColors.chalkFaint
-												: isThisMonth
-													? boardColors.chalk
-													: "rgba(244, 243, 236, 0.45)",
-									}}
-								/>
+								<Paragraph
+									typography="t7"
+									fontWeight={isThisMonth ? "bold" : "regular"}
+									color={isThisMonth ? boardColors.chalk : boardColors.chalkDim}
+								>
+									<Paragraph.Text>{`${month.month}월`}</Paragraph.Text>
+								</Paragraph>
+								<Paragraph
+									typography="t6"
+									fontWeight="bold"
+									color={
+										month.total === 0
+											? boardColors.chalkFaint
+											: boardColors.chalk
+									}
+									style={s.monthAmount}
+								>
+									<Paragraph.Text>
+										{month.total === 0 ? "—" : formatCompact(month.total)}
+									</Paragraph.Text>
+								</Paragraph>
 							</button>
 						);
 					})}
 				</div>
 
-				<div style={s.labelRow}>
-					{months.map((month) => (
-						<div key={month.ym} style={s.label}>
-							<Paragraph
-								typography="t7"
-								fontWeight={month.ym === thisYm ? "bold" : "regular"}
-								color={
-									month.ym === thisYm ? boardColors.chalk : boardColors.chalkDim
-								}
-							>
-								<Paragraph.Text>{String(month.month)}</Paragraph.Text>
-							</Paragraph>
-						</div>
-					))}
-				</div>
-
 				<Paragraph
 					typography="t7"
-					color={colors.textTertiary}
+					color={boardColors.chalkDim}
 					style={s.chartHint}
 				>
 					<Paragraph.Text>월을 누르면 그 달 상세를 볼 수 있어요</Paragraph.Text>
