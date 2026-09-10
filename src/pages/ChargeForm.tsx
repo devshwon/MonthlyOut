@@ -40,10 +40,12 @@ import {
 	updateCharge,
 } from "@/services/chargeStore";
 import {
+	addMonths,
 	CATEGORY_HINT,
 	currentYearMonth,
 	formatAmount,
 	formatKrw,
+	formatYearMonth,
 	isValidYearMonth,
 	josa,
 	METHOD_KIND_LABEL,
@@ -186,6 +188,32 @@ const s = {
 		paddingTop: spacing.md,
 		borderTop: `1px solid ${colors.border}`,
 	} satisfies React.CSSProperties,
+	endGrid: {
+		display: "grid",
+		gridTemplateColumns: "repeat(3, 1fr)",
+		gap: spacing.xs,
+	} satisfies React.CSSProperties,
+	endTile: {
+		display: "flex",
+		alignItems: "center",
+		justifyContent: "center",
+		minHeight: 38,
+		border: "none",
+		borderRadius: radius.md,
+		backgroundColor: colors.surfaceSunken,
+		cursor: "pointer",
+	} satisfies React.CSSProperties,
+	endResume: {
+		display: "flex",
+		alignItems: "center",
+		justifyContent: "center",
+		width: "100%",
+		minHeight: 38,
+		border: "none",
+		borderRadius: radius.md,
+		backgroundColor: colors.accentSoft,
+		cursor: "pointer",
+	} satisfies React.CSSProperties,
 	deleteWrap: {
 		display: "flex",
 		justifyContent: "center",
@@ -253,6 +281,13 @@ function StepRow({
 }
 
 type Step = "group" | "sub" | "name";
+
+/** 해지 시점 선택지. 값은 이번 달 기준 오프셋(마지막으로 나간 달). */
+const END_CHOICES = [
+	{ offset: -1, label: "지난달까지" },
+	{ offset: 0, label: "이번 달까지" },
+	{ offset: 1, label: "다음 달까지" },
+] as const;
 
 function onlyDigits(value: string, maxLength: number): string {
 	return value.replace(/\D/g, "").slice(0, maxLength);
@@ -389,21 +424,24 @@ export default function ChargeFormPage() {
 		setOpenSections(next && hasPresets ? ["sub", "name"] : ["sub"]);
 	};
 
+	const toDraft = (): ChargeDraft => ({
+		name: finalName,
+		amount,
+		billingDay,
+		category,
+		subCategory: subCategoryId,
+		memo: memo.trim() || undefined,
+		method: { kind: methodKind, name: methodName.trim() },
+		term: hasTerm ? { totalCount, startMonth } : null,
+		endedMonth: editing?.endedMonth,
+	});
+
 	const handleSave = () => {
 		if (!canSave) {
 			return;
 		}
 
-		const draft: ChargeDraft = {
-			name: finalName,
-			amount,
-			billingDay,
-			category,
-			subCategory: subCategoryId,
-			memo: memo.trim() || undefined,
-			method: { kind: methodKind, name: methodName.trim() },
-			term: hasTerm ? { totalCount, startMonth } : null,
-		};
+		const draft = toDraft();
 
 		if (editing) {
 			updateCharge(editing.id, draft);
@@ -414,6 +452,26 @@ export default function ChargeFormPage() {
 		addCharge(draft);
 		// 새로 적었으면 방금 넣은 줄이 보이는 관리 화면으로 보낸다.
 		navigate("/manage", { replace: true });
+	};
+
+	/** 해지 시점 선택 — 5일 결제라면 해지해도 이번 달까진 나가는 게 보통이라 기본은 "이번 달까지". */
+	const handleEnd = (offset: number) => {
+		if (!editing) {
+			return;
+		}
+		updateCharge(editing.id, {
+			...toDraft(),
+			endedMonth: addMonths(thisMonth, offset),
+		});
+		navigate(-1);
+	};
+
+	const handleResume = () => {
+		if (!editing) {
+			return;
+		}
+		updateCharge(editing.id, { ...toDraft(), endedMonth: undefined });
+		navigate(-1);
 	};
 
 	const handleDelete = () => {
@@ -882,6 +940,61 @@ export default function ChargeFormPage() {
 					저장
 				</PrimaryButton>
 			</div>
+
+			{editing ? (
+				<div style={s.card}>
+					<Paragraph
+						typography="t7"
+						color={colors.textSecondary}
+						style={s.label}
+					>
+						<Paragraph.Text>
+							{editing.endedMonth
+								? `${formatYearMonth(editing.endedMonth)}까지 나갔어요`
+								: "해지했나요?"}
+						</Paragraph.Text>
+					</Paragraph>
+
+					{editing.endedMonth ? (
+						<button type="button" style={s.endResume} onClick={handleResume}>
+							<Paragraph
+								typography="t7"
+								fontWeight="bold"
+								color={colors.accent}
+							>
+								<Paragraph.Text>다시 나가는 중으로 되돌리기</Paragraph.Text>
+							</Paragraph>
+						</button>
+					) : (
+						<>
+							<div style={s.endGrid}>
+								{END_CHOICES.map((choice) => (
+									<button
+										key={choice.offset}
+										type="button"
+										style={s.endTile}
+										onClick={() => handleEnd(choice.offset)}
+									>
+										<Paragraph typography="t7" color={colors.textSecondary}>
+											<Paragraph.Text>{choice.label}</Paragraph.Text>
+										</Paragraph>
+									</button>
+								))}
+							</div>
+							<Paragraph
+								typography="t7"
+								color={colors.textTertiary}
+								style={s.hint}
+							>
+								<Paragraph.Text>
+									마지막으로 돈이 나간 달을 고르면, 그 달까지는 기록에 남고 다음
+									달부터 빠져요.
+								</Paragraph.Text>
+							</Paragraph>
+						</>
+					)}
+				</div>
+			) : null}
 
 			{editing ? (
 				<div style={s.deleteWrap}>

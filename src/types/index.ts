@@ -56,6 +56,11 @@ export interface FixedCharge {
 	subCategory?: string;
 	method: PaymentMethod | null;
 	term: ChargeTerm | null;
+	/**
+	 * 해지한 항목의 **마지막으로 돈이 나간 달**. 이 달까지는 집계되고 다음 달부터 빠진다.
+	 * 지우지 않고 남겨야 지난달 숫자가 그대로 유지된다.
+	 */
+	endedMonth?: YearMonth;
 	memo?: string;
 	createdAt: number;
 	updatedAt: number;

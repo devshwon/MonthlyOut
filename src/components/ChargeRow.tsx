@@ -88,6 +88,8 @@ interface Props {
 	dimmed?: boolean;
 	/** 노트(괘선) 위에 놓일 때 — 왼쪽 여백선을 침범하지 않게 들여쓴다 */
 	paper?: boolean;
+	/** 이름 옆에 붙는 짧은 표시(예: "해지") */
+	badge?: string;
 }
 
 /** 항목 한 줄. 카테고리 색·아이콘이 화면 전체에서 같은 의미로 반복된다. */
@@ -98,6 +100,7 @@ export function ChargeRow({
 	accessory,
 	dimmed = false,
 	paper = false,
+	badge,
 }: Props) {
 	const round = installmentRound(charge, yearMonth);
 	const meta = [
@@ -144,6 +147,13 @@ export function ChargeRow({
 						>
 							<Paragraph.Text>{charge.name}</Paragraph.Text>
 						</Paragraph>
+						{badge ? (
+							<span style={s.badge}>
+								<Paragraph typography="t7" color={colors.textTertiary}>
+									<Paragraph.Text>{badge}</Paragraph.Text>
+								</Paragraph>
+							</span>
+						) : null}
 						{charge.term && round ? (
 							<span style={s.badge}>
 								<Paragraph typography="t7" color={colors.textTertiary}>

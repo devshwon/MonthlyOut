@@ -1,6 +1,7 @@
 import { Paragraph } from "@toss/tds-mobile";
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { AllowanceSheet } from "@/components/AllowanceSheet";
 import { ConfirmButton } from "@/components/ConfirmButton";
 import {
 	CategoryIcon,
@@ -22,6 +23,7 @@ import {
 	shadow,
 	spacing,
 } from "@/design/tokens";
+import { useAppSettings } from "@/hooks/useAppSettings";
 import { useCharges } from "@/hooks/useCharges";
 import { useConfirmedIds } from "@/hooks/useConfirmations";
 import { useCountUp } from "@/hooks/useCountUp";
@@ -269,6 +271,35 @@ const s = {
 		textOverflow: "ellipsis",
 		whiteSpace: "nowrap" as const,
 	} satisfies React.CSSProperties,
+	leftoverRow: {
+		display: "flex",
+		justifyContent: "center",
+		width: "100%",
+		padding: `${spacing.xs}px 0 0`,
+		border: "none",
+		background: "none",
+		cursor: "pointer",
+	} satisfies React.CSSProperties,
+	/** 말풍선 왼쪽에 나란히 두는 후원 버튼 */
+	allowanceButton: {
+		flexShrink: 0,
+		padding: `${spacing.xs}px ${spacing.sm}px`,
+		border: `1px solid ${colors.accentSoft}`,
+		borderRadius: radius.full,
+		backgroundColor: colors.surface,
+		boxShadow: shadow.card,
+		cursor: "pointer",
+	} satisfies React.CSSProperties,
+	tipButton: {
+		flex: 1,
+		minWidth: 0,
+		display: "flex",
+		justifyContent: "flex-end",
+		padding: 0,
+		border: "none",
+		background: "none",
+		cursor: "pointer",
+	} satisfies React.CSSProperties,
 	savingNote: {
 		padding: `${spacing.xs}px ${spacing.xxs}px 0`,
 		textAlign: "center" as const,
@@ -300,12 +331,10 @@ const s = {
 	dueBody: { flex: 1, minWidth: 0 } satisfies React.CSSProperties,
 	buddyRow: {
 		display: "flex",
-		justifyContent: "flex-end",
+		alignItems: "center",
+		gap: spacing.xs,
 		width: "100%",
 		padding: `${spacing.xs}px 0 0`,
-		border: "none",
-		background: "none",
-		cursor: "pointer",
 	} satisfies React.CSSProperties,
 	bubble: {
 		position: "relative" as const,
@@ -377,6 +406,7 @@ export default function HomePage() {
 	const thisMonth = useMemo(() => currentYearMonth(), []);
 	const [ym, setYm] = useState(thisMonth);
 	const confirmed = useConfirmedIds(ym);
+	const settings = useAppSettings();
 
 	const visible = activeCharges(charges, ym).filter(
 		(charge) => !isSaving(charge),
@@ -386,6 +416,7 @@ export default function HomePage() {
 	const slices = categoryBreakdown(charges, ym);
 	const release = nextRelease(charges, ym);
 	const saving = savingTotal(charges, ym);
+	const income = settings.monthlyIncome;
 	const transfers = transferCharges(charges, ym);
 	// 오늘 빠지는 것들 — 이번 달을 보고 있을 때만 의미가 있다.
 	const today = new Date().getDate();
@@ -422,6 +453,7 @@ export default function HomePage() {
 	});
 	const [openCategory, setOpenCategory] = useState<ChargeCategory | null>(null);
 	const [showDoneToday, setShowDoneToday] = useState(false);
+	const [allowanceOpen, setAllowanceOpen] = useState(false);
 	const [tip, setTip] = useState(() => tips[0]);
 	const currentTip = tips.includes(tip) ? tip : tips[0];
 	// 캐릭터와 말풍선 어느 쪽을 눌러도 다음 이야기로 넘어간다.
@@ -552,19 +584,71 @@ export default function HomePage() {
 				</button>
 			</div>
 
-			<button
-				type="button"
-				style={s.buddyRow}
-				aria-label="다른 이야기 듣기"
-				onClick={showNextTip}
-			>
-				<div style={s.bubble}>
-					<span style={s.bubbleTail} />
+			<AllowanceSheet
+				open={allowanceOpen}
+				onClose={() => setAllowanceOpen(false)}
+			/>
+
+			<div style={s.buddyRow}>
+				{/* 칠판 위 캐릭터에게 주는 용돈 — 광고 한 편이 후원이 된다 */}
+				<button
+					type="button"
+					style={s.allowanceButton}
+					onClick={() => setAllowanceOpen(true)}
+				>
+					<Paragraph typography="t7" fontWeight="bold" color={colors.accent}>
+						<Paragraph.Text>용돈 주기</Paragraph.Text>
+					</Paragraph>
+				</button>
+
+				<button
+					type="button"
+					style={s.tipButton}
+					aria-label="다른 이야기 듣기"
+					onClick={showNextTip}
+				>
+					<div style={s.bubble}>
+						<span style={s.bubbleTail} />
+						<Paragraph typography="t7" color={colors.textSecondary}>
+							<Paragraph.Text>{currentTip}</Paragraph.Text>
+						</Paragraph>
+					</div>
+				</button>
+			</div>
+
+			{income && income > total ? (
+				<button
+					type="button"
+					style={s.leftoverRow}
+					onClick={() => navigate(`/month/${ym}`)}
+				>
 					<Paragraph typography="t7" color={colors.textSecondary}>
-						<Paragraph.Text>{currentTip}</Paragraph.Text>
+						<Paragraph.Text>
+							{`이번 달은 ${formatKrw(income - total)} 안에서 쓰면 돼요`}
+						</Paragraph.Text>
+					</Paragraph>
+				</button>
+			) : income ? (
+				<div style={s.leftoverRow}>
+					<Paragraph typography="t7" color={colors.danger}>
+						<Paragraph.Text>
+							{`고정지출이 수입보다 ${formatKrw(total - income)} 많아요`}
+						</Paragraph.Text>
 					</Paragraph>
 				</div>
-			</button>
+			) : charges.length > 0 ? (
+				<button
+					type="button"
+					style={s.leftoverRow}
+					onClick={() => navigate("/settings")}
+				>
+					<Paragraph typography="t7" color={colors.textTertiary}>
+						<Paragraph.Text>
+							월급을 적어두면 쓸 수 있는 돈을 알려드려요
+						</Paragraph.Text>
+					</Paragraph>
+				</button>
+			) : null}
 
 			{charges.length === 0 ? (
 				<div style={s.empty}>

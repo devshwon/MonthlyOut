@@ -139,9 +139,18 @@ export function trackedFromMonth(charge: FixedCharge): YearMonth {
 	return toYearMonth(new Date(charge.createdAt));
 }
 
-/** 이번 달에 실제로 돈이 빠지는 항목인지. 등록 이전 달은 언제나 false. */
+/** 해지한 항목인지(마지막 납부 달이 정해졌는지). */
+export function isEnded(charge: FixedCharge): boolean {
+	return Boolean(charge.endedMonth);
+}
+
+/** 이번 달에 실제로 돈이 빠지는 항목인지. 등록 이전·해지 이후 달은 false. */
 export function isActive(charge: FixedCharge, ym: YearMonth): boolean {
 	if (monthDiff(trackedFromMonth(charge), ym) < 0) {
+		return false;
+	}
+	// 해지한 달까지는 나갔고, 그 다음 달부터는 나가지 않는다.
+	if (charge.endedMonth && monthDiff(charge.endedMonth, ym) > 0) {
 		return false;
 	}
 	if (!charge.term) {

@@ -24,6 +24,7 @@ import {
 	formatKrw,
 	groupByCategory,
 	isActive,
+	isEnded,
 	monthlyTotal,
 } from "@/services/charges";
 
@@ -251,6 +252,7 @@ export default function ManagePage() {
 									yearMonth={ym}
 									paper
 									dimmed={!isActive(charge, ym)}
+									badge={isEnded(charge) ? "해지" : undefined}
 									onClick={() => navigate(`/charge/${charge.id}`)}
 									accessory={
 										<div style={s.rowTail}>

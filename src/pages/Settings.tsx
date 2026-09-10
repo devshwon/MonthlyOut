@@ -1,16 +1,21 @@
-import { Paragraph } from "@toss/tds-mobile";
+import { Paragraph, Switch, TextField } from "@toss/tds-mobile";
 import { useMemo, useState } from "react";
 import { MoneyBuddy } from "@/components/MoneyBuddy";
+import { NOTIFICATION_TEMPLATE_CODE } from "@/constants/notification";
 import { colors, radius, shadow, spacing } from "@/design/tokens";
+import { useAppSettings } from "@/hooks/useAppSettings";
 import { useCharges } from "@/hooks/useCharges";
 import { clearCharges } from "@/services/chargeStore";
 import {
 	activeCharges,
 	currentYearMonth,
+	formatAmount,
 	formatKrw,
 	monthlyTotal,
 } from "@/services/charges";
 import { clearConfirmations } from "@/services/confirmStore";
+import { requestReminderAgreement } from "@/services/reminder";
+import { updateSettings } from "@/services/settingsStore";
 
 const s = {
 	page: {
@@ -59,6 +64,40 @@ export default function SettingsPage() {
 	const charges = useCharges();
 	const ym = useMemo(() => currentYearMonth(), []);
 	const [confirmingClear, setConfirmingClear] = useState(false);
+	const settings = useAppSettings();
+	const [incomeText, setIncomeText] = useState(
+		settings.monthlyIncome ? String(settings.monthlyIncome) : "",
+	);
+	const [requestingAgreement, setRequestingAgreement] = useState(false);
+	const [agreementResult, setAgreementResult] = useState<string | null>(null);
+
+	/**
+	 * 알림은 SDK가 동의만 받고 발송은 콘솔 스마트발송이 한다.
+	 * 그래서 토글을 켜는 건 "토스에 수신 동의를 남기는" 일이다.
+	 */
+	const handleNotification = async (checked: boolean) => {
+		if (!checked) {
+			updateSettings({ notificationAgreed: false });
+			setAgreementResult(null);
+			return;
+		}
+
+		setRequestingAgreement(true);
+		const result = await requestReminderAgreement(NOTIFICATION_TEMPLATE_CODE);
+		setRequestingAgreement(false);
+
+		updateSettings({ notificationAgreed: result === "agreed" });
+		setAgreementResult(result);
+	};
+
+	const notificationNote =
+		agreementResult === "unsupported"
+			? "이 버전의 토스 앱에서는 알림 동의를 받을 수 없어요."
+			: agreementResult === "rejected"
+				? "동의하지 않아서 알림은 오지 않아요."
+				: settings.notificationAgreed
+					? "결제일 즈음에 확인하라고 알려드려요."
+					: "매달 나가는 날, 확인하라고 알려드릴게요.";
 
 	const handleClear = () => {
 		if (!confirmingClear) {
@@ -113,6 +152,61 @@ export default function SettingsPage() {
 						{`이번 달에 실제로 빠지는 항목은 ${activeCharges(charges, ym).length}개예요.`}
 					</Paragraph.Text>
 				</Paragraph>
+			</div>
+
+			<div style={s.card}>
+				<Paragraph typography="t6" fontWeight="bold" color={colors.textPrimary}>
+					<Paragraph.Text>매달 들어오는 돈</Paragraph.Text>
+				</Paragraph>
+				<Paragraph typography="t7" color={colors.textTertiary} style={s.hint}>
+					<Paragraph.Text>
+						적어두면 고정지출을 뺀 "쓸 수 있는 돈"을 홈에서 알려줘요.
+					</Paragraph.Text>
+				</Paragraph>
+				<div style={s.action}>
+					<TextField
+						variant="box"
+						labelOption="sustain"
+						label="월 수입 (선택)"
+						placeholder="0"
+						inputMode="numeric"
+						suffix="원"
+						value={incomeText ? formatAmount(Number(incomeText)) : ""}
+						onChange={(event) => {
+							const digits = event.target.value.replace(/\D/g, "").slice(0, 10);
+							setIncomeText(digits);
+							updateSettings({
+								monthlyIncome: digits ? Number(digits) : undefined,
+							});
+						}}
+					/>
+				</div>
+			</div>
+
+			<div style={s.card}>
+				<div style={s.row}>
+					<div>
+						<Paragraph
+							typography="t6"
+							fontWeight="bold"
+							color={colors.textPrimary}
+						>
+							<Paragraph.Text>결제일 알림 받기</Paragraph.Text>
+						</Paragraph>
+						<Paragraph
+							typography="t7"
+							color={colors.textTertiary}
+							style={s.hint}
+						>
+							<Paragraph.Text>{notificationNote}</Paragraph.Text>
+						</Paragraph>
+					</div>
+					<Switch
+						checked={Boolean(settings.notificationAgreed)}
+						disabled={requestingAgreement}
+						onChange={(_, checked) => handleNotification(checked)}
+					/>
+				</div>
 			</div>
 
 			<div style={s.card}>
