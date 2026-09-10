@@ -1,3 +1,4 @@
+import { readStorage, writeStorage } from "@/services/storage";
 import type { YearMonth } from "@/types";
 
 const STORAGE_KEY = "monthlyout.confirmations.v1";
@@ -14,11 +15,7 @@ let confirmations: ConfirmationMap = load();
 const listeners = new Set<() => void>();
 
 function load(): ConfirmationMap {
-	if (typeof localStorage === "undefined") {
-		return {};
-	}
-
-	const raw = localStorage.getItem(STORAGE_KEY);
+	const raw = readStorage(STORAGE_KEY);
 	if (!raw) {
 		return {};
 	}
@@ -44,13 +41,7 @@ function load(): ConfirmationMap {
 function persist(next: ConfirmationMap): void {
 	confirmations = next;
 
-	if (typeof localStorage !== "undefined") {
-		try {
-			localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-		} catch {
-			// 저장 실패해도 화면 상태는 유지한다.
-		}
-	}
+	writeStorage(STORAGE_KEY, JSON.stringify(next));
 
 	for (const listener of listeners) {
 		listener();

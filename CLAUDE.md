@@ -22,15 +22,17 @@
 4. **등록한 달부터 집계한다.** 항목은 `createdAt`이 속한 달부터 잡히고, 그 이전 달에는
    나타나지 않는다(`trackedFromMonth`). 정리를 시작한 달부터가 믿을 수 있는 수치고,
    과거를 채워 넣으면 빠뜨린 항목 때문에 오히려 틀린 숫자가 된다.
-5. **해지는 지우지 않고 끝을 적는다.** `endedMonth`(마지막으로 돈이 나간 달)까지는 집계되고
+5. **월 수입도 이력으로 남긴다.** 연봉이 오르면 `setIncome(amount, 이번_달)`로 구간을 추가하고,
+   과거 달은 그때 금액으로 계산한다. 처음 적을 때나 "쭉 이 금액이었다"면 시작 월 없이 저장한다.
+6. **해지는 지우지 않고 끝을 적는다.** `endedMonth`(마지막으로 돈이 나간 달)까지는 집계되고
    다음 달부터 빠진다(`isEnded`). 삭제하면 지난달 숫자까지 바뀌어 버린다.
-6. **저축은 총액에서 뺀다.** 적금·청약·연금은 사라지는 돈이 아니라 옮기는 돈이라
+7. **저축은 총액에서 뺀다.** 적금·청약·연금은 사라지는 돈이 아니라 옮기는 돈이라
    고정지출 총액에 섞으면 과장된다(`isSaving`/`savingTotal`). 목록에는 그대로 보이되
    "총액 제외" 배지를 달고 따로 합산한다.
-7. **입력 횟수를 최소화한다.** 한 번 등록하면 12개월 유효해야 한다.
+8. **입력 횟수를 최소화한다.** 한 번 등록하면 12개월 유효해야 한다.
    매달 손대야 하는 기능(변동지출 기록·일일 입력)을 넣는 순간 사용자는 이탈한다.
    필수 입력은 **이름과 금액뿐**이고, 나머지는 기본값으로 넘어갈 수 있어야 한다.
-8. **하지 않는 것**: 보험/카드 추천·상담, 변동지출 가계부, 계좌 자동 연동, 자산·투자 관리.
+9. **하지 않는 것**: 보험/카드 추천·상담, 변동지출 가계부, 계좌 자동 연동, 자산·투자 관리.
    기능 제안을 받으면 먼저 기획서 2장 "하지 않는 것"과 충돌하는지 본다.
 
 ---
@@ -55,6 +57,8 @@
 | 도메인 타입 | `src/types/index.ts` — `FixedCharge` · `ChargeTerm` · `PaymentMethod` · `WithdrawalGroup` |
 | 계산(순수 함수) | `src/services/charges.ts` — 회차/활성 판정, `activeCharges` · `monthlyTotal` · `nextRelease` · `totalByMethodKind` · `categoryBreakdown` · `groupByCategory` · `yearlyTotals` · `yearlyCategoryTotals` · `transferCharges` · `withdrawalGroups` · `cardFixedTotal` |
 | 항목 저장소 | `src/services/chargeStore.ts` — localStorage(`monthlyout.charges.v1`) + 모듈 스토어. 변경은 `addCharge`/`updateCharge`/`removeCharge`/`clearCharges`로만 |
+| 설정·수입 저장소 | `src/services/settingsStore.ts` — 월 수입 **이력**(`incomes`: 시작 월 + 금액)과 알림 동의. 그 달 금액은 `incomeForMonth()`로 고른다 |
+| 저장소 공통 | `src/services/storage.ts` — localStorage 접근은 전부 여기를 거친다(테스트·시크릿 모드에서 죽지 않게) |
 | 이체 확인 저장소 | `src/services/confirmStore.ts` — `monthlyout.confirmations.v1`, `{ "2026-09": [chargeId] }`. **달마다 따로** 쌓인다 |
 | 화면 구독 | `src/hooks/useCharges.ts` · `src/hooks/useConfirmations.ts` — `useSyncExternalStore`. 화면에서 localStorage를 직접 읽지 말 것 |
 | 화면 | `src/pages/` — `Home` · `Manage` · `Yearly` · `MonthDetail` · `ChargeForm` · `Settings` · `NotFound` |

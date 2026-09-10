@@ -45,6 +45,7 @@ import {
 	transferCharges,
 } from "@/services/charges";
 import { toggleConfirmed } from "@/services/confirmStore";
+import { incomeForMonth } from "@/services/settingsStore";
 import { buildTips, pickNextTip } from "@/services/tips";
 import type { ChargeCategory } from "@/types";
 
@@ -416,7 +417,8 @@ export default function HomePage() {
 	const slices = categoryBreakdown(charges, ym);
 	const release = nextRelease(charges, ym);
 	const saving = savingTotal(charges, ym);
-	const income = settings.monthlyIncome;
+	// 과거 달을 보고 있으면 그때 적용되던 수입으로 계산한다.
+	const income = incomeForMonth(settings.incomes, ym);
 	const transfers = transferCharges(charges, ym);
 	// 오늘 빠지는 것들 — 이번 달을 보고 있을 때만 의미가 있다.
 	const today = new Date().getDate();

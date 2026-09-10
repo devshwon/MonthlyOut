@@ -1,3 +1,4 @@
+import { readStorage, writeStorage } from "@/services/storage";
 import type { ChargeDraft, FixedCharge } from "@/types";
 
 const STORAGE_KEY = "monthlyout.charges.v1";
@@ -32,11 +33,7 @@ function isFixedCharge(value: unknown): value is FixedCharge {
 }
 
 function load(): FixedCharge[] {
-	if (typeof localStorage === "undefined") {
-		return [];
-	}
-
-	const raw = localStorage.getItem(STORAGE_KEY);
+	const raw = readStorage(STORAGE_KEY);
 	if (!raw) {
 		return [];
 	}
@@ -52,13 +49,7 @@ function load(): FixedCharge[] {
 function persist(next: FixedCharge[]): void {
 	charges = next;
 
-	if (typeof localStorage !== "undefined") {
-		try {
-			localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-		} catch {
-			// 저장 실패(용량 초과 등)해도 화면 상태는 유지한다.
-		}
-	}
+	writeStorage(STORAGE_KEY, JSON.stringify(next));
 
 	for (const listener of listeners) {
 		listener();

@@ -1,6 +1,7 @@
 import { Paragraph, Switch, TextField } from "@toss/tds-mobile";
 import { useMemo, useState } from "react";
 import { MoneyBuddy } from "@/components/MoneyBuddy";
+import { PrimaryButton } from "@/components/PrimaryButton";
 import { NOTIFICATION_TEMPLATE_CODE } from "@/constants/notification";
 import { colors, radius, shadow, spacing } from "@/design/tokens";
 import { useAppSettings } from "@/hooks/useAppSettings";
@@ -11,11 +12,18 @@ import {
 	currentYearMonth,
 	formatAmount,
 	formatKrw,
+	formatYearMonth,
 	monthlyTotal,
 } from "@/services/charges";
 import { clearConfirmations } from "@/services/confirmStore";
 import { requestReminderAgreement } from "@/services/reminder";
-import { updateSettings } from "@/services/settingsStore";
+import {
+	currentIncome,
+	removeIncome,
+	SINCE_BEGINNING,
+	setIncome,
+	setNotificationAgreed,
+} from "@/services/settingsStore";
 
 const s = {
 	page: {
@@ -40,6 +48,24 @@ const s = {
 	} satisfies React.CSSProperties,
 	hint: { marginTop: spacing.xs } satisfies React.CSSProperties,
 	action: { marginTop: spacing.md } satisfies React.CSSProperties,
+	historyBox: {
+		marginTop: spacing.md,
+		paddingTop: spacing.sm,
+		borderTop: `1px solid ${colors.border}`,
+	} satisfies React.CSSProperties,
+	historyRow: {
+		display: "flex",
+		alignItems: "center",
+		gap: spacing.xs,
+		paddingTop: spacing.xs,
+	} satisfies React.CSSProperties,
+	historyLabel: { flex: 1 } satisfies React.CSSProperties,
+	historyRemove: {
+		padding: 0,
+		border: "none",
+		background: "none",
+		cursor: "pointer",
+	} satisfies React.CSSProperties,
 	/** 되돌릴 수 없는 동작이라 중립색 대신 위험색으로 */
 	dangerButton: {
 		display: "flex",
@@ -63,11 +89,16 @@ const s = {
 export default function SettingsPage() {
 	const charges = useCharges();
 	const ym = useMemo(() => currentYearMonth(), []);
+	const thisMonth = ym;
 	const [confirmingClear, setConfirmingClear] = useState(false);
 	const settings = useAppSettings();
+	const currentAmount = currentIncome(settings.incomes);
 	const [incomeText, setIncomeText] = useState(
-		settings.monthlyIncome ? String(settings.monthlyIncome) : "",
+		currentAmount ? String(currentAmount) : "",
 	);
+	// 이미 적어둔 금액이 있으면 "이번 달부터"가 기본 — 연봉이 오른 경우가 대부분이다.
+	const [applyFromThisMonth, setApplyFromThisMonth] = useState(true);
+	const incomeChanged = Number(incomeText || 0) !== (currentAmount ?? 0);
 	const [requestingAgreement, setRequestingAgreement] = useState(false);
 	const [agreementResult, setAgreementResult] = useState<string | null>(null);
 
@@ -77,7 +108,7 @@ export default function SettingsPage() {
 	 */
 	const handleNotification = async (checked: boolean) => {
 		if (!checked) {
-			updateSettings({ notificationAgreed: false });
+			setNotificationAgreed(false);
 			setAgreementResult(null);
 			return;
 		}
@@ -86,7 +117,7 @@ export default function SettingsPage() {
 		const result = await requestReminderAgreement(NOTIFICATION_TEMPLATE_CODE);
 		setRequestingAgreement(false);
 
-		updateSettings({ notificationAgreed: result === "agreed" });
+		setNotificationAgreed(result === "agreed");
 		setAgreementResult(result);
 	};
 
@@ -163,6 +194,7 @@ export default function SettingsPage() {
 						적어두면 고정지출을 뺀 "쓸 수 있는 돈"을 홈에서 알려줘요.
 					</Paragraph.Text>
 				</Paragraph>
+
 				<div style={s.action}>
 					<TextField
 						variant="box"
@@ -172,15 +204,89 @@ export default function SettingsPage() {
 						inputMode="numeric"
 						suffix="원"
 						value={incomeText ? formatAmount(Number(incomeText)) : ""}
-						onChange={(event) => {
-							const digits = event.target.value.replace(/\D/g, "").slice(0, 10);
-							setIncomeText(digits);
-							updateSettings({
-								monthlyIncome: digits ? Number(digits) : undefined,
-							});
-						}}
+						onChange={(event) =>
+							setIncomeText(event.target.value.replace(/\D/g, "").slice(0, 10))
+						}
 					/>
 				</div>
+
+				{settings.incomes.length > 0 ? (
+					<div style={s.row}>
+						<div>
+							<Paragraph typography="t6" color={colors.textPrimary}>
+								<Paragraph.Text>이번 달부터 적용</Paragraph.Text>
+							</Paragraph>
+							<Paragraph
+								typography="t7"
+								color={colors.textTertiary}
+								style={s.hint}
+							>
+								<Paragraph.Text>
+									{applyFromThisMonth
+										? `${formatYearMonth(thisMonth)}부터 새 금액으로 계산해요`
+										: "지난달까지도 이 금액이었던 걸로 봐요"}
+								</Paragraph.Text>
+							</Paragraph>
+						</div>
+						<Switch
+							checked={applyFromThisMonth}
+							onChange={(_, checked) => setApplyFromThisMonth(checked)}
+						/>
+					</div>
+				) : null}
+
+				<div style={s.action}>
+					<PrimaryButton
+						disabled={!incomeChanged}
+						onClick={() => {
+							const amount = Number(incomeText || 0);
+							setIncome(
+								amount,
+								applyFromThisMonth && settings.incomes.length > 0
+									? thisMonth
+									: undefined,
+							);
+						}}
+					>
+						월 수입 저장
+					</PrimaryButton>
+				</div>
+
+				{settings.incomes.length > 1 ? (
+					<div style={s.historyBox}>
+						<Paragraph typography="t7" color={colors.textTertiary}>
+							<Paragraph.Text>적어둔 수입</Paragraph.Text>
+						</Paragraph>
+						{settings.incomes.map((entry) => (
+							<div key={entry.fromMonth} style={s.historyRow}>
+								<Paragraph
+									typography="t7"
+									color={colors.textSecondary}
+									style={s.historyLabel}
+								>
+									<Paragraph.Text>
+										{entry.fromMonth === SINCE_BEGINNING
+											? "처음부터"
+											: `${formatYearMonth(entry.fromMonth)}부터`}
+									</Paragraph.Text>
+								</Paragraph>
+								<Paragraph typography="t7" color={colors.textPrimary}>
+									<Paragraph.Text>{formatKrw(entry.amount)}</Paragraph.Text>
+								</Paragraph>
+								<button
+									type="button"
+									style={s.historyRemove}
+									aria-label="이 구간 지우기"
+									onClick={() => removeIncome(entry.fromMonth)}
+								>
+									<Paragraph typography="t7" color={colors.textTertiary}>
+										<Paragraph.Text>지우기</Paragraph.Text>
+									</Paragraph>
+								</button>
+							</div>
+						))}
+					</div>
+				) : null}
 			</div>
 
 			<div style={s.card}>

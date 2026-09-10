@@ -14,6 +14,7 @@ import {
 	totalByMethodKind,
 	usedMethods,
 } from "@/services/charges";
+import { incomeForMonth, SINCE_BEGINNING } from "@/services/settingsStore";
 import type { ChargeCategory, FixedCharge, PaymentMethodKind } from "@/types";
 
 /** 2026-05에 등록한 항목을 기본으로 만든다. */
@@ -193,5 +194,23 @@ describe("표시 형식", () => {
 		expect(josa("학원·강의", "으로", "로")).toBe("로");
 		expect(josa("OTT·영상", "으로", "로")).toBe("으로");
 		expect(josa("ChatGPT", "으로", "로")).toBe("로");
+	});
+});
+
+describe("월 수입 이력", () => {
+	it("그 달에 적용되던 금액을 고른다", () => {
+		const incomes = [
+			{ fromMonth: SINCE_BEGINNING, amount: 3000000 },
+			{ fromMonth: "2026-07", amount: 3400000 },
+		];
+		expect(incomeForMonth(incomes, "2026-06")).toBe(3000000);
+		expect(incomeForMonth(incomes, "2026-07")).toBe(3400000);
+		expect(incomeForMonth(incomes, "2026-12")).toBe(3400000);
+	});
+
+	it("시작 구간보다 앞선 달은 값이 없다", () => {
+		expect(
+			incomeForMonth([{ fromMonth: "2026-07", amount: 100 }], "2026-06"),
+		).toBeUndefined();
 	});
 });
