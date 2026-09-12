@@ -56,7 +56,7 @@ import type { ChargeCategory, ChargeDraft, PaymentMethodKind } from "@/types";
 
 const s = {
 	page: {
-		padding: `${spacing.xs}px ${spacing.md}px 0`,
+		padding: `${spacing.md}px ${spacing.lg}px 0`,
 	} satisfies React.CSSProperties,
 	title: {
 		padding: `${spacing.sm}px 0 ${spacing.md}px`,
@@ -66,8 +66,8 @@ const s = {
 	 * 다만 **괘선은 깔지 않는다** — 입력 요소 높이가 제각각이라 줄과 절대 안 맞는다.
 	 */
 	card: {
-		padding: `${spacing.xs}px ${spacing.md}px ${spacing.md}px`,
-		marginBottom: spacing.sm,
+		padding: `${spacing.md}px ${spacing.lg}px ${spacing.md}px`,
+		marginBottom: spacing.md,
 		borderRadius: radius.xl,
 		backgroundColor: paperColors.surface,
 		boxShadow: shadow.card,
@@ -152,7 +152,7 @@ const s = {
 		display: "grid",
 		gridTemplateColumns: "repeat(2, 1fr)",
 		gap: spacing.xs,
-		marginBottom: spacing.sm,
+		marginBottom: spacing.md,
 	} satisfies React.CSSProperties,
 	presetTile: {
 		position: "relative" as const,

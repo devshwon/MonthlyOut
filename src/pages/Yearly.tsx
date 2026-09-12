@@ -22,7 +22,7 @@ import {
 
 const s = {
 	page: {
-		padding: `${spacing.xs}px ${spacing.md}px ${spacing.lg}px`,
+		padding: `${spacing.md}px ${spacing.lg}px ${spacing.lg}px`,
 	} satisfies React.CSSProperties,
 	header: {
 		display: "flex",
@@ -39,8 +39,8 @@ const s = {
 		display: "flex",
 		alignItems: "center",
 		justifyContent: "center",
-		width: 32,
-		height: 32,
+		width: 44,
+		height: 44,
 		border: "none",
 		borderRadius: radius.full,
 		backgroundColor: colors.surface,
@@ -48,8 +48,8 @@ const s = {
 		cursor: "pointer",
 	} satisfies React.CSSProperties,
 	card: {
-		padding: spacing.md,
-		marginBottom: spacing.sm,
+		padding: spacing.lg,
+		marginBottom: spacing.md,
 		borderRadius: radius.xl,
 		backgroundColor: colors.surface,
 		boxShadow: shadow.card,
@@ -57,17 +57,17 @@ const s = {
 	/** 1~12월 막대는 칠판에 분필로 그린 것처럼 */
 	boardCard: {
 		padding: `${spacing.md}px ${spacing.md}px ${spacing.sm}px`,
-		marginBottom: spacing.sm,
-		border: `7px solid ${boardColors.wood}`,
+		marginBottom: spacing.md,
+		border: `1px solid ${colors.surface}`,
 		borderRadius: radius.xl,
 		background: boardSurface,
-		boxShadow: `inset 0 0 24px rgba(0,0,0,0.35), ${shadow.card}`,
+		boxShadow: shadow.card,
 	} satisfies React.CSSProperties,
 	summaryRow: {
 		display: "flex",
 		gap: spacing.md,
 	} satisfies React.CSSProperties,
-	summaryItem: { flex: 1 } satisfies React.CSSProperties,
+	summaryItem: { flex: 1, minWidth: 0 } satisfies React.CSSProperties,
 	summaryValue: { marginTop: spacing.xxs } satisfies React.CSSProperties,
 	/** 분필로 칸을 그어 달마다 적어둔 느낌 */
 	monthGrid: {
@@ -86,7 +86,7 @@ const s = {
 		cursor: "pointer",
 	} satisfies React.CSSProperties,
 	monthAmount: {
-		textShadow: "0 0 8px rgba(244,243,236,0.3)",
+		fontVariantNumeric: "tabular-nums",
 	} satisfies React.CSSProperties,
 	chartHint: {
 		marginTop: spacing.sm,
@@ -183,10 +183,10 @@ export default function YearlyPage() {
 								style={{
 									...s.monthCell,
 									backgroundColor: isThisMonth
-										? "rgba(244, 243, 236, 0.14)"
-										: "transparent",
-									border: `1px ${isThisMonth ? "solid" : "dashed"} ${
-										isThisMonth ? boardColors.chalk : boardColors.chalkFaint
+										? colors.primarySoft
+										: colors.surface,
+									border: `1px solid ${
+										isThisMonth ? colors.primary : colors.border
 									}`,
 								}}
 								onClick={() => navigate(`/month/${month.ym}`)}
@@ -202,9 +202,7 @@ export default function YearlyPage() {
 									typography="t6"
 									fontWeight="bold"
 									color={
-										month.total === 0
-											? boardColors.chalkFaint
-											: boardColors.chalk
+										month.total === 0 ? colors.textTertiary : boardColors.chalk
 									}
 									style={s.monthAmount}
 								>

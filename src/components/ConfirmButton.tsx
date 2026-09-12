@@ -22,17 +22,17 @@ export function ConfirmButton({
 				flexShrink: 0,
 				alignItems: "center",
 				justifyContent: "center",
-				width: 30,
-				height: 30,
+				width: 44,
+				height: 44,
 				borderRadius: radius.full,
 				// 체크가 그려지면 동그라미는 지운다 — 펜 자국만 남은 것처럼 보이게.
 				border: done ? "none" : `1.5px solid ${colors.border}`,
-				background: "none",
+				background: done ? colors.primarySoft : colors.surface,
 				cursor: "pointer",
 			}}
 			onClick={onToggle}
 		>
-			{done ? <HandDrawnCheck size={24} /> : null}
+			{done ? <HandDrawnCheck size={22} color={colors.primary} /> : null}
 		</button>
 	);
 }

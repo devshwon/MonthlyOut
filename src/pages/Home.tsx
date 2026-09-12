@@ -58,7 +58,7 @@ const EMPTY_PREVIEW = [
 
 const s = {
 	page: {
-		padding: `${spacing.xs}px ${spacing.md}px ${spacing.lg}px`,
+		padding: `${spacing.md}px ${spacing.lg}px ${spacing.lg}px`,
 	} satisfies React.CSSProperties,
 	header: {
 		position: "relative" as const,
@@ -76,8 +76,8 @@ const s = {
 		display: "flex",
 		alignItems: "center",
 		justifyContent: "center",
-		width: 32,
-		height: 32,
+		width: 44,
+		height: 44,
 		border: "none",
 		borderRadius: radius.full,
 		background: "none",
@@ -89,8 +89,8 @@ const s = {
 		display: "flex",
 		alignItems: "center",
 		justifyContent: "center",
-		width: 36,
-		height: 36,
+		width: 44,
+		height: 44,
 		border: "none",
 		borderRadius: radius.full,
 		background: "none",
@@ -110,95 +110,50 @@ const s = {
 	} satisfies React.CSSProperties,
 	boardWrap: {
 		position: "relative" as const,
-		paddingBottom: 30,
+		paddingBottom: 0,
+		marginTop: spacing.sm,
 	} satisfies React.CSSProperties,
 	board: {
-		padding: `${spacing.lg}px ${spacing.lg}px ${spacing.md}px`,
-		border: `7px solid ${boardColors.wood}`,
+		padding: `${spacing.xl}px`,
+		border: `1px solid ${colors.surface}`,
 		borderRadius: radius.xl,
 		background: boardSurface,
-		boxShadow: `inset 0 0 24px rgba(0,0,0,0.35), ${shadow.card}`,
+		boxShadow: shadow.card,
 	} satisfies React.CSSProperties,
-	/** 칠판 아래 분필 선반 */
-	/** 칠판과 같은 폭으로 — 좁으면 단차가 생겨 어긋나 보인다 */
-	tray: {
-		position: "absolute" as const,
-		left: 0,
-		right: 0,
-		bottom: 6,
-		height: 12,
-		borderRadius: `0 0 ${radius.sm}px ${radius.sm}px`,
-		background: `linear-gradient(180deg, ${boardColors.wood} 0%, ${boardColors.woodDeep} 100%)`,
-		boxShadow: "0 3px 6px rgba(0,0,0,0.14)",
-	} satisfies React.CSSProperties,
-	trayChalk: {
-		position: "absolute" as const,
-		left: spacing.xl,
-		bottom: 13,
-		width: 26,
-		height: 7,
-		borderRadius: radius.full,
-		backgroundColor: boardColors.chalk,
-		opacity: 0.9,
-	} satisfies React.CSSProperties,
-	trayChalkShort: {
-		position: "absolute" as const,
-		left: spacing.xl + 34,
-		bottom: 13,
-		width: 14,
-		height: 7,
-		borderRadius: radius.full,
-		backgroundColor: "#BFE0D6",
-		opacity: 0.85,
-	} satisfies React.CSSProperties,
-	/** 선반 위에 두 발로 서서 칠판 옆을 지킨다. 눌러도 말풍선이 바뀐다. */
 	buddyOnTray: {
 		position: "absolute" as const,
-		// 칠판 밖으로 삐져나가면 잘려 보인다 — 선반 위 안쪽에 세운다.
-		right: spacing.xl,
-		bottom: 14,
+		right: spacing.lg,
+		top: spacing.lg,
 		padding: 0,
 		border: "none",
 		background: "none",
 		cursor: "pointer",
 	} satisfies React.CSSProperties,
 	chalkCaption: {
-		textAlign: "center" as const,
-		// "고 정 지 출" — 자간을 벌린 만큼 마지막 글자 뒤에 여백이 생겨서 들여쓰기로 보정한다.
-		letterSpacing: "0.4em",
-		textIndent: "0.4em",
-		textShadow: "0 0 8px rgba(244,243,236,0.35)",
-	} satisfies React.CSSProperties,
-	chalkRule: {
-		height: 1,
-		margin: `${spacing.sm}px auto 0`,
-		width: 132,
-		backgroundImage: `repeating-linear-gradient(90deg, ${boardColors.chalkDim} 0 6px, transparent 6px 12px)`,
+		textAlign: "left" as const,
 	} satisfies React.CSSProperties,
 	heroAmountRow: {
-		display: "grid",
-		gridTemplateColumns: "1fr auto 1fr",
+		display: "flex",
+		gap: spacing.xxs,
 		alignItems: "baseline",
-		marginTop: spacing.md,
+		marginTop: spacing.sm,
 	} satisfies React.CSSProperties,
 	heroNumber: {
-		gridColumn: 2,
-		textAlign: "center" as const,
-		textShadow: "0 0 10px rgba(244,243,236,0.35)",
+		fontVariantNumeric: "tabular-nums",
+		letterSpacing: "-0.04em",
+		fontSize: "clamp(26px, 8.5vw, 38px)",
+		overflowWrap: "anywhere" as const,
 	} satisfies React.CSSProperties,
-	heroUnit: {
-		gridColumn: 3,
-		justifySelf: "end" as const,
-	} satisfies React.CSSProperties,
+	heroUnit: { flexShrink: 0 } satisfies React.CSSProperties,
 	heroFooter: {
 		display: "flex",
-		justifyContent: "center",
+		justifyContent: "flex-start",
 		marginTop: spacing.md,
 	} satisfies React.CSSProperties,
 	heroPill: {
 		padding: `${spacing.xxs}px ${spacing.sm}px`,
 		borderRadius: radius.full,
-		border: `1px dashed ${boardColors.chalkDim}`,
+		backgroundColor: colors.primarySoft,
 	} satisfies React.CSSProperties,
 	methodRow: {
 		display: "flex",
@@ -207,7 +162,7 @@ const s = {
 	} satisfies React.CSSProperties,
 	methodCard: {
 		flex: 1,
-		padding: spacing.md,
+		padding: spacing.lg,
 		borderRadius: radius.xl,
 		backgroundColor: colors.surface,
 		boxShadow: shadow.card,
@@ -219,8 +174,8 @@ const s = {
 	} satisfies React.CSSProperties,
 	methodAmount: { marginTop: spacing.xs } satisfies React.CSSProperties,
 	card: {
-		padding: spacing.md,
-		marginTop: spacing.sm,
+		padding: spacing.lg,
+		marginTop: spacing.md,
 		borderRadius: radius.xl,
 		backgroundColor: colors.surface,
 		boxShadow: shadow.card,
@@ -230,7 +185,7 @@ const s = {
 		alignItems: "center",
 		justifyContent: "space-between",
 		gap: spacing.xs,
-		marginBottom: spacing.sm,
+		marginBottom: spacing.md,
 	} satisfies React.CSSProperties,
 	sliceRow: {
 		display: "flex",
@@ -339,23 +294,12 @@ const s = {
 	} satisfies React.CSSProperties,
 	bubble: {
 		position: "relative" as const,
-		maxWidth: "88%",
+		width: "100%",
 		padding: `${spacing.sm}px ${spacing.md}px`,
 		borderRadius: radius.lg,
 		backgroundColor: colors.surface,
 		boxShadow: shadow.card,
 		textAlign: "left" as const,
-	} satisfies React.CSSProperties,
-	/** 칠판 위 캐릭터에서 말이 나오는 것처럼 꼬리를 오른쪽 위로 */
-	bubbleTail: {
-		position: "absolute" as const,
-		right: 22,
-		top: -4,
-		width: 10,
-		height: 10,
-		borderRadius: 2,
-		backgroundColor: colors.surface,
-		transform: "rotate(45deg)",
 	} satisfies React.CSSProperties,
 	empty: {
 		marginTop: spacing.sm,
@@ -367,8 +311,8 @@ const s = {
 	} satisfies React.CSSProperties,
 	emptyBubble: {
 		display: "inline-block",
-		padding: `${spacing.xs}px ${spacing.md}px`,
-		marginBottom: spacing.sm,
+		padding: `${spacing.md}px ${spacing.lg}px`,
+		marginBottom: spacing.md,
 		borderRadius: radius.full,
 		backgroundColor: colors.primarySoft,
 	} satisfies React.CSSProperties,
@@ -521,9 +465,8 @@ export default function HomePage() {
 						color={boardColors.chalk}
 						style={s.chalkCaption}
 					>
-						<Paragraph.Text>고정지출</Paragraph.Text>
+						<Paragraph.Text>이번 달 고정지출</Paragraph.Text>
 					</Paragraph>
-					<div style={s.chalkRule} />
 
 					<div style={s.heroAmountRow}>
 						<Paragraph
@@ -565,7 +508,7 @@ export default function HomePage() {
 									<Paragraph.Text>
 										{visible.length > 0
 											? `고정지출 ${visible.length}개`
-											: "아직 적을 게 없어요"}
+											: "첫 지출을 등록해 보세요"}
 									</Paragraph.Text>
 								</Paragraph>
 							</div>
@@ -573,16 +516,13 @@ export default function HomePage() {
 					)}
 				</div>
 
-				<div style={s.tray} />
-				<span style={s.trayChalk} />
-				<span style={s.trayChalkShort} />
 				<button
 					type="button"
 					style={s.buddyOnTray}
 					aria-label="다른 이야기 듣기"
 					onClick={showNextTip}
 				>
-					<MoneyBuddy size={66} holdingChalk />
+					<MoneyBuddy size={44} />
 				</button>
 			</div>
 
@@ -610,7 +550,6 @@ export default function HomePage() {
 					onClick={showNextTip}
 				>
 					<div style={s.bubble}>
-						<span style={s.bubbleTail} />
 						<Paragraph typography="t7" color={colors.textSecondary}>
 							<Paragraph.Text>{currentTip}</Paragraph.Text>
 						</Paragraph>
@@ -660,14 +599,16 @@ export default function HomePage() {
 						color={colors.textPrimary}
 						style={s.emptyTitle}
 					>
-						<Paragraph.Text>칠판이 아직 비어 있어요</Paragraph.Text>
+						<Paragraph.Text>매달 나가는 돈, 한눈에</Paragraph.Text>
 					</Paragraph>
 					<Paragraph
 						typography="t7"
 						color={colors.textTertiary}
 						style={s.emptyDescription}
 					>
-						<Paragraph.Text>하나씩 적어두면 이렇게 채워져요</Paragraph.Text>
+						<Paragraph.Text>
+							구독료부터 할부까지 한곳에서 관리해요
+						</Paragraph.Text>
 					</Paragraph>
 
 					<div style={s.previewBox}>
@@ -701,8 +642,8 @@ export default function HomePage() {
 					</div>
 
 					<div style={s.emptyCta}>
-						<PrimaryButton onClick={() => navigate("/manage")}>
-							관리에서 첫 항목 적기
+						<PrimaryButton onClick={() => navigate("/charge/new")}>
+							첫 고정지출 등록하기
 						</PrimaryButton>
 					</div>
 				</div>

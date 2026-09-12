@@ -27,14 +27,14 @@ import {
 
 const s = {
 	page: {
-		padding: `${spacing.xs}px ${spacing.md}px ${spacing.lg}px`,
+		padding: `${spacing.md}px ${spacing.lg}px ${spacing.lg}px`,
 	} satisfies React.CSSProperties,
 	title: {
 		padding: `${spacing.sm}px 0 ${spacing.md}px`,
 	} satisfies React.CSSProperties,
 	card: {
-		padding: spacing.md,
-		marginBottom: spacing.sm,
+		padding: spacing.lg,
+		marginBottom: spacing.md,
 		borderRadius: radius.xl,
 		backgroundColor: colors.surface,
 		boxShadow: shadow.card,

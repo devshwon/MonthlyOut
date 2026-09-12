@@ -30,7 +30,7 @@ import {
 
 const s = {
 	page: {
-		padding: `${spacing.xs}px ${spacing.md}px ${spacing.xs}px`,
+		padding: `${spacing.md}px ${spacing.lg}px ${spacing.xs}px`,
 	} satisfies React.CSSProperties,
 	header: {
 		padding: `${spacing.xs}px 0 ${spacing.sm}px`,
@@ -46,7 +46,7 @@ const s = {
 	} satisfies React.CSSProperties,
 	summary: { marginTop: spacing.xxs } satisfies React.CSSProperties,
 	section: {
-		marginBottom: spacing.sm,
+		marginBottom: spacing.md,
 		borderRadius: radius.xl,
 		backgroundColor: colors.surface,
 		boxShadow: shadow.card,
@@ -119,7 +119,8 @@ const s = {
 		display: "flex",
 		alignItems: "center",
 		justifyContent: "center",
-		width: 56,
+		padding: "0 20px",
+		gap: spacing.xs,
 		height: 56,
 		border: "none",
 		borderRadius: radius.full,
@@ -174,7 +175,6 @@ export default function ManagePage() {
 					>
 						<Paragraph.Text>관리</Paragraph.Text>
 					</Paragraph>
-					<div style={s.titleUnderline} />
 				</div>
 				<Paragraph
 					typography="t7"
@@ -203,7 +203,9 @@ export default function ManagePage() {
 						color={colors.textTertiary}
 						style={s.emptyDescription}
 					>
-						<Paragraph.Text>아래 + 버튼으로 하나씩 넣어보세요.</Paragraph.Text>
+						<Paragraph.Text>
+							지출 추가를 눌러 매달 나가는 돈을 기록해 보세요.
+						</Paragraph.Text>
 					</Paragraph>
 				</div>
 			) : (
@@ -287,7 +289,10 @@ export default function ManagePage() {
 					aria-label="항목 적기"
 					onClick={() => navigate("/charge/new")}
 				>
-					<IconPencil size={24} color={colors.textOnDark} />
+					<IconPencil size={20} color={colors.textOnDark} />
+					<span style={{ color: colors.textOnDark, fontWeight: 600 }}>
+						지출 추가
+					</span>
 				</button>
 			</div>
 		</div>

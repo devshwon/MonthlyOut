@@ -1,14 +1,9 @@
-import { paperColors } from "@/design/tokens";
+import { colors } from "@/design/tokens";
 
-/**
- * 빨간펜으로 그은 체크.
- *
- * 초록 동그라미는 앱 UI 기본값처럼 보인다 — 노트에 적어두고 처리한 걸 표시하는
- * 관습은 옆에 체크를 긋는 것이라, 손으로 그은 획으로 그린다.
- */
+/** 결제 확인 상태를 표시하는 공통 체크. */
 export function HandDrawnCheck({
 	size = 22,
-	color = paperColors.redPen,
+	color = colors.primary,
 }: {
 	size?: number;
 	color?: string;

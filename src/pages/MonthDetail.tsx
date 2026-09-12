@@ -41,7 +41,7 @@ import { toggleConfirmed } from "@/services/confirmStore";
 
 const s = {
 	page: {
-		padding: `${spacing.xs}px ${spacing.md}px ${spacing.lg}px`,
+		padding: `${spacing.md}px ${spacing.lg}px ${spacing.lg}px`,
 	} satisfies React.CSSProperties,
 	topBar: {
 		display: "flex",
@@ -68,8 +68,8 @@ const s = {
 		gap: spacing.xxs,
 	} satisfies React.CSSProperties,
 	summary: {
-		padding: spacing.md,
-		marginBottom: spacing.sm,
+		padding: spacing.lg,
+		marginBottom: spacing.md,
 		borderRadius: radius.xxl,
 		backgroundColor: colors.surface,
 		boxShadow: shadow.card,
@@ -94,7 +94,7 @@ const s = {
 		backgroundImage: paperBackground,
 	} satisfies React.CSSProperties,
 	inlineAd: {
-		marginBottom: spacing.sm,
+		marginBottom: spacing.md,
 		borderRadius: radius.xl,
 		overflow: "hidden",
 	} satisfies React.CSSProperties,
@@ -114,7 +114,7 @@ const s = {
 		cursor: "pointer",
 	} satisfies React.CSSProperties,
 	card: {
-		marginBottom: spacing.sm,
+		marginBottom: spacing.md,
 		borderRadius: radius.xl,
 		backgroundColor: colors.surface,
 		boxShadow: shadow.card,

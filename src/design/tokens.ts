@@ -37,12 +37,12 @@ export function radiusPx(key: RadiusKey): string {
  * (desigin/toss-look.md — "토큰만 사용")
  */
 export const colors = {
-	/** 화면 배경 — 교실 종이 같은 따뜻한 밝은 톤 */
-	background: "#F6F4EF",
+	/** 화면 배경 */
+	background: "#F4F6F9",
 	/** 카드·리스트 표면 */
 	surface: "#FFFFFF",
 	/** 한 단계 낮은 표면(칩·트랙) */
-	surfaceSunken: "#EFEDE7",
+	surfaceSunken: "#F2F4F6",
 	/** 구분선 */
 	border: "#E5E8EB",
 	/** 본문 강조 */
@@ -50,19 +50,16 @@ export const colors = {
 	/** 본문 */
 	textSecondary: "#4E5968",
 	/** 보조 설명 */
-	textTertiary: "#8B95A1",
+	textTertiary: "#6B7684",
 	/** 어두운 배경 위 텍스트 */
 	textOnDark: "#FFFFFF",
 	/** 브랜드 */
 	primary: "#3182F6",
 	primarySoft: "#E8F1FE",
-	/**
-	 * 액션 색. 칠판에서 가져온 초록이라 이 앱의 색으로 읽힌다.
-	 * 토스 파랑(primary)은 링크·선택 표시처럼 시스템 신호에만 남긴다.
-	 */
-	accent: "#2F4A40",
-	accentPressed: "#264037",
-	accentSoft: "#E9EFEC",
+	/** 주요 액션 */
+	accent: "#3182F6",
+	accentPressed: "#1B64DA",
+	accentSoft: "#E8F1FE",
 	/** 금액이 풀리는 등 긍정 신호 */
 	positive: "#12B76A",
 	positiveSoft: "#E4F7EE",
@@ -72,33 +69,23 @@ export const colors = {
 
 export type ColorKey = keyof typeof colors;
 
-/**
- * 칠판. 총액처럼 "선생님이 칠판에 적어준 숫자" 느낌을 주는 자리에만 쓴다.
- * 화면 전체를 어둡게 칠하지는 않는다 — 미니앱은 라이트 모드가 원칙이다
- * (prompts/99-last-checklist.md 3-2).
- */
+/** 요약 카드의 공통 색상. 홈과 연간 화면에서 같은 위계를 사용한다. */
 export const boardColors = {
-	/** 칠판 면 */
-	surface: "#2F4A40",
-	surfaceDeep: "#264037",
-	/** 나무 프레임 */
-	wood: "#C89257",
-	woodDeep: "#A9733C",
-	/** 분필 글씨 */
-	chalk: "#F4F3EC",
-	/** 흐린 분필(보조 텍스트·선) */
-	chalkDim: "rgba(244, 243, 236, 0.62)",
-	/** 분필 자국이 남은 면 */
-	chalkFaint: "rgba(244, 243, 236, 0.18)",
+	surface: "#FFFFFF",
+	surfaceDeep: "#E8F1FE",
+	wood: "#E8F1FE",
+	woodDeep: "#D0E3FF",
+	chalk: "#191F28",
+	chalkDim: "#6B7684",
+	chalkFaint: "#DDE5EF",
 } as const;
 
-/** 칠판 면 — 가운데가 살짝 밝은 진짜 칠판 느낌 */
 export const boardSurface =
-	"radial-gradient(120% 90% at 50% 35%, #35544A 0%, #2F4A40 45%, #26403F 100%)";
+	"linear-gradient(145deg, #FFFFFF 35%, #EDF5FF 100%)";
 
 export const shadow = {
-	card: "0 2px 8px rgba(25, 31, 40, 0.05)",
-	floating: "0 6px 20px rgba(25, 31, 40, 0.16)",
+	card: "0 2px 12px rgba(25, 31, 40, 0.025)",
+	floating: "0 8px 28px rgba(25, 31, 40, 0.12)",
 	hero: "0 10px 24px rgba(61, 123, 247, 0.28)",
 } as const;
 
@@ -152,7 +139,7 @@ export const characterColors = {
  */
 export const paperColors = {
 	/** 종이 면 */
-	surface: "#FFFDF7",
+	surface: "#FFFFFF",
 	/** 가로 괘선 */
 	rule: "#E2EAF2",
 	/** 채점하듯 긋는 빨간펜 */
@@ -167,7 +154,7 @@ export const paperRuleHeight = 32;
  * 왼쪽 빨간 여백선은 뺐다 — 목록 왼쪽이 아이콘으로 이미 정렬돼 있어서 선이 하나 더 있으면
  * 애매하게 겹쳐 보인다.
  */
-export const paperBackground = `repeating-linear-gradient(180deg, transparent 0 ${paperRuleHeight - 1}px, ${paperColors.rule} ${paperRuleHeight - 1}px ${paperRuleHeight}px)`;
+export const paperBackground = "none";
 
 /**
  * 손으로 슥 그린 동그라미 느낌의 테두리 반경.

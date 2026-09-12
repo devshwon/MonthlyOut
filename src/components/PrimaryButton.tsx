@@ -20,17 +20,12 @@ const s = {
 		gap: spacing.xs,
 		height: 54,
 		border: "none",
-		borderRadius: radius.full,
+		borderRadius: radius.lg,
 		cursor: "pointer",
 	} satisfies React.CSSProperties,
 };
 
-/**
- * 앱의 주 액션 버튼.
- *
- * TDS Button 대신 쓰는 이유 — 색을 칠판 초록(`colors.accent`)으로 맞추기 위해서다.
- * 높이(54)·라운드·비활성 처리는 TDS 규격을 그대로 따라 이질감이 없게 한다.
- */
+/** 앱 전체에서 사용하는 주요 액션 버튼. */
 export function PrimaryButton({
 	children,
 	onClick,

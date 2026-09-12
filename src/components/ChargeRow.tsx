@@ -21,7 +21,8 @@ const s = {
 		alignItems: "center",
 		gap: spacing.sm,
 		width: "100%",
-		padding: `${spacing.sm}px ${spacing.md}px`,
+		padding: `${spacing.md}px`,
+		borderBottom: `1px solid ${colors.surfaceSunken}`,
 	} satisfies React.CSSProperties,
 	/** 행 본문(누르면 수정으로) — 액세서리가 버튼일 수 있어 따로 둔다 */
 	main: {
@@ -47,6 +48,7 @@ const s = {
 	} satisfies React.CSSProperties,
 	body: { flex: 1, minWidth: 0 } satisfies React.CSSProperties,
 	nameLine: {
+		flexWrap: "wrap" as const,
 		display: "flex",
 		alignItems: "center",
 		gap: spacing.xxs,
@@ -176,7 +178,12 @@ export function ChargeRow({
 					) : null}
 				</div>
 
-				<Paragraph typography="t6" fontWeight="bold" color={colors.textPrimary}>
+				<Paragraph
+					typography="t6"
+					fontWeight="bold"
+					color={colors.textPrimary}
+					style={{ flexShrink: 0, fontVariantNumeric: "tabular-nums" }}
+				>
 					<Paragraph.Text>{formatKrw(charge.amount)}</Paragraph.Text>
 				</Paragraph>
 			</button>

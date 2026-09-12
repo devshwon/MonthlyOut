@@ -12,7 +12,7 @@ const TABS = [
 /** 플로팅 탭바 높이 */
 export const NAV_HEIGHT = 60;
 /** 화면 하단(세이프에어리어 위)과 탭바 사이 간격 */
-export const NAV_GAP = 4;
+export const NAV_GAP = 12;
 
 /**
  * 탭바에 가리지 않으려면 콘텐츠 하단에 이만큼 비워야 한다.
@@ -73,16 +73,22 @@ export function BottomNav() {
 
 	return (
 		<div style={{ ...s.layer, bottom: NAV_GAP }}>
-			<nav style={s.bar}>
+			<nav style={s.bar} aria-label="주요 메뉴">
 				{TABS.map(({ path, label, Icon }) => {
-					const active = current === path;
+					const active =
+						current === path ||
+						(path === "/yearly" && current.startsWith("/month/"));
 					const color = active ? colors.accent : colors.textTertiary;
 
 					return (
 						<button
 							key={path}
 							type="button"
-							style={s.tab}
+							style={{
+								...s.tab,
+								backgroundColor: active ? colors.primarySoft : "transparent",
+								height: 48,
+							}}
 							aria-current={active ? "page" : undefined}
 							onClick={() => navigate(path)}
 						>
