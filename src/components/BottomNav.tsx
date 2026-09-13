@@ -1,12 +1,31 @@
 import { Paragraph } from "@toss/tds-mobile";
 import { useLocation, useNavigate } from "react-router-dom";
-import { IconHome, IconManage, IconYearly } from "@/components/icons";
+import {
+	IconHome,
+	IconManage,
+	IconMonth,
+	IconYearly,
+} from "@/components/icons";
 import { colors, radius, shadow, spacing } from "@/design/tokens";
+import { currentYearMonth } from "@/services/charges";
 
+/**
+ * 탭 넷. **다섯을 넘기지 않는다**(검수 2-10: 2~5개).
+ *
+ * "이번 달"은 경로가 고정이 아니라 오늘이 속한 달이라 `path`를 함수로 둔다 —
+ * 지난달을 보다가 눌러도 이번 달로 돌아오는 게 이 탭의 쓸모다.
+ */
 const TABS = [
-	{ path: "/", label: "홈", Icon: IconHome },
-	{ path: "/manage", label: "관리", Icon: IconManage },
-	{ path: "/yearly", label: "연간", Icon: IconYearly },
+	{ path: () => "/", label: "홈", Icon: IconHome },
+	{ path: () => "/manage", label: "관리", Icon: IconManage },
+	{
+		path: () => `/month/${currentYearMonth()}`,
+		label: "이번 달",
+		Icon: IconMonth,
+		// 어느 달을 보고 있든 이 탭이 켜져 있어야 지금 어디인지 읽힌다.
+		match: (pathname: string) => pathname.startsWith("/month/"),
+	},
+	{ path: () => "/yearly", label: "연간", Icon: IconYearly },
 ] as const;
 
 /** 플로팅 탭바 높이 */
@@ -47,7 +66,8 @@ const s = {
 		alignItems: "center",
 		justifyContent: "center",
 		gap: 2,
-		width: 72,
+		// 탭이 넷이라 좁은 화면(360px)에서도 알약이 화면을 넘지 않게 폭을 줄였다.
+		width: 66,
 		height: "100%",
 		border: "none",
 		borderRadius: radius.full,
@@ -74,15 +94,16 @@ export function BottomNav() {
 	return (
 		<div style={{ ...s.layer, bottom: NAV_GAP }}>
 			<nav style={s.bar} aria-label="주요 메뉴">
-				{TABS.map(({ path, label, Icon }) => {
+				{TABS.map((tab) => {
+					const { label, Icon } = tab;
+					const target = tab.path();
 					const active =
-						current === path ||
-						(path === "/yearly" && current.startsWith("/month/"));
+						"match" in tab ? tab.match(current) : current === target;
 					const color = active ? colors.accent : colors.textTertiary;
 
 					return (
 						<button
-							key={path}
+							key={label}
 							type="button"
 							style={{
 								...s.tab,
@@ -90,7 +111,14 @@ export function BottomNav() {
 								height: 48,
 							}}
 							aria-current={active ? "page" : undefined}
-							onClick={() => navigate(path)}
+							onClick={() =>
+								// 이미 어떤 달을 보고 있다면 이번 달로 갈아타는 것이지
+								// 새 화면으로 들어가는 게 아니다 — 스택에 쌓지 않는다.
+								navigate(target, {
+									replace: active,
+									state: active ? { stackReplace: true } : undefined,
+								})
+							}
 						>
 							<Icon size={22} color={color} strokeWidth={active ? 2.2 : 1.8} />
 							<Paragraph

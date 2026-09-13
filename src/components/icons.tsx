@@ -68,6 +68,19 @@ export function IconYearly(props: IconProps) {
 	);
 }
 
+/** 이번 달 상세 — 달력에 체크. "이 달 것을 확인한다"는 화면이라 체크를 넣는다. */
+export function IconMonth(props: IconProps) {
+	return (
+		<Svg {...props}>
+			<path d="M4 7.5A1.5 1.5 0 0 1 5.5 6h13A1.5 1.5 0 0 1 20 7.5v11A1.5 1.5 0 0 1 18.5 20h-13A1.5 1.5 0 0 1 4 18.5z" />
+			<path d="M4 10h16" />
+			<path d="M8 4v3" />
+			<path d="M16 4v3" />
+			<path d="m9 14.5 2 2 4-4" />
+		</Svg>
+	);
+}
+
 export function IconSettings(props: IconProps) {
 	return (
 		<Svg {...props}>

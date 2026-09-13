@@ -17,6 +17,5 @@ export const NOTIFICATION_TEMPLATE_CODE = "__PUT_NOTIFICATION_TEMPLATE_CODE__";
  * "동의하지 않아서 알림은 오지 않아요"가 뜬다. 사용자에겐 앱이 멈췄다 고장난 것으로
  * 보이는데, 실제로는 우리가 등록을 안 한 것뿐이다.
  */
-export const NOTIFICATION_READY = !NOTIFICATION_TEMPLATE_CODE.includes(
-	"PUT_NOTIFICATION",
-);
+export const NOTIFICATION_READY =
+	!NOTIFICATION_TEMPLATE_CODE.includes("PUT_NOTIFICATION");
