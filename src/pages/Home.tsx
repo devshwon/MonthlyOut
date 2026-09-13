@@ -30,8 +30,6 @@ import { useCountUp } from "@/hooks/useCountUp";
 import {
 	activeCharges,
 	addMonths,
-	CATEGORY_LABEL,
-	categoryBreakdown,
 	chargesDueOn,
 	currentYearMonth,
 	formatAmount,
@@ -47,7 +45,6 @@ import {
 import { toggleConfirmed } from "@/services/confirmStore";
 import { incomeForMonth } from "@/services/settingsStore";
 import { buildTips, pickNextTip } from "@/services/tips";
-import type { ChargeCategory } from "@/types";
 
 /** 빈 화면에서 "이렇게 채워져요"를 보여주는 예시. 저장되는 값이 아니다. */
 const EMPTY_PREVIEW = [
@@ -207,46 +204,6 @@ const s = {
 		justifyContent: "space-between",
 		gap: spacing.xs,
 		marginBottom: spacing.md,
-	} satisfies React.CSSProperties,
-	sliceRow: {
-		display: "flex",
-		alignItems: "center",
-		gap: spacing.xs,
-		width: "100%",
-		padding: `${spacing.xs}px 0`,
-		border: "none",
-		background: "none",
-		cursor: "pointer",
-	} satisfies React.CSSProperties,
-	sliceDot: {
-		flexShrink: 0,
-		width: 8,
-		height: 8,
-		borderRadius: radius.full,
-	} satisfies React.CSSProperties,
-	sliceLabel: {
-		flex: 1,
-		textAlign: "left" as const,
-	} satisfies React.CSSProperties,
-	sliceItems: {
-		padding: `${spacing.xxs}px 0 ${spacing.xs}px ${spacing.md}px`,
-	} satisfies React.CSSProperties,
-	sliceItem: {
-		display: "flex",
-		alignItems: "center",
-		gap: spacing.xs,
-		width: "100%",
-		padding: `${spacing.xxs}px 0`,
-		border: "none",
-		background: "none",
-		cursor: "pointer",
-	} satisfies React.CSSProperties,
-	sliceItemName: {
-		flex: 1,
-		textAlign: "left" as const,
-		overflow: "hidden",
-		textOverflow: "ellipsis",
-		whiteSpace: "nowrap" as const,
 	} satisfies React.CSSProperties,
 	incomeCard: {
 		marginTop: spacing.md,
@@ -412,7 +369,6 @@ export default function HomePage() {
 	);
 	const total = monthlyTotal(charges, ym);
 	const methods = totalByMethodKind(charges, ym);
-	const slices = categoryBreakdown(charges, ym);
 	const release = nextRelease(charges, ym);
 	const saving = savingTotal(charges, ym);
 	// 과거 달을 보고 있으면 그때 적용되던 수입으로 계산한다.
@@ -451,7 +407,6 @@ export default function HomePage() {
 		total,
 		release,
 	});
-	const [openCategory, setOpenCategory] = useState<ChargeCategory | null>(null);
 	const [showDoneToday, setShowDoneToday] = useState(false);
 	const [allowanceOpen, setAllowanceOpen] = useState(false);
 	const [tip, setTip] = useState(() => tips[0]);
@@ -868,105 +823,8 @@ export default function HomePage() {
 						</div>
 					) : null}
 
-					{slices.length > 0 ? (
-						<div style={s.card}>
-							<div style={s.cardHead}>
-								<Paragraph
-									typography="t6"
-									fontWeight="bold"
-									color={colors.textPrimary}
-								>
-									<Paragraph.Text>어디에 나가고 있나요</Paragraph.Text>
-								</Paragraph>
-							</div>
-
-							{slices.map((slice) => {
-								const open = openCategory === slice.category;
-								const items = visible.filter(
-									(charge) => charge.category === slice.category,
-								);
-
-								return (
-									<div key={slice.category}>
-										<button
-											type="button"
-											aria-expanded={open}
-											style={s.sliceRow}
-											onClick={() =>
-												setOpenCategory(open ? null : slice.category)
-											}
-										>
-											<span
-												style={{
-													...s.sliceDot,
-													backgroundColor: categoryColors[slice.category],
-												}}
-											/>
-											<Paragraph
-												typography="t7"
-												color={colors.textSecondary}
-												style={s.sliceLabel}
-											>
-												<Paragraph.Text>
-													{`${CATEGORY_LABEL[slice.category]} ${Math.round(slice.ratio * 100)}%`}
-												</Paragraph.Text>
-											</Paragraph>
-											<Paragraph
-												typography="t7"
-												fontWeight="bold"
-												color={colors.textPrimary}
-											>
-												<Paragraph.Text>
-													{formatKrw(slice.amount)}
-												</Paragraph.Text>
-											</Paragraph>
-											<span
-												style={{
-													display: "flex",
-													transform: open ? "rotate(90deg)" : "none",
-													transition: "transform 120ms ease",
-												}}
-											>
-												<IconChevronRight
-													size={14}
-													color={colors.textTertiary}
-												/>
-											</span>
-										</button>
-
-										{open ? (
-											<div style={s.sliceItems}>
-												{items.map((charge) => (
-													<button
-														key={charge.id}
-														type="button"
-														style={s.sliceItem}
-														onClick={() => navigate(`/charge/${charge.id}`)}
-													>
-														<Paragraph
-															typography="t7"
-															color={colors.textSecondary}
-															style={s.sliceItemName}
-														>
-															<Paragraph.Text>{charge.name}</Paragraph.Text>
-														</Paragraph>
-														<Paragraph
-															typography="t7"
-															color={colors.textTertiary}
-														>
-															<Paragraph.Text>
-																{formatKrw(charge.amount)}
-															</Paragraph.Text>
-														</Paragraph>
-													</button>
-												))}
-											</div>
-										) : null}
-									</div>
-								);
-							})}
-						</div>
-					) : null}
+					{/* 카테고리 구성은 "이번 달" 탭이 목록과 함께 보여준다 —
+					    같은 그림을 홈에도 두면 화면만 길어지고 볼 곳이 갈린다. */}
 				</>
 			)}
 		</div>

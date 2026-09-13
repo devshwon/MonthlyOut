@@ -40,15 +40,21 @@
 ## 화면 구조
 
 하단 탭 4개(**홈 · 관리 · 이번 달 · 연간**) + 홈 우상단 설정 아이콘.
+
+**화면마다 하는 일이 하나씩이다 — 같은 목록을 두 곳에 두지 않는다.**
+홈은 숫자, 관리는 목록을 고치는 곳, 이번 달은 날짜순으로 확인하는 곳, 연간은 추세다.
+관리와 이번 달은 같은 항목을 다루지만 **세우는 축이 다르다**(카테고리 ↔ 날짜).
+같은 축으로 두 번 세우면 어느 화면을 봐야 할지 사라진다 — 카테고리 비율을 홈에서
+뺀 것도 그래서다.
 탭은 **5개를 넘기지 않는다**(검수 2-10). "이번 달" 탭의 경로는 고정이 아니라 오늘이 속한 달이고,
 어느 달을 보고 있든 이 탭이 켜진다.
 
 | 화면 | 경로 | 하는 일 |
 |---|---|---|
-| 홈 | `/` | 이번 달 총액(칠판 히어로) · **오늘 빠지는 돈**(눌러서 확인 체크) · 고정이 한마디 + 응원하기 · 월급 카드(남는 돈) · 카드/이체 분리 · 카테고리 비율 |
-| 관리 | `/manage` | 등록된 항목을 **카테고리별**로 묶어 보여주고 + 버튼으로 추가 |
+| 홈 | `/` | **숫자만.** 이번 달 총액(칠판) · 고정이 한마디 + 응원 · 월급 카드(남는 돈) · 카드/이체 분리 · 오늘 빠지는 돈(확인 체크) |
+| 관리 | `/manage` | **카테고리별 목록.** 등록된 **전체**(해지·지난 항목 포함, 달 무관)를 묶어 보여주고 연필 버튼으로 추가·수정 |
 | 연간 | `/yearly` | 1~12월 막대(월 탭 → 그 달 상세) · 연 합계/월 평균 · 카테고리별 연간 합계 |
-| 이번 달(상세) | `/month/:ym` | 탭으로 바로 간다. 그 달 요약 · **확인 체크**(항목마다) · 카테고리별 정리. 월 이동 가능 |
+| 이번 달 | `/month/:ym` | **날짜순 체크리스트.** 그 달 요약 · 5일 → 25일 순으로 묶은 출금 목록(항목마다 확인 체크) · 카테고리 비율. 월 이동 가능 |
 | 등록/수정 | `/charge/new`, `/charge/:id` | 항목 폼 |
 | 설정 | `/settings` | 현황 · **월 수입**(이력·이번 달부터 적용) · 결제일 알림 동의 · 앱 정보 · 데이터 초기화 |
 
@@ -57,7 +63,7 @@
 | 무엇 | 어디 |
 |---|---|
 | 도메인 타입 | `src/types/index.ts` — `FixedCharge` · `ChargeTerm` · `PaymentMethod` · `WithdrawalGroup` |
-| 계산(순수 함수) | `src/services/charges.ts` — 회차/활성 판정, `activeCharges` · `monthlyTotal` · `nextRelease` · `totalByMethodKind` · `categoryBreakdown` · `groupByCategory` · `yearlyTotals` · `yearlyCategoryTotals` · `transferCharges` · `withdrawalGroups` · `cardFixedTotal` |
+| 계산(순수 함수) | `src/services/charges.ts` — 회차/활성 판정, `activeCharges` · `monthlyTotal` · `nextRelease` · `totalByMethodKind` · `categoryBreakdown` · `groupByCategory`(카테고리 축) · **`dueDayGroups`(날짜 축)** · `yearlyTotals` · `yearlyCategoryTotals` · `transferCharges` · `withdrawalGroups` · `cardFixedTotal` |
 | 항목 저장소 | `src/services/chargeStore.ts` — localStorage(`monthlyout.charges.v1`) + 모듈 스토어. 변경은 `addCharge`/`updateCharge`/`removeCharge`/`clearCharges`로만 |
 | 설정·수입 저장소 | `src/services/settingsStore.ts` — 월 수입 **이력**(`incomes`: 시작 월 + 금액)과 알림 동의. 그 달 금액은 `incomeForMonth()`로 고른다 |
 | 저장소 공통 | `src/services/storage.ts` — localStorage 접근은 전부 여기를 거친다(테스트·시크릿 모드에서 죽지 않게) |
@@ -79,7 +85,6 @@
 
 **다음 후보** — 재료는 이미 `charges.ts`에 있다:
 - 카드값 역산 → `cardFixedTotal()`. 화면에 **"카드값 중 최소 X원은 확정"**이라는 한계를 반드시 명시한다
-- 출금 달력(같은 날·같은 수단으로 묶기) → `withdrawalGroups()`
 - 결제일 알림, 종료 예정 알림, 백업/내보내기
 
 기획서 6장의 기준: **첫 버전을 본인이 두 달 연속 쓰는지 확인하기 전에는 기능을 늘리지 않는다.**

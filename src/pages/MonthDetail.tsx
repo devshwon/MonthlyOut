@@ -2,10 +2,10 @@ import { Paragraph } from "@toss/tds-mobile";
 import { useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { BannerAd } from "@/components/BannerAd";
+import { CategoryBar } from "@/components/CategoryBar";
 import { ChargeRow } from "@/components/ChargeRow";
 import { ConfirmButton } from "@/components/ConfirmButton";
 import {
-	CategoryIcon,
 	IconBank,
 	IconCard,
 	IconChevronLeft,
@@ -13,8 +13,6 @@ import {
 } from "@/components/icons";
 import { AD_GROUP_IDS, MONTH_INFEED_PLACEMENT } from "@/constants/ads";
 import {
-	categoryColors,
-	categorySoftColors,
 	colors,
 	paperBackground,
 	paperColors,
@@ -27,11 +25,12 @@ import { useConfirmedIds } from "@/hooks/useConfirmations";
 import {
 	activeCharges,
 	addMonths,
-	CATEGORY_LABEL,
+	categoryBreakdown,
 	currentYearMonth,
+	dueDayGroups,
 	formatKrw,
 	formatYearMonth,
-	groupByCategory,
+	isSaving,
 	isValidYearMonth,
 	monthlyTotal,
 	totalByMethodKind,
@@ -98,21 +97,7 @@ const s = {
 		borderRadius: radius.xl,
 		overflow: "hidden",
 	} satisfies React.CSSProperties,
-	listHint: {
-		padding: `0 ${spacing.xxs}px ${spacing.xs}px`,
-	} satisfies React.CSSProperties,
-	todayRow: {
-		display: "flex",
-		justifyContent: "center",
-		marginBottom: spacing.xs,
-	} satisfies React.CSSProperties,
-	todayButton: {
-		padding: `${spacing.xxs}px ${spacing.sm}px`,
-		border: "none",
-		borderRadius: radius.full,
-		backgroundColor: colors.accentSoft,
-		cursor: "pointer",
-	} satisfies React.CSSProperties,
+	listHint: { marginTop: spacing.xxs } satisfies React.CSSProperties,
 	card: {
 		marginBottom: spacing.md,
 		borderRadius: radius.xl,
@@ -120,30 +105,27 @@ const s = {
 		boxShadow: shadow.card,
 		overflow: "hidden",
 	} satisfies React.CSSProperties,
-	cardHead: {
+	/** 날짜 머리. 괘선 위에 흰 띠로 덮어 줄과 겹치지 않게 한다. */
+	dayHead: {
 		display: "flex",
 		alignItems: "center",
 		gap: spacing.xs,
 		padding: `${spacing.sm}px ${spacing.md}px`,
-		// 괘선 위에 흰 띠로 덮어 줄과 겹치지 않게 한다.
 		backgroundColor: colors.surface,
 		borderBottom: `1px solid ${colors.border}`,
 	} satisfies React.CSSProperties,
-	headLabel: { flex: 1 } satisfies React.CSSProperties,
-	/** 저축처럼 총액에 넣지 않는 묶음 표시 */
-	exceptBadge: {
+	/** 이미 지난 날 — 지우지 않고 힘만 뺀다 */
+	dayHeadPast: { opacity: 0.6 } satisfies React.CSSProperties,
+	headSpacer: { flex: 1 } satisfies React.CSSProperties,
+	todayBadge: {
 		padding: `1px ${spacing.xs}px`,
 		borderRadius: radius.full,
-		backgroundColor: colors.surfaceSunken,
+		backgroundColor: colors.accentSoft,
 	} satisfies React.CSSProperties,
-	sectionDot: {
-		display: "flex",
-		alignItems: "center",
-		justifyContent: "center",
-		width: 26,
-		height: 26,
-		borderRadius: radius.full,
+	listHead: {
+		padding: `0 ${spacing.xxs}px ${spacing.xs}px`,
 	} satisfies React.CSSProperties,
+	sectionTitle: { marginBottom: spacing.sm } satisfies React.CSSProperties,
 	empty: {
 		padding: `${spacing.xxl}px ${spacing.md}px`,
 		textAlign: "center" as const,
@@ -169,7 +151,10 @@ export default function MonthDetailPage() {
 	const confirmedAllCount = active.filter((charge) =>
 		confirmed.has(charge.id),
 	).length;
-	const groups = groupByCategory(active);
+	const days = dueDayGroups(charges, ym);
+	const slices = categoryBreakdown(charges, ym);
+	const isThisMonth = ym === fallback;
+	const today = new Date().getDate();
 
 	return (
 		<div style={s.page}>
@@ -210,25 +195,6 @@ export default function MonthDetailPage() {
 					</button>
 				</div>
 			</div>
-
-			{ym !== fallback ? (
-				<div style={s.todayRow}>
-					<button
-						type="button"
-						style={s.todayButton}
-						onClick={() =>
-							navigate(`/month/${fallback}`, {
-								replace: true,
-								state: { stackReplace: true },
-							})
-						}
-					>
-						<Paragraph typography="t7" fontWeight="bold" color={colors.accent}>
-							<Paragraph.Text>이번 달로</Paragraph.Text>
-						</Paragraph>
-					</button>
-				</div>
-			) : null}
 
 			<div style={s.summary}>
 				<Paragraph typography="t7" color={colors.textTertiary}>
@@ -290,7 +256,7 @@ export default function MonthDetailPage() {
 				/>
 			</div>
 
-			{groups.length === 0 ? (
+			{days.length === 0 ? (
 				<div style={s.empty}>
 					<Paragraph
 						typography="t6"
@@ -302,88 +268,109 @@ export default function MonthDetailPage() {
 				</div>
 			) : (
 				<>
-					{active.length > confirmedAllCount ? (
+					<div style={s.listHead}>
 						<Paragraph
-							typography="t7"
-							color={colors.textTertiary}
-							style={s.listHint}
+							typography="t6"
+							fontWeight="bold"
+							color={colors.textPrimary}
 						>
-							<Paragraph.Text>
-								이체는 빠져나간 걸 확인하면 오른쪽 동그라미를 눌러 체크해
-								두세요.
-							</Paragraph.Text>
+							<Paragraph.Text>언제 빠지나요</Paragraph.Text>
 						</Paragraph>
-					) : null}
+						{active.length > confirmedAllCount ? (
+							<Paragraph
+								typography="t7"
+								color={colors.textTertiary}
+								style={s.listHint}
+							>
+								<Paragraph.Text>
+									빠져나간 걸 확인하면 오른쪽 동그라미를 눌러 두세요.
+								</Paragraph.Text>
+							</Paragraph>
+						) : null}
+					</div>
 
 					<div style={s.card}>
-						{groups.map((group, index) => (
-							<div key={group.category}>
-								<div
-									style={{
-										...s.cardHead,
-										...(index > 0
-											? { borderTop: `1px solid ${colors.border}` }
-											: null),
-									}}
-								>
-									<span
+						{days.map((group, index) => {
+							// 오늘이 속한 달을 볼 때만 지난 날과 남은 날이 의미가 있다.
+							const past = isThisMonth && group.day < today;
+							const isToday = isThisMonth && group.day === today;
+
+							return (
+								<div key={group.day}>
+									<div
 										style={{
-											...s.sectionDot,
-											backgroundColor: categorySoftColors[group.category],
+											...s.dayHead,
+											...(index > 0
+												? { borderTop: `1px solid ${colors.border}` }
+												: null),
+											...(past ? s.dayHeadPast : null),
 										}}
 									>
-										<CategoryIcon
-											category={group.category}
-											size={16}
-											color={categoryColors[group.category]}
-										/>
-									</span>
-									<Paragraph
-										typography="t6"
-										fontWeight="bold"
-										color={colors.textPrimary}
-										style={s.headLabel}
-									>
-										<Paragraph.Text>
-											{CATEGORY_LABEL[group.category]}
-										</Paragraph.Text>
-									</Paragraph>
-									{group.category === "saving" ? (
-										<span style={s.exceptBadge}>
-											<Paragraph typography="t7" color={colors.textTertiary}>
-												<Paragraph.Text>총액 제외</Paragraph.Text>
-											</Paragraph>
-										</span>
-									) : null}
-									<Paragraph
-										typography="t7"
-										fontWeight="bold"
-										color={colors.textSecondary}
-									>
-										<Paragraph.Text>{formatKrw(group.amount)}</Paragraph.Text>
-									</Paragraph>
-								</div>
+										<Paragraph
+											typography="t6"
+											fontWeight="bold"
+											color={past ? colors.textTertiary : colors.textPrimary}
+										>
+											<Paragraph.Text>{`${group.day}일`}</Paragraph.Text>
+										</Paragraph>
+										{isToday ? (
+											<span style={s.todayBadge}>
+												<Paragraph
+													typography="t7"
+													fontWeight="bold"
+													color={colors.accent}
+												>
+													<Paragraph.Text>오늘</Paragraph.Text>
+												</Paragraph>
+											</span>
+										) : null}
+										<span style={s.headSpacer} />
+										<Paragraph
+											typography="t7"
+											fontWeight="bold"
+											color={colors.textSecondary}
+										>
+											<Paragraph.Text>{formatKrw(group.amount)}</Paragraph.Text>
+										</Paragraph>
+									</div>
 
-								<div style={s.groupRows}>
-									{group.charges.map((charge) => (
-										<ChargeRow
-											key={charge.id}
-											charge={charge}
-											yearMonth={ym}
-											paper
-											onClick={() => navigate(`/charge/${charge.id}`)}
-											accessory={
-												<ConfirmButton
-													done={confirmed.has(charge.id)}
-													onToggle={() => toggleConfirmed(ym, charge.id)}
-												/>
-											}
-										/>
-									))}
+									<div style={s.groupRows}>
+										{group.charges.map((charge) => (
+											<ChargeRow
+												key={charge.id}
+												charge={charge}
+												yearMonth={ym}
+												paper
+												hideBillingDay
+												badge={isSaving(charge) ? "총액 제외" : undefined}
+												onClick={() => navigate(`/charge/${charge.id}`)}
+												accessory={
+													<ConfirmButton
+														done={confirmed.has(charge.id)}
+														onToggle={() => toggleConfirmed(ym, charge.id)}
+													/>
+												}
+											/>
+										))}
+									</div>
 								</div>
-							</div>
-						))}
+							);
+						})}
 					</div>
+
+					{slices.length > 0 ? (
+						<div style={s.summary}>
+							<Paragraph
+								typography="t6"
+								fontWeight="bold"
+								color={colors.textPrimary}
+								style={s.sectionTitle}
+							>
+								<Paragraph.Text>어디에 나가고 있나요</Paragraph.Text>
+							</Paragraph>
+							<CategoryBar slices={slices} legendLimit={5} />
+						</div>
+					) : null}
 				</>
 			)}
 		</div>

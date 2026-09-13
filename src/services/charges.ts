@@ -296,6 +296,50 @@ export function withdrawalGroups(
 	);
 }
 
+export interface DueDayGroup {
+	/** 그 달 기준으로 보정된 결제일(31일 → 그 달 말일) */
+	day: number;
+	amount: number;
+	charges: FixedCharge[];
+}
+
+/**
+ * 그 달에 **언제** 얼마가 빠지는지 — 날짜순 묶음.
+ *
+ * 카테고리별 묶음(`groupByCategory`)과 같은 데이터를 다르게 세운 것이다. 항목 층이
+ * "넷플릭스 17,000"이라면 여기는 출금 층이라, 통장을 볼 때의 순서(5일 → 25일)와 같다.
+ * 확인 체크가 이 순서 위에 붙는다.
+ *
+ * 저축도 포함한다 — 총액에서는 빼지만(규칙 7) 그 날 통장에서 나가는 건 사실이라
+ * 빼면 "통장과 안 맞는" 목록이 된다. 화면에서 "총액 제외" 배지로 구분한다.
+ */
+export function dueDayGroups(
+	charges: FixedCharge[],
+	ym: YearMonth,
+): DueDayGroup[] {
+	const groups = new Map<number, DueDayGroup>();
+
+	for (const charge of activeCharges(charges, ym)) {
+		const day = billingDayInMonth(charge, ym);
+		const group = groups.get(day);
+
+		if (group) {
+			group.amount += charge.amount;
+			group.charges.push(charge);
+			continue;
+		}
+		groups.set(day, { day, amount: charge.amount, charges: [charge] });
+	}
+
+	for (const group of groups.values()) {
+		group.charges.sort(
+			(a, b) => b.amount - a.amount || a.name.localeCompare(b.name),
+		);
+	}
+
+	return [...groups.values()].sort((a, b) => a.day - b.day);
+}
+
 /** 카드로 빠지는 고정분 합계 — 카드값 역산(2차)의 재료. */
 export function cardFixedTotal(charges: FixedCharge[], ym: YearMonth): number {
 	return activeCharges(charges, ym)

@@ -92,6 +92,11 @@ interface Props {
 	paper?: boolean;
 	/** 이름 옆에 붙는 짧은 표시(예: "해지") */
 	badge?: string;
+	/**
+	 * 결제일을 메타에서 뺀다. 날짜 헤더 아래 놓일 때 쓴다 —
+	 * "5일" 밑에 다시 "5일 · 국민은행"이 적히면 같은 말이 두 번이다.
+	 */
+	hideBillingDay?: boolean;
 }
 
 /** 항목 한 줄. 카테고리 색·아이콘이 화면 전체에서 같은 의미로 반복된다. */
@@ -103,10 +108,11 @@ export function ChargeRow({
 	dimmed = false,
 	paper = false,
 	badge,
+	hideBillingDay = false,
 }: Props) {
 	const round = installmentRound(charge, yearMonth);
 	const meta = [
-		formatBillingDay(charge.billingDay),
+		hideBillingDay ? null : formatBillingDay(charge.billingDay),
 		charge.method?.name ||
 			(charge.method ? METHOD_KIND_LABEL[charge.method.kind] : null),
 	].filter(Boolean);
