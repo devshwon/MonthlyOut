@@ -379,3 +379,16 @@ export function showFullScreenAdSlot(
 		}, LOAD_POLL_INTERVAL_MS);
 	});
 }
+
+/**
+ * 지금 기다리지 않고 바로 띄울 수 있는가.
+ *
+ * `showFullScreenAdSlot`은 미준비면 최대 10초를 폴링한다. 그 동작이 맞는 자리
+ * ("광고 보기" 버튼처럼 사용자가 광고를 기다리는 자리)도 있지만, 저장 직후처럼
+ * **사용자가 다음 화면을 기다리는 자리**에서는 쓰면 안 된다 — 화면이 멈춘 것처럼
+ * 보이고, 늦게 뜬 광고는 검수 7-2("예상하기 어려운 순간")에 걸린다.
+ * 그런 자리는 이 값이 true일 때만 부른다.
+ */
+export function isFullScreenAdReady(adGroupId: string): boolean {
+	return getSlot(adGroupId).isReady;
+}

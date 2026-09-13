@@ -2,6 +2,7 @@ import { useCallback, useEffect } from "react";
 import {
 	armFullScreenAd,
 	initializeFullScreenAd,
+	isFullScreenAdReady,
 	type ShowAdOptions,
 	type ShowAdResult,
 	showFullScreenAdSlot,
@@ -70,5 +71,15 @@ export function useFullScreenAd(
 		[adGroupId],
 	);
 
-	return { show, preload };
+	/**
+	 * 기다리지 않고 바로 띄울 수 있는지. 저장 직후처럼 **사용자가 다음 화면을
+	 * 기다리는 자리**에서는 이게 true일 때만 `show()`를 부른다 — 아니면 화면이
+	 * 멈춘 것처럼 보이고, 늦게 뜬 광고는 검수 7-2에 걸린다.
+	 */
+	const isReady = useCallback(
+		() => isFullScreenAdReady(adGroupId),
+		[adGroupId],
+	);
+
+	return { show, preload, isReady };
 }

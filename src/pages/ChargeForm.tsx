@@ -16,6 +16,7 @@ import {
 	IconPencil,
 } from "@/components/icons";
 import { PrimaryButton } from "@/components/PrimaryButton";
+import { AD_GROUP_IDS } from "@/constants/ads";
 import {
 	categoryColors,
 	categorySoftColors,
@@ -26,7 +27,9 @@ import {
 	spacing,
 } from "@/design/tokens";
 import { useCharges } from "@/hooks/useCharges";
+import { useFullScreenAd } from "@/hooks/useFullScreenAd";
 import { useSafeAreaInsets } from "@/hooks/useSafeAreaInsets";
+import { canShowInterstitial, markInterstitialShown } from "@/services/adGate";
 import {
 	CATEGORY_GROUPS,
 	type CategoryGroupDef,
@@ -390,6 +393,18 @@ export default function ChargeFormPage() {
 		!hasTerm || (totalCount > 0 && isValidYearMonth(startMonth));
 	const canSave = amount > 0 && termValid;
 
+	/**
+	 * 전면광고는 **새 항목을 다 적어 저장할 수 있게 된 순간** 미리 받아둔다.
+	 *
+	 * 마운트에 걸면 수정하러 들어온 세션·중간에 나간 세션까지 한 편씩 받아 버리고
+	 * (ads-log KI-23), 저장 버튼을 누른 뒤에 받으면 검수 7-4(재생 시점 실시간 로딩)에
+	 * 걸린다. 그 사이가 여기다 — 다 적었고, 오늘 아직 안 봤고, 새 항목일 때.
+	 */
+	const adArmed = !editing && canSave && canShowInterstitial();
+	const interstitial = useFullScreenAd(AD_GROUP_IDS.INTERSTITIAL, {
+		arm: adArmed,
+	});
+
 	const methodsForKind = methodOptions.filter(
 		(option) => option.kind === methodKind,
 	);
@@ -436,7 +451,7 @@ export default function ChargeFormPage() {
 		endedMonth: editing?.endedMonth,
 	});
 
-	const handleSave = () => {
+	const handleSave = async () => {
 		if (!canSave) {
 			return;
 		}
@@ -450,6 +465,21 @@ export default function ChargeFormPage() {
 		}
 
 		addCharge(draft);
+
+		/*
+		 * 전면광고는 **적는 일이 끝난 여기** 한 곳에만 둔다. 홈 진입이나 화면 전환에
+		 * 끼우면 확인하러 들어온 사람을 가로막는 꼴이라 검수 7-2에 걸린다.
+		 *
+		 * 이미 받아둔 광고가 있을 때만 띄운다. 기다렸다 띄우면(최대 10초) 저장이 안 된
+		 * 것처럼 보이고, 뒤늦게 뜬 광고는 사용자가 예상할 수 없는 순간이 된다.
+		 * 저장은 이미 끝났으니 광고가 없어도 흐름은 그대로다.
+		 */
+		if (adArmed && interstitial.isReady()) {
+			const result = await interstitial.show();
+			// 실제로 떴을 때만 하루치를 쓴다 — 로드 실패까지 세면 기회만 잃는다.
+			if (result.ok || result.impressed) markInterstitialShown();
+		}
+
 		// 새로 적었으면 방금 넣은 줄이 보이는 관리 화면으로 보낸다.
 		navigate("/manage", { replace: true });
 	};
