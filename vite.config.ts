@@ -20,7 +20,10 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     emptyOutDir: true,
-    sourcemap: true,
+    // 소스맵을 번들에 넣지 않는다. 켜두면 .ait의 4분의 3이 소스맵이 되고(5.7MB 중 4.3MB)
+    // 앱 소스가 그대로 나간다. 실기기 스택이 필요하면 잠깐 'hidden'으로 만들어
+    // 로컬에 두고 보되, webBundleDir에는 올리지 않는다.
+    sourcemap: false,
   },
   server: {
     port: 5173,

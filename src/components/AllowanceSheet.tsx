@@ -66,12 +66,15 @@ export function AllowanceSheet({
 
 	useEffect(() => {
 		const dialog = dialogRef.current;
+		// showModal/close는 iOS 15.4부터 있다. 그 아래 기기에서 그냥 부르면 TypeError가
+		// effect 밖으로 튀어 ErrorBoundary까지 올라가고 **앱 전체가 에러 화면**이 된다.
+		// 응원 시트 하나 때문에 치를 값이 아니라, 없으면 시트만 조용히 안 열리게 둔다.
 		if (open) {
 			setPhase("ask");
-			dialog?.showModal();
-			dialog?.focus();
+			dialog?.showModal?.();
+			dialog?.focus?.();
 		} else {
-			dialog?.close();
+			dialog?.close?.();
 		}
 		return () => {
 			requestRef.current += 1;
