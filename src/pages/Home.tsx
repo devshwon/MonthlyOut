@@ -110,26 +110,46 @@ const s = {
 	} satisfies React.CSSProperties,
 	boardWrap: {
 		position: "relative" as const,
-		paddingBottom: 0,
+		paddingBottom: 18,
 		marginTop: spacing.sm,
 	} satisfies React.CSSProperties,
 	board: {
-		padding: `${spacing.xl}px`,
-		border: `1px solid ${colors.surface}`,
+		padding: `${spacing.xl}px ${spacing.lg}px ${spacing.xl + 20}px`,
+		border: `4px solid ${boardColors.wood}`,
 		borderRadius: radius.xl,
 		background: boardSurface,
-		boxShadow: shadow.card,
+		boxShadow: `inset 0 1px 12px rgba(0,0,0,0.12), ${shadow.card}`,
+	} satisfies React.CSSProperties,
+	tray: {
+		position: "absolute" as const,
+		left: 0,
+		right: 0,
+		bottom: 10,
+		height: 9,
+		borderRadius: "0 0 8px 8px",
+		background: `linear-gradient(180deg, ${boardColors.wood}, ${boardColors.woodDeep})`,
+		boxShadow: "0 3px 6px rgba(0,0,0,0.10)",
+	} satisfies React.CSSProperties,
+	trayChalk: {
+		position: "absolute" as const,
+		left: spacing.xl,
+		bottom: 19,
+		width: 24,
+		height: 5,
+		borderRadius: radius.full,
+		backgroundColor: boardColors.chalk,
 	} satisfies React.CSSProperties,
 	buddyOnTray: {
 		position: "absolute" as const,
 		right: spacing.lg,
-		top: spacing.lg,
+		bottom: 22,
 		padding: 0,
 		border: "none",
 		background: "none",
 		cursor: "pointer",
 	} satisfies React.CSSProperties,
 	chalkCaption: {
+		letterSpacing: "0.08em",
 		textAlign: "left" as const,
 	} satisfies React.CSSProperties,
 	heroAmountRow: {
@@ -151,9 +171,10 @@ const s = {
 		marginTop: spacing.md,
 	} satisfies React.CSSProperties,
 	heroPill: {
+		maxWidth: "calc(100% - 44px)",
 		padding: `${spacing.xxs}px ${spacing.sm}px`,
 		borderRadius: radius.full,
-		backgroundColor: colors.primarySoft,
+		backgroundColor: boardColors.chalkWash,
 	} satisfies React.CSSProperties,
 	methodRow: {
 		display: "flex",
@@ -475,7 +496,16 @@ export default function HomePage() {
 							color={boardColors.chalk}
 							style={s.heroNumber}
 						>
-							<Paragraph.Text>{formatAmount(shownTotal)}</Paragraph.Text>
+							<Paragraph.Text>
+								<span
+									style={{
+										fontSize: "clamp(30px, 9vw, 38px)",
+										lineHeight: 1.25,
+									}}
+								>
+									{formatAmount(shownTotal)}
+								</span>
+							</Paragraph.Text>
 						</Paragraph>
 						<Paragraph
 							typography="t5"
@@ -516,13 +546,15 @@ export default function HomePage() {
 					)}
 				</div>
 
+				<div style={s.tray} aria-hidden="true" />
+				<span style={s.trayChalk} aria-hidden="true" />
 				<button
 					type="button"
 					style={s.buddyOnTray}
 					aria-label="다른 이야기 듣기"
 					onClick={showNextTip}
 				>
-					<MoneyBuddy size={44} />
+					<MoneyBuddy size={52} holdingChalk />
 				</button>
 			</div>
 
@@ -599,7 +631,7 @@ export default function HomePage() {
 						color={colors.textPrimary}
 						style={s.emptyTitle}
 					>
-						<Paragraph.Text>매달 나가는 돈, 한눈에</Paragraph.Text>
+						<Paragraph.Text>나의 지출 칠판을 채워볼까요?</Paragraph.Text>
 					</Paragraph>
 					<Paragraph
 						typography="t7"

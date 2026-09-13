@@ -175,6 +175,7 @@ export default function ManagePage() {
 					>
 						<Paragraph.Text>관리</Paragraph.Text>
 					</Paragraph>
+					<div style={s.titleUnderline} />
 				</div>
 				<Paragraph
 					typography="t7"

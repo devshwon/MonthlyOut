@@ -38,11 +38,11 @@ export function radiusPx(key: RadiusKey): string {
  */
 export const colors = {
 	/** 화면 배경 */
-	background: "#F4F6F9",
+	background: "#F6F4EF",
 	/** 카드·리스트 표면 */
 	surface: "#FFFFFF",
 	/** 한 단계 낮은 표면(칩·트랙) */
-	surfaceSunken: "#F2F4F6",
+	surfaceSunken: "#EFEDE7",
 	/** 구분선 */
 	border: "#E5E8EB",
 	/** 본문 강조 */
@@ -57,9 +57,9 @@ export const colors = {
 	primary: "#3182F6",
 	primarySoft: "#E8F1FE",
 	/** 주요 액션 */
-	accent: "#3182F6",
-	accentPressed: "#1B64DA",
-	accentSoft: "#E8F1FE",
+	accent: "#2F4A40",
+	accentPressed: "#264037",
+	accentSoft: "#E9EFEC",
 	/** 금액이 풀리는 등 긍정 신호 */
 	positive: "#12B76A",
 	positiveSoft: "#E4F7EE",
@@ -69,19 +69,20 @@ export const colors = {
 
 export type ColorKey = keyof typeof colors;
 
-/** 요약 카드의 공통 색상. 홈과 연간 화면에서 같은 위계를 사용한다. */
+/** 칠판 요약 영역. 분필 글자는 번짐 없이 충분한 대비를 유지한다. */
 export const boardColors = {
-	surface: "#FFFFFF",
-	surfaceDeep: "#E8F1FE",
-	wood: "#E8F1FE",
-	woodDeep: "#D0E3FF",
-	chalk: "#191F28",
-	chalkDim: "#6B7684",
-	chalkFaint: "#DDE5EF",
+	surface: "#2F4A40",
+	surfaceDeep: "#264037",
+	wood: "#C89257",
+	woodDeep: "#A9733C",
+	chalk: "#F4F3EC",
+	chalkDim: "rgba(244, 243, 236, 0.78)",
+	chalkFaint: "rgba(244, 243, 236, 0.22)",
+	chalkWash: "rgba(244, 243, 236, 0.10)",
 } as const;
 
 export const boardSurface =
-	"linear-gradient(145deg, #FFFFFF 35%, #EDF5FF 100%)";
+	"radial-gradient(120% 100% at 45% 20%, #35544A 0%, #2F4A40 65%, #264037 100%)";
 
 export const shadow = {
 	card: "0 2px 12px rgba(25, 31, 40, 0.025)",
@@ -139,9 +140,9 @@ export const characterColors = {
  */
 export const paperColors = {
 	/** 종이 면 */
-	surface: "#FFFFFF",
+	surface: "#FFFDF7",
 	/** 가로 괘선 */
-	rule: "#E2EAF2",
+	rule: "#EAF0F3",
 	/** 채점하듯 긋는 빨간펜 */
 	redPen: "#E5484D",
 } as const;
@@ -154,7 +155,7 @@ export const paperRuleHeight = 32;
  * 왼쪽 빨간 여백선은 뺐다 — 목록 왼쪽이 아이콘으로 이미 정렬돼 있어서 선이 하나 더 있으면
  * 애매하게 겹쳐 보인다.
  */
-export const paperBackground = "none";
+export const paperBackground = `repeating-linear-gradient(180deg, transparent 0 ${paperRuleHeight - 1}px, ${paperColors.rule} ${paperRuleHeight - 1}px ${paperRuleHeight}px)`;
 
 /**
  * 손으로 슥 그린 동그라미 느낌의 테두리 반경.

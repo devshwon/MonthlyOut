@@ -27,12 +27,12 @@ export function ConfirmButton({
 				borderRadius: radius.full,
 				// 체크가 그려지면 동그라미는 지운다 — 펜 자국만 남은 것처럼 보이게.
 				border: done ? "none" : `1.5px solid ${colors.border}`,
-				background: done ? colors.primarySoft : colors.surface,
+				background: "none",
 				cursor: "pointer",
 			}}
 			onClick={onToggle}
 		>
-			{done ? <HandDrawnCheck size={22} color={colors.primary} /> : null}
+			{done ? <HandDrawnCheck size={22} /> : null}
 		</button>
 	);
 }

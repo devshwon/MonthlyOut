@@ -58,7 +58,7 @@ const s = {
 	boardCard: {
 		padding: `${spacing.md}px ${spacing.md}px ${spacing.sm}px`,
 		marginBottom: spacing.md,
-		border: `1px solid ${colors.surface}`,
+		border: `4px solid ${boardColors.wood}`,
 		borderRadius: radius.xl,
 		background: boardSurface,
 		boxShadow: shadow.card,
@@ -183,10 +183,10 @@ export default function YearlyPage() {
 								style={{
 									...s.monthCell,
 									backgroundColor: isThisMonth
-										? colors.primarySoft
-										: colors.surface,
+										? boardColors.chalkWash
+										: "transparent",
 									border: `1px solid ${
-										isThisMonth ? colors.primary : colors.border
+										isThisMonth ? boardColors.chalk : boardColors.chalkFaint
 									}`,
 								}}
 								onClick={() => navigate(`/month/${month.ym}`)}
@@ -202,7 +202,7 @@ export default function YearlyPage() {
 									typography="t6"
 									fontWeight="bold"
 									color={
-										month.total === 0 ? colors.textTertiary : boardColors.chalk
+										month.total === 0 ? boardColors.chalkDim : boardColors.chalk
 									}
 									style={s.monthAmount}
 								>
