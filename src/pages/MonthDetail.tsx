@@ -11,7 +11,7 @@ import {
 	IconChevronLeft,
 	IconChevronRight,
 } from "@/components/icons";
-import { AD_GROUP_IDS } from "@/constants/ads";
+import { AD_GROUP_IDS, MONTH_INFEED_PLACEMENT } from "@/constants/ads";
 import {
 	categoryColors,
 	categorySoftColors,
@@ -283,7 +283,11 @@ export default function MonthDetailPage() {
 
 			{/* 요약과 목록 사이 — 읽는 흐름이 한 번 끊기는 자리라 광고가 덜 방해된다 */}
 			<div style={s.inlineAd}>
-				<BannerAd adGroupId={AD_GROUP_IDS.BANNER_NATIVE} variant="card" />
+				<BannerAd
+					adGroupId={AD_GROUP_IDS.BANNER_NATIVE}
+					placement={MONTH_INFEED_PLACEMENT}
+					variant="card"
+				/>
 			</div>
 
 			{groups.length === 0 ? (

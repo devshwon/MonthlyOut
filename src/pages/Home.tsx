@@ -13,6 +13,7 @@ import {
 } from "@/components/icons";
 import { MoneyBuddy } from "@/components/MoneyBuddy";
 import { PrimaryButton } from "@/components/PrimaryButton";
+import { REWARDED_READY } from "@/constants/ads";
 import {
 	boardColors,
 	boardSurface,
@@ -564,16 +565,20 @@ export default function HomePage() {
 			/>
 
 			<div style={s.buddyRow}>
-				{/* 칠판 위 캐릭터에게 주는 용돈 — 광고 한 편이 후원이 된다 */}
-				<button
-					type="button"
-					style={s.allowanceButton}
-					onClick={() => setAllowanceOpen(true)}
-				>
-					<Paragraph typography="t7" fontWeight="bold" color={colors.accent}>
-						<Paragraph.Text>용돈 주기</Paragraph.Text>
-					</Paragraph>
-				</button>
+				{/* 칠판 위 캐릭터에게 주는 용돈 — 광고 한 편이 후원이 된다.
+				    리워드 운영 ID를 아직 안 받았으면 버튼을 내린다 — 자리표시자로는
+				    load가 실패해서 누를 때마다 "광고를 못 불러왔어요"만 나온다. */}
+				{REWARDED_READY ? (
+					<button
+						type="button"
+						style={s.allowanceButton}
+						onClick={() => setAllowanceOpen(true)}
+					>
+						<Paragraph typography="t7" fontWeight="bold" color={colors.accent}>
+							<Paragraph.Text>용돈 주기</Paragraph.Text>
+						</Paragraph>
+					</button>
+				) : null}
 
 				<button
 					type="button"

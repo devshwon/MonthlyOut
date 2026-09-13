@@ -4,7 +4,7 @@ import { Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import { BannerAd } from "@/components/BannerAd";
 import { BottomNav, navSpace } from "@/components/BottomNav";
 import { FlowDebugPanel } from "@/components/FlowDebugPanel";
-import { AD_GROUP_IDS } from "@/constants/ads";
+import { AD_GROUP_IDS, BOTTOM_BANNER_PLACEMENT } from "@/constants/ads";
 import { colors } from "@/design/tokens";
 import ChargeFormPage from "@/pages/ChargeForm";
 import HomePage from "@/pages/Home";
@@ -145,6 +145,7 @@ export default function App() {
 			{/* 하단 고정 배너 — App 최상위에 한 번만 마운트해 라우트가 바뀌어도 다시 로드하지 않는다 */}
 			<BannerAd
 				adGroupId={AD_GROUP_IDS.BANNER}
+				placement={BOTTOM_BANNER_PLACEMENT}
 				variant="expanded"
 				flushBottom
 			/>

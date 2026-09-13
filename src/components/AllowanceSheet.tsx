@@ -59,7 +59,10 @@ export function AllowanceSheet({
 	open: boolean;
 	onClose: () => void;
 }) {
-	const ad = useFullScreenAd(AD_GROUP_IDS.REWARDED);
+	// 이 시트는 Home에서 조건 없이 렌더되므로(open=false여도 마운트는 된다) 마운트에
+	// 프리로드를 붙이면 용돈을 줄 생각이 없는 세션까지 매번 한 편을 받아놓고 버린다.
+	// 시트가 실제로 열릴 때만 받는다 (ads-log KI-23).
+	const ad = useFullScreenAd(AD_GROUP_IDS.REWARDED, { arm: open });
 	const [phase, setPhase] = useState<Phase>("ask");
 
 	if (!open) {
