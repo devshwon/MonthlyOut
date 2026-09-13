@@ -2,7 +2,10 @@ import { Paragraph, Switch, TextField } from "@toss/tds-mobile";
 import { useMemo, useState } from "react";
 import { MoneyBuddy } from "@/components/MoneyBuddy";
 import { PrimaryButton } from "@/components/PrimaryButton";
-import { NOTIFICATION_TEMPLATE_CODE } from "@/constants/notification";
+import {
+	NOTIFICATION_READY,
+	NOTIFICATION_TEMPLATE_CODE,
+} from "@/constants/notification";
 import { colors, radius, shadow, spacing } from "@/design/tokens";
 import { useAppSettings } from "@/hooks/useAppSettings";
 import { useCharges } from "@/hooks/useCharges";
@@ -289,31 +292,35 @@ export default function SettingsPage() {
 				) : null}
 			</div>
 
-			<div style={s.card}>
-				<div style={s.row}>
-					<div>
-						<Paragraph
-							typography="t6"
-							fontWeight="bold"
-							color={colors.textPrimary}
-						>
-							<Paragraph.Text>결제일 알림 받기</Paragraph.Text>
-						</Paragraph>
-						<Paragraph
-							typography="t7"
-							color={colors.textTertiary}
-							style={s.hint}
-						>
-							<Paragraph.Text>{notificationNote}</Paragraph.Text>
-						</Paragraph>
+			{/* 콘솔에 동의문 템플릿이 없으면 토글 자체를 내린다 — 켜봐야 30초 기다렸다
+			    실패하고, 그건 사용자 눈에 앱 고장으로 보인다. */}
+			{NOTIFICATION_READY ? (
+				<div style={s.card}>
+					<div style={s.row}>
+						<div>
+							<Paragraph
+								typography="t6"
+								fontWeight="bold"
+								color={colors.textPrimary}
+							>
+								<Paragraph.Text>결제일 알림 받기</Paragraph.Text>
+							</Paragraph>
+							<Paragraph
+								typography="t7"
+								color={colors.textTertiary}
+								style={s.hint}
+							>
+								<Paragraph.Text>{notificationNote}</Paragraph.Text>
+							</Paragraph>
+						</div>
+						<Switch
+							checked={Boolean(settings.notificationAgreed)}
+							disabled={requestingAgreement}
+							onChange={(_, checked) => handleNotification(checked)}
+						/>
 					</div>
-					<Switch
-						checked={Boolean(settings.notificationAgreed)}
-						disabled={requestingAgreement}
-						onChange={(_, checked) => handleNotification(checked)}
-					/>
 				</div>
-			</div>
+			) : null}
 
 			<div style={s.card}>
 				<div style={s.row}>

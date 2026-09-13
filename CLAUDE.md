@@ -43,12 +43,12 @@
 
 | 화면 | 경로 | 하는 일 |
 |---|---|---|
-| 홈 | `/` | 이번 달 총액(히어로) · 카드/이체 분리 · 이체 확인 진행률 · 카테고리 비율 · 많이 나가는 항목 3개 |
+| 홈 | `/` | 이번 달 총액(칠판 히어로) · **오늘 빠지는 돈**(눌러서 확인 체크) · 고정이 한마디 + 응원하기 · 월급 카드(남는 돈) · 카드/이체 분리 · 카테고리 비율 |
 | 관리 | `/manage` | 등록된 항목을 **카테고리별**로 묶어 보여주고 + 버튼으로 추가 |
 | 연간 | `/yearly` | 1~12월 막대(월 탭 → 그 달 상세) · 연 합계/월 평균 · 카테고리별 연간 합계 |
 | 상세 | `/month/:ym` | 그 달 요약 · **이체 확인 체크리스트**(날짜순) · 카테고리별 정리. 월 이동 가능 |
 | 등록/수정 | `/charge/new`, `/charge/:id` | 항목 폼 |
-| 설정 | `/settings` | 현황 · 데이터 초기화 |
+| 설정 | `/settings` | 현황 · **월 수입**(이력·이번 달부터 적용) · 결제일 알림 동의 · 앱 정보 · 데이터 초기화 |
 
 ## 코드 지도
 
@@ -59,6 +59,7 @@
 | 항목 저장소 | `src/services/chargeStore.ts` — localStorage(`monthlyout.charges.v1`) + 모듈 스토어. 변경은 `addCharge`/`updateCharge`/`removeCharge`/`clearCharges`로만 |
 | 설정·수입 저장소 | `src/services/settingsStore.ts` — 월 수입 **이력**(`incomes`: 시작 월 + 금액)과 알림 동의. 그 달 금액은 `incomeForMonth()`로 고른다 |
 | 저장소 공통 | `src/services/storage.ts` — localStorage 접근은 전부 여기를 거친다(테스트·시크릿 모드에서 죽지 않게) |
+| 광고 빈도 | `src/services/adGate.ts` — 전면광고를 하루 한 번으로 묶는다(`monthlyout.ads.v1`) |
 | 이체 확인 저장소 | `src/services/confirmStore.ts` — `monthlyout.confirmations.v1`, `{ "2026-09": [chargeId] }`. **달마다 따로** 쌓인다 |
 | 화면 구독 | `src/hooks/useCharges.ts` · `src/hooks/useConfirmations.ts` — `useSyncExternalStore`. 화면에서 localStorage를 직접 읽지 말 것 |
 | 화면 | `src/pages/` — `Home` · `Manage` · `Yearly` · `MonthDetail` · `ChargeForm` · `Settings` · `NotFound` |
@@ -71,7 +72,8 @@
 ## 지금 상태 / 다음
 
 **구현됨**: 항목 CRUD · 카테고리별 관리 · 월 총액과 카드/이체 분리 · 카테고리 비율 ·
-연간 12개월 뷰 · 월 상세 · **이체 확인 체크** · 로컬 저장.
+연간 12개월 뷰 · 월 상세 · **이체 확인 체크** · 월 수입 이력 · 해지(끝 월 기록) · 로컬 저장 ·
+광고 네 자리와 진단 로그.
 
 **다음 후보** — 재료는 이미 `charges.ts`에 있다:
 - 카드값 역산 → `cardFixedTotal()`. 화면에 **"카드값 중 최소 X원은 확정"**이라는 한계를 반드시 명시한다
@@ -90,6 +92,8 @@
 - **한 덩어리를 끝까지 완결한다.** "출금 달력 + 라우팅 + 검증"처럼 의미 있는 단위를 계획→구현→검증→(필요시)배포까지 한 흐름으로. 중간에 "여기까지 했는데 계속할까요?"로 멈추지 않는다.
 - **사소한 결정은 합리적 기본값으로 진행한다.** 정말 사용자만 답할 수 있는 갈림길(되돌리기 어렵거나 취향이 갈리는 선택)만 묻는다.
 - **항상 검증하고 끝낸다.** `npx tsc --noEmit` → `npx biome check --write src` → `npm test` → `npm run build`.
+  테스트는 node 환경이고 `src/test/setup.ts`가 메모리 localStorage를 심는다 — 저장소를 쓰는
+  코드도 그대로 테스트할 수 있다.
   계산 로직(`src/services/charges.ts`)을 건드리면 `src/services/__tests__/charges.test.ts`도 함께 고친다 —
   숫자가 틀리면 이 앱은 존재 이유가 없다.
 - **UI를 바꿨으면 브라우저로 눈으로 확인한다**(아래 "브라우저에서 디버깅").

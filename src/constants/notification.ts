@@ -9,3 +9,14 @@
  * ⚠️ 토스 앱 5.255.0 이상에서만 동의 요청이 뜬다(미만은 unsupported).
  */
 export const NOTIFICATION_TEMPLATE_CODE = "__PUT_NOTIFICATION_TEMPLATE_CODE__";
+
+/**
+ * 콘솔에 동의문 템플릿이 실제로 등록됐는지. false면 알림 기능을 화면에 내지 않는다.
+ *
+ * 자리표시자로 동의를 요청하면 토스가 콜백을 주지 않아 30초 타임아웃을 다 기다린 뒤
+ * "동의하지 않아서 알림은 오지 않아요"가 뜬다. 사용자에겐 앱이 멈췄다 고장난 것으로
+ * 보이는데, 실제로는 우리가 등록을 안 한 것뿐이다.
+ */
+export const NOTIFICATION_READY = !NOTIFICATION_TEMPLATE_CODE.includes(
+	"PUT_NOTIFICATION",
+);

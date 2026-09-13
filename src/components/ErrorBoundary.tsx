@@ -1,4 +1,5 @@
 import { Component, type ErrorInfo, type ReactNode } from "react";
+import { logError } from "@/lib/ad-log";
 
 interface Props {
 	children: ReactNode;
@@ -21,6 +22,15 @@ export class ErrorBoundary extends Component<Props, State> {
 
 	componentDidCatch(error: Error, errorInfo: ErrorInfo) {
 		console.error("ErrorBoundary:", error, errorInfo);
+		// 진단 로그로도 넘긴다. 전역 훅(window.onerror·unhandledrejection)은 렌더 중
+		// 예외를 못 본다 — React가 여기서 잡아 삼키기 때문이다. 광고가 안 뜨는 원인이
+		// 광고 코드가 아니라 그 위에서 터진 예외인 경우가 흔한데, 이 경로가 비어 있으면
+		// 리포트에는 아무 흔적도 안 남는다.
+		logError(
+			error,
+			{ componentStack: (errorInfo.componentStack ?? "").slice(0, 300) },
+			"boundary",
+		);
 	}
 
 	handleRetry = () => {

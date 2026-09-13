@@ -7,5 +7,7 @@ export default defineConfig({
 	},
 	test: {
 		environment: "node",
+		// node에는 localStorage가 없다 — 저장소를 쓰는 테스트가 죽지 않게 하나 심는다.
+		setupFiles: ["./src/test/setup.ts"],
 	},
 });
