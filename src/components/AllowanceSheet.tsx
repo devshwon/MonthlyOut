@@ -1,57 +1,55 @@
 import { Paragraph } from "@toss/tds-mobile";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { MoneyBuddy } from "@/components/MoneyBuddy";
 import { PrimaryButton } from "@/components/PrimaryButton";
 import { AD_GROUP_IDS } from "@/constants/ads";
 import { colors, radius, spacing } from "@/design/tokens";
 import { useFullScreenAd } from "@/hooks/useFullScreenAd";
+import { useSafeAreaInsets } from "@/hooks/useSafeAreaInsets";
+import "./AllowanceSheet.css";
 
 type Phase = "ask" | "playing" | "thanks" | "failed";
 
 const s = {
-	dim: {
-		position: "fixed" as const,
-		inset: 0,
-		display: "flex",
-		alignItems: "flex-end",
-		justifyContent: "center",
-		backgroundColor: "rgba(25, 31, 40, 0.45)",
-		zIndex: 20,
-	} satisfies React.CSSProperties,
-	backdrop: {
-		position: "absolute" as const,
-		inset: 0,
-		border: "none",
-		background: "none",
-		cursor: "default",
-	} satisfies React.CSSProperties,
 	sheet: {
-		position: "relative" as const,
-		width: "100%",
-		maxWidth: 460,
 		padding: `${spacing.xl}px ${spacing.lg}px ${spacing.lg}px`,
-		borderRadius: `${radius.xxl}px ${radius.xxl}px 0 0`,
 		backgroundColor: colors.surface,
 		textAlign: "center" as const,
 	} satisfies React.CSSProperties,
-	title: { marginTop: spacing.sm } satisfies React.CSSProperties,
-	body: { marginTop: spacing.xs } satisfies React.CSSProperties,
+	portrait: {
+		display: "flex",
+		alignItems: "center",
+		justifyContent: "center",
+		width: 96,
+		height: 96,
+		margin: "0 auto",
+		borderRadius: radius.full,
+		backgroundColor: colors.accentSoft,
+	} satisfies React.CSSProperties,
+	title: { marginTop: spacing.md } satisfies React.CSSProperties,
+	body: {
+		marginTop: spacing.xs,
+		lineHeight: 1.7,
+	} satisfies React.CSSProperties,
+	note: {
+		marginTop: spacing.lg,
+		padding: spacing.sm,
+		borderRadius: radius.md,
+		backgroundColor: colors.background,
+	} satisfies React.CSSProperties,
 	cta: { marginTop: spacing.lg } satisfies React.CSSProperties,
 	close: {
 		width: "100%",
-		padding: `${spacing.sm}px 0 0`,
+		minHeight: 48,
+		marginTop: spacing.xs,
+		padding: spacing.xs,
 		border: "none",
 		background: "none",
 		cursor: "pointer",
 	} satisfies React.CSSProperties,
 };
 
-/**
- * "열심히 적고 있는 머니에게 용돈 주기" — 리워드 광고 한 편이 곧 후원이다.
- *
- * 보상을 사용자에게 주는 구조가 아니라 **앱을 후원하는** 구조라, 광고를 끝까지 본
- * 사실만 확인하고 고맙다는 말을 돌려준다. 뒤에 기능을 잠그지 않는다.
- */
+/** 사용자가 선택한 전면광고 한 편으로 앱을 응원하는 시트. 결제나 사용자 보상은 없다. */
 export function AllowanceSheet({
 	open,
 	onClose,
@@ -59,83 +57,162 @@ export function AllowanceSheet({
 	open: boolean;
 	onClose: () => void;
 }) {
-	// 이 시트는 Home에서 조건 없이 렌더되므로(open=false여도 마운트는 된다) 마운트에
-	// 프리로드를 붙이면 용돈을 줄 생각이 없는 세션까지 매번 한 편을 받아놓고 버린다.
-	// 시트가 실제로 열릴 때만 받는다 (ads-log KI-23).
-	const ad = useFullScreenAd(AD_GROUP_IDS.REWARDED, { arm: open });
+	const ad = useFullScreenAd(AD_GROUP_IDS.INTERSTITIAL, { arm: open });
+	const insets = useSafeAreaInsets();
 	const [phase, setPhase] = useState<Phase>("ask");
+	const dialogRef = useRef<HTMLDialogElement>(null);
+	const watchingRef = useRef(false);
+	const requestRef = useRef(0);
 
-	if (!open) {
-		return null;
-	}
-
-	const handleWatch = async () => {
-		setPhase("playing");
-		// 보상을 사용자에게 주는 게 아니라 후원이라 `requireReward`를 켜지 않는다.
-		// 광고가 노출되고 닫혔으면 그걸로 후원은 성립한다.
-		const result = await ad.show();
-		setPhase(result.ok || result.impressed ? "thanks" : "failed");
-	};
+	useEffect(() => {
+		const dialog = dialogRef.current;
+		if (open) {
+			setPhase("ask");
+			dialog?.showModal();
+			dialog?.focus();
+		} else {
+			dialog?.close();
+		}
+		return () => {
+			requestRef.current += 1;
+			watchingRef.current = false;
+		};
+	}, [open]);
 
 	const close = () => {
-		setPhase("ask");
+		if (watchingRef.current) return;
 		onClose();
 	};
 
+	const handleWatch = async () => {
+		if (watchingRef.current) return;
+		watchingRef.current = true;
+		const request = ++requestRef.current;
+		setPhase("playing");
+		try {
+			const result = await ad.show();
+			if (request !== requestRef.current) return;
+			setPhase(result.ok || result.impressed ? "thanks" : "failed");
+		} catch {
+			if (request === requestRef.current) setPhase("failed");
+		} finally {
+			if (request === requestRef.current) watchingRef.current = false;
+		}
+	};
+
 	return (
-		<div style={s.dim}>
-			{/* 바깥을 눌러 닫는 영역 — 버튼으로 둬야 키보드로도 닫을 수 있다 */}
-			<button
-				type="button"
-				aria-label="닫기"
-				style={s.backdrop}
-				onClick={close}
-			/>
-
-			<div style={s.sheet}>
-				<MoneyBuddy size={72} holdingChalk={phase !== "thanks"} />
-
-				<Paragraph
-					typography="t5"
-					fontWeight="bold"
-					color={colors.textPrimary}
-					style={s.title}
-				>
-					<Paragraph.Text>
+		// 바깥을 눌러 닫는 동작이다. 키보드로 닫는 길은 onCancel(Esc)이 이미 맡고 있고,
+		// 여기에 키 핸들러를 더 달면 시트 안 어디서 키를 눌러도 닫히는 함정이 된다.
+		// biome-ignore lint/a11y/useKeyWithClickEvents: Esc는 onCancel이 처리한다
+		<dialog
+			ref={dialogRef}
+			className="allowance-dialog"
+			tabIndex={-1}
+			aria-labelledby="allowance-title"
+			aria-describedby="allowance-description"
+			onCancel={(event) => {
+				event.preventDefault();
+				close();
+			}}
+			onClick={(event) => {
+				if (event.target === event.currentTarget) close();
+			}}
+		>
+			<div style={{ ...s.sheet, paddingBottom: spacing.lg + insets.bottom }}>
+				<div style={s.portrait}>
+					<MoneyBuddy size={72} holdingChalk={phase !== "thanks"} />
+				</div>
+				<div aria-live="polite" aria-atomic="true">
+					<h2
+						id="allowance-title"
+						style={{
+							...s.title,
+							fontSize: 22,
+							lineHeight: 1.4,
+							color: colors.textPrimary,
+							marginBottom: 0,
+						}}
+					>
 						{phase === "thanks"
-							? "잘 받았어요, 고마워요"
+							? "응원 잘 받았어요!"
 							: phase === "failed"
-								? "광고를 못 불러왔어요"
-								: "머니에게 용돈 주기"}
-					</Paragraph.Text>
-				</Paragraph>
-
-				<Paragraph typography="t7" color={colors.textTertiary} style={s.body}>
-					<Paragraph.Text>
-						{phase === "thanks"
-							? "덕분에 계속 칠판을 지킬 수 있어요."
-							: phase === "failed"
-								? "잠시 뒤에 다시 시도해 주세요."
-								: "광고를 한 편 보면 이 앱을 만드는 데 보탬이 돼요. 기능은 그대로 다 쓸 수 있어요."}
-					</Paragraph.Text>
-				</Paragraph>
-
-				{phase === "thanks" ? null : (
-					<div style={s.cta}>
-						<PrimaryButton disabled={phase === "playing"} onClick={handleWatch}>
-							{phase === "playing" ? "광고 준비 중" : "광고 보고 용돈 주기"}
-						</PrimaryButton>
+								? "광고가 잠시 쉬고 있어요"
+								: phase === "playing"
+									? "광고를 준비하고 있어요"
+									: "고정이를 응원해 주세요"}
+					</h2>
+					<p
+						id="allowance-description"
+						style={{
+							...s.body,
+							fontSize: 15,
+							color: colors.textSecondary,
+							marginBottom: 0,
+						}}
+					>
+						{phase === "thanks" ? (
+							<>
+								소중한 시간 내줘서 고마워요.
+								<br />
+								덕분에 오늘도 힘내서 칠판을 지킬게요.
+							</>
+						) : phase === "failed" ? (
+							<>
+								지금은 광고를 불러오지 못했어요.
+								<br />
+								응원하려는 마음만으로도 고마워요.
+							</>
+						) : phase === "playing" ? (
+							"잠시만 기다려 주세요."
+						) : (
+							<>
+								광고 한 편이 고정이에게 작은 용돈이 돼요.
+								<br />
+								매달 함께할 수 있도록 힘을 보태주세요.
+							</>
+						)}
+					</p>
+				</div>
+				{phase === "ask" ? (
+					<div style={s.note}>
+						<Paragraph typography="t7" color={colors.textTertiary}>
+							<Paragraph.Text>
+								결제 없이, 광고 시청으로 전하는 응원이에요.
+							</Paragraph.Text>
+						</Paragraph>
 					</div>
-				)}
-
-				<button type="button" style={s.close} onClick={close}>
-					<Paragraph typography="t7" color={colors.textTertiary}>
-						<Paragraph.Text>
-							{phase === "thanks" ? "닫기" : "다음에"}
-						</Paragraph.Text>
-					</Paragraph>
-				</button>
+				) : null}
+				<div style={s.cta}>
+					<PrimaryButton
+						disabled={phase === "playing"}
+						onClick={phase === "thanks" ? close : handleWatch}
+					>
+						{phase === "thanks"
+							? "다시 칠판으로"
+							: phase === "playing"
+								? "광고 준비 중…"
+								: phase === "failed"
+									? "광고 다시 불러오기"
+									: "광고 한 편으로 응원하기"}
+					</PrimaryButton>
+				</div>
+				{phase !== "thanks" ? (
+					<button
+						type="button"
+						style={s.close}
+						disabled={phase === "playing"}
+						onClick={close}
+					>
+						<Paragraph typography="t7" color={colors.textTertiary}>
+							<Paragraph.Text>
+								{phase === "failed"
+									? "괜찮아요, 다음에 할게요"
+									: "다음에 응원할게요"}
+							</Paragraph.Text>
+						</Paragraph>
+					</button>
+				) : null}
 			</div>
-		</div>
+		</dialog>
 	);
 }

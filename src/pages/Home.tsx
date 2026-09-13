@@ -13,7 +13,6 @@ import {
 } from "@/components/icons";
 import { MoneyBuddy } from "@/components/MoneyBuddy";
 import { PrimaryButton } from "@/components/PrimaryButton";
-import { REWARDED_READY } from "@/constants/ads";
 import {
 	boardColors,
 	boardSurface,
@@ -249,33 +248,62 @@ const s = {
 		textOverflow: "ellipsis",
 		whiteSpace: "nowrap" as const,
 	} satisfies React.CSSProperties,
-	leftoverRow: {
-		display: "flex",
-		justifyContent: "center",
-		width: "100%",
-		padding: `${spacing.xs}px 0 0`,
-		border: "none",
-		background: "none",
-		cursor: "pointer",
-	} satisfies React.CSSProperties,
-	/** 말풍선 왼쪽에 나란히 두는 후원 버튼 */
-	allowanceButton: {
-		flexShrink: 0,
-		padding: `${spacing.xs}px ${spacing.sm}px`,
-		border: `1px solid ${colors.accentSoft}`,
-		borderRadius: radius.full,
+	incomeCard: {
+		marginTop: spacing.md,
+		padding: spacing.md,
+		borderRadius: radius.lg,
 		backgroundColor: colors.surface,
 		boxShadow: shadow.card,
+	} satisfies React.CSSProperties,
+	incomeButton: {
+		display: "flex",
+		alignItems: "center",
+		gap: spacing.sm,
+		width: "100%",
+		padding: 0,
+		minHeight: 48,
+		border: "none",
+		background: "none",
+		textAlign: "left" as const,
+		cursor: "pointer",
+	} satisfies React.CSSProperties,
+	incomeIcon: {
+		display: "flex",
+		alignItems: "center",
+		justifyContent: "center",
+		flexShrink: 0,
+		width: 40,
+		height: 40,
+		borderRadius: radius.md,
+		backgroundColor: colors.accentSoft,
+	} satisfies React.CSSProperties,
+	incomeSummary: {
+		marginTop: spacing.sm,
+		paddingTop: spacing.sm,
+		borderTop: `1px solid ${colors.border}`,
+	} satisfies React.CSSProperties,
+	allowanceButton: {
+		display: "flex",
+		alignItems: "center",
+		justifyContent: "center",
+		gap: spacing.xs,
+		width: "100%",
+		minHeight: 44,
+		marginTop: spacing.sm,
+		padding: `${spacing.xs}px ${spacing.sm}px`,
+		border: `1px solid ${colors.accentSoft}`,
+		borderRadius: radius.md,
+		backgroundColor: colors.accentSoft,
 		cursor: "pointer",
 	} satisfies React.CSSProperties,
 	tipButton: {
-		flex: 1,
-		minWidth: 0,
-		display: "flex",
-		justifyContent: "flex-end",
+		display: "block",
+		width: "100%",
+		minHeight: 44,
 		padding: 0,
 		border: "none",
 		background: "none",
+		textAlign: "left" as const,
 		cursor: "pointer",
 	} satisfies React.CSSProperties,
 	savingNote: {
@@ -307,21 +335,25 @@ const s = {
 		borderRadius: radius.sm,
 	} satisfies React.CSSProperties,
 	dueBody: { flex: 1, minWidth: 0 } satisfies React.CSSProperties,
-	buddyRow: {
-		display: "flex",
-		alignItems: "center",
-		gap: spacing.xs,
-		width: "100%",
-		padding: `${spacing.xs}px 0 0`,
-	} satisfies React.CSSProperties,
 	bubble: {
 		position: "relative" as const,
 		width: "100%",
-		padding: `${spacing.sm}px ${spacing.md}px`,
-		borderRadius: radius.lg,
+		padding: spacing.md,
+		borderRadius: radius.xl,
 		backgroundColor: colors.surface,
 		boxShadow: shadow.card,
 		textAlign: "left" as const,
+	} satisfies React.CSSProperties,
+	bubbleTail: {
+		position: "absolute" as const,
+		right: spacing.lg + 18,
+		top: -8,
+		width: 18,
+		height: 18,
+		borderRadius: 3,
+		backgroundColor: colors.surface,
+		transform: "rotate(45deg)",
+		pointerEvents: "none" as const,
 	} satisfies React.CSSProperties,
 	empty: {
 		marginTop: spacing.sm,
@@ -564,69 +596,89 @@ export default function HomePage() {
 				onClose={() => setAllowanceOpen(false)}
 			/>
 
-			<div style={s.buddyRow}>
-				{/* 칠판 위 캐릭터에게 주는 용돈 — 광고 한 편이 후원이 된다.
-				    리워드 운영 ID를 아직 안 받았으면 버튼을 내린다 — 자리표시자로는
-				    load가 실패해서 누를 때마다 "광고를 못 불러왔어요"만 나온다. */}
-				{REWARDED_READY ? (
-					<button
-						type="button"
-						style={s.allowanceButton}
-						onClick={() => setAllowanceOpen(true)}
-					>
-						<Paragraph typography="t7" fontWeight="bold" color={colors.accent}>
-							<Paragraph.Text>용돈 주기</Paragraph.Text>
-						</Paragraph>
-					</button>
-				) : null}
-
+			<div style={s.bubble}>
+				<span style={s.bubbleTail} aria-hidden="true" />
 				<button
 					type="button"
 					style={s.tipButton}
-					aria-label="다른 이야기 듣기"
+					aria-label="고정이의 다른 이야기 듣기"
 					onClick={showNextTip}
 				>
-					<div style={s.bubble}>
-						<Paragraph typography="t7" color={colors.textSecondary}>
-							<Paragraph.Text>{currentTip}</Paragraph.Text>
-						</Paragraph>
-					</div>
+					<Paragraph typography="t7" fontWeight="bold" color={colors.accent}>
+						<Paragraph.Text>고정이의 한마디</Paragraph.Text>
+					</Paragraph>
+					<Paragraph
+						typography="t7"
+						color={colors.textSecondary}
+						style={{ marginTop: spacing.xxs }}
+					>
+						<Paragraph.Text>{currentTip}</Paragraph.Text>
+					</Paragraph>
+				</button>
+				<button
+					type="button"
+					style={s.allowanceButton}
+					aria-haspopup="dialog"
+					onClick={() => setAllowanceOpen(true)}
+				>
+					<span aria-hidden="true" style={{ color: colors.accent }}>
+						♡
+					</span>
+					<Paragraph typography="t7" fontWeight="bold" color={colors.accent}>
+						<Paragraph.Text>고정이 용돈 주기</Paragraph.Text>
+					</Paragraph>
+					<IconChevronRight size={16} color={colors.accent} />
 				</button>
 			</div>
 
-			{income && income > total ? (
+			<div style={s.incomeCard}>
 				<button
 					type="button"
-					style={s.leftoverRow}
-					onClick={() => navigate(`/month/${ym}`)}
-				>
-					<Paragraph typography="t7" color={colors.textSecondary}>
-						<Paragraph.Text>
-							{`이번 달은 ${formatKrw(income - total)} 안에서 쓰면 돼요`}
-						</Paragraph.Text>
-					</Paragraph>
-				</button>
-			) : income ? (
-				<div style={s.leftoverRow}>
-					<Paragraph typography="t7" color={colors.danger}>
-						<Paragraph.Text>
-							{`고정지출이 수입보다 ${formatKrw(total - income)} 많아요`}
-						</Paragraph.Text>
-					</Paragraph>
-				</div>
-			) : charges.length > 0 ? (
-				<button
-					type="button"
-					style={s.leftoverRow}
+					style={s.incomeButton}
 					onClick={() => navigate("/settings")}
 				>
-					<Paragraph typography="t7" color={colors.textTertiary}>
-						<Paragraph.Text>
-							월급을 적어두면 쓸 수 있는 돈을 알려드려요
-						</Paragraph.Text>
-					</Paragraph>
+					<span style={s.incomeIcon}>
+						<IconBank size={22} color={colors.accent} />
+					</span>
+					<span style={{ flex: 1, minWidth: 0 }}>
+						<Paragraph
+							typography="t6"
+							fontWeight="bold"
+							color={colors.textPrimary}
+						>
+							<Paragraph.Text>
+								{income ? "월급 수정하기" : "월급 입력하기"}
+							</Paragraph.Text>
+						</Paragraph>
+						<Paragraph
+							typography="t7"
+							color={colors.textTertiary}
+							style={{ marginTop: spacing.xxs }}
+						>
+							<Paragraph.Text>
+								{income
+									? `등록한 월 수입 ${formatKrw(income)}`
+									: "고정지출을 빼고 남는 돈을 확인해요"}
+							</Paragraph.Text>
+						</Paragraph>
+					</span>
+					<IconChevronRight size={20} color={colors.accent} />
 				</button>
-			) : null}
+				{income ? (
+					<div style={s.incomeSummary}>
+						<Paragraph
+							typography="t7"
+							color={income < total ? colors.danger : colors.textSecondary}
+						>
+							<Paragraph.Text>
+								{income >= total
+									? `고정지출을 빼면 ${formatKrw(income - total)} 남아요`
+									: `고정지출이 월 수입보다 ${formatKrw(total - income)} 많아요`}
+							</Paragraph.Text>
+						</Paragraph>
+					</div>
+				) : null}
+			</div>
 
 			{charges.length === 0 ? (
 				<div style={s.empty}>
