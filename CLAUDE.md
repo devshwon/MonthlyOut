@@ -27,10 +27,13 @@
 6. **해지는 지우지 않고 끝을 적는다.** `endedMonth`(마지막으로 돈이 나간 달)까지는 집계되고
    다음 달부터 빠진다(`isEnded`). 삭제하면 지난달 숫자까지 바뀌어 버린다.
 7. **총액과 "쓸 수 있는 돈"은 다른 수다.** 총액(`monthlyTotal`)은 "매달 자동으로 나가는 돈이
-   얼마인가"를 묻고, 쓸 수 있는 돈은 월 수입 − `monthlyOutflow()`다.
-   **카드 청구액은 카드 고정분을 이미 품고 있어서**, 총액에 청구액을 더하면 카드 고정분이
-   두 번 빠진다(4-1 이중과금을 수단 층에서 반복하는 것). 청구액을 적었으면 카드 쪽은
-   **대체한다**. 저축도 쓸 수 있는 돈에서는 뺀다 — 옮기는 돈이라도 이번 달엔 못 쓴다.
+   얼마인가"를 묻는다. 쓸 수 있는 돈은 **월 수입 − `monthlyReserve()`**, 즉 통장에
+   남겨둬야 하는 돈만 뺀 값이다.
+   **카드 고정분은 빼지 않는다.** 카드값은 결제일에 한 번에 빠지고 그 안에 넷플릭스도
+   할부도 이미 들어 있어서, 따로 빼면 카드값을 낼 때 같은 돈이 두 번 빠진 셈이 된다
+   (4-1 이중과금을 수단 층에서 반복하는 것). 카드값은 카드사가 매달 알려주니
+   **사용자가 이 금액에서 직접 뺀다** — 앱이 매달 청구액을 받아 적게 만들면 규칙 9를 깬다.
+   저축은 뺀다 — 옮기는 돈이라도 이번 달엔 못 쓴다.
 8. **저축은 총액에서 뺀다.** 적금·청약·연금은 사라지는 돈이 아니라 옮기는 돈이라
    고정지출 총액에 섞으면 과장된다(`isSaving`/`savingTotal`). 목록에는 그대로 보이되
    "총액 제외" 배지를 달고 따로 합산한다.
@@ -59,7 +62,7 @@
 | 홈 | `/` | **숫자만.** 이번 달 총액(칠판) · 고정이 한마디 + 응원 · 월급 카드(**쓸 수 있는 돈**) · 카드/이체 분리 · 오늘 빠지는 돈(확인 체크) |
 | 관리 | `/manage` | **카테고리별 목록, 큰 금액이 먼저**(기획서 2장: 줄일 대상이 위로). 등록된 **전체**(해지·지난 항목 포함, 달 무관). 연필 버튼으로 추가·수정 |
 | 연간 | `/yearly` | 1~12월 막대(월 탭 → 그 달 상세) · 연 합계/월 평균 · 카테고리별 연간 합계 |
-| 이번 달 | `/month/:ym` | **출금 층 체크리스트**(기획서 4-2). "25일 · 신한카드 337,000"처럼 같은 날·같은 수단이 한 묶음, 날짜순. 항목마다 확인 체크 · **카드 청구액 적기**(기획서 5장 역산) · 카테고리 비율. 월 이동 가능 |
+| 이번 달 | `/month/:ym` | **출금 층 체크리스트**(기획서 4-2). "25일 · 신한카드 337,000"처럼 같은 날·같은 수단이 한 묶음, 날짜순. 항목마다 확인 체크 · 카테고리 비율. 월 이동 가능 |
 | 등록/수정 | `/charge/new`, `/charge/:id` | 항목 폼 |
 | 설정 | `/settings` | 현황 · **월 수입**(이력·이번 달부터 적용) · 결제일 알림 동의 · 앱 정보 · 데이터 초기화 |
 
@@ -68,12 +71,11 @@
 | 무엇 | 어디 |
 |---|---|
 | 도메인 타입 | `src/types/index.ts` — `FixedCharge` · `ChargeTerm` · `PaymentMethod` · `WithdrawalGroup` |
-| 계산(순수 함수) | `src/services/charges.ts` — 회차/활성 판정, `activeCharges` · `monthlyTotal` · `nextRelease` · `totalByMethodKind` · `categoryBreakdown` · `groupByCategory`(카테고리 축, 금액순) · **`withdrawalGroups`(출금 축: 날짜·수단)** · `yearlyTotals` · `yearlyCategoryTotals` · `transferCharges` · `withdrawalGroups` · `cardFixedTotal` |
+| 계산(순수 함수) | `src/services/charges.ts` — 회차/활성 판정, `activeCharges` · `monthlyTotal` · `nextRelease` · `totalByMethodKind` · `categoryBreakdown` · `groupByCategory`(카테고리 축, 금액순) · `withdrawalGroups`(출금 축: 날짜·수단) · **`monthlyReserve`(남겨둘 돈)** · `yearlyTotals` · `yearlyCategoryTotals` · `transferCharges` · `withdrawalGroups` · `cardFixedTotal` |
 | 항목 저장소 | `src/services/chargeStore.ts` — localStorage(`monthlyout.charges.v1`) + 모듈 스토어. 변경은 `addCharge`/`updateCharge`/`removeCharge`/`clearCharges`로만 |
 | 설정·수입 저장소 | `src/services/settingsStore.ts` — 월 수입 **이력**(`incomes`: 시작 월 + 금액)과 알림 동의. 그 달 금액은 `incomeForMonth()`로 고른다 |
 | 저장소 공통 | `src/services/storage.ts` — localStorage 접근은 전부 여기를 거친다(테스트·시크릿 모드에서 죽지 않게) |
 | 광고 빈도 | `src/services/adGate.ts` — 전면광고를 하루 한 번으로 묶는다(`monthlyout.ads.v1`) |
-| 카드 청구액 저장소 | `src/services/cardBillStore.ts` — `monthlyout.cardbills.v1`, `{ "2026-09": 870000 }`. **달마다 따로** |
 | 이체 확인 저장소 | `src/services/confirmStore.ts` — `monthlyout.confirmations.v1`, `{ "2026-09": [chargeId] }`. **달마다 따로** 쌓인다 |
 | 화면 구독 | `src/hooks/useCharges.ts` · `src/hooks/useConfirmations.ts` — `useSyncExternalStore`. 화면에서 localStorage를 직접 읽지 말 것 |
 | 화면 | `src/pages/` — `Home` · `Manage` · `Yearly` · `MonthDetail` · `ChargeForm` · `Settings` · `NotFound` |
@@ -89,8 +91,19 @@
 연간 12개월 뷰 · 월 상세 · **이체 확인 체크** · 월 수입 이력 · 해지(끝 월 기록) · 로컬 저장 ·
 광고 네 자리와 진단 로그.
 
+**안 하기로 한 것**
+- **결제일 알림**. SDK는 동의만 받고 발송은 콘솔 스마트발송이라 **전원 동일 문구**만 보낼 수 있다.
+  "오늘 5일에 43,000원이 빠져요" 같은 개인화는 항목 데이터를 서버에 올려야 가능한데,
+  "서버에 안 보낸다"는 이 앱의 신뢰 자산이다. 전원 동일 문구는 안 보내느니만 못하다.
+  코드는 남아 있고 `NOTIFICATION_READY`가 false라 화면에 안 뜬다 — 서버가 생기면
+  **결제일과 금액만** 올려 개인화한다(항목명은 올리지 않는다).
+- **카드 청구액 입력**. 매달 손대야 하는 입력은 규칙 9를 깬다. 위 규칙 7대로
+  카드 고정분을 안 빼두면 사용자가 카드값을 직접 빼서 계산할 수 있다.
+- **사용자 평균 공유**("보통 OTT에 얼마 써요"). 기획서 2장 "추천·상담 안 함"과 충돌하고,
+  표본이 적은 초기엔 그냥 틀린 숫자다.
+
 **다음 후보** — 재료는 이미 `charges.ts`에 있다:
-- 결제일 알림, 종료 예정 알림, 백업/내보내기
+- 백업/내보내기
 
 기획서 6장의 기준: **첫 버전을 본인이 두 달 연속 쓰는지 확인하기 전에는 기능을 늘리지 않는다.**
 

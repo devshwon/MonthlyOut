@@ -315,53 +315,50 @@ export function withdrawalGroups(
 	);
 }
 
-export interface MonthOutflow {
-	/** 카드로 빠져나갈 돈 */
-	card: number;
-	/** 카드 청구액을 사용자가 적었는지. false면 앱이 아는 고정분뿐이라 실제보다 작다. */
-	cardIsBill: boolean;
-	/** 카드 청구액 중 앱이 아는 고정분 — "최소 X원은 확정"의 X */
+export interface MonthReserve {
+	/**
+	 * 이번 달 통장에 **남겨둬야 하는 돈** — 이체·수단 미지정 고정분 + 저축.
+	 * 월 수입에서 이걸 빼면 "카드값 내고 쓸 수 있는 돈"이 된다.
+	 */
+	reserve: number;
+	/** 그중 저축 */
+	saving: number;
+	/** 카드로 빠질 고정분 — **여기서 빼지 않는다.** 카드 청구액에 이미 들어 있다. */
 	cardFixed: number;
-	/** 카드가 아닌 것 전부(이체·수단 미지정, 저축 포함) */
-	account: number;
-	/** 이번 달 통장에서 빠져나갈 돈 */
-	total: number;
 }
 
 /**
- * 이번 달 **통장에서 빠져나갈 돈**. "쓸 수 있는 돈"은 월 수입에서 이걸 뺀 값이다.
+ * 월 수입에서 **미리 빼둬야 하는 돈**.
  *
- * 고정지출 총액(`monthlyTotal`)과 다른 수를 세는 함수다. 총액은 "매달 자동으로 나가는
- * 돈이 얼마인가"를 묻고, 이건 "이번 달에 통장에서 얼마가 빠지나"를 묻는다.
+ * 카드 고정분은 빼지 않는다. 카드값은 결제일에 한 번에 빠지고 그 안에 넷플릭스도
+ * 할부도 이미 들어 있어서, 카드 고정분을 따로 빼면 나중에 카드값을 낼 때 같은 돈이
+ * 두 번 빠진 셈이 된다(기획서 4-1의 이중과금을 수단 층에서 반복하는 것).
+ * 카드값은 카드사가 매달 알려주니 사용자가 이 금액에서 직접 빼면 된다 —
+ * 앱이 매달 청구액을 받아 적게 만들면 규칙 9(입력 횟수 최소화)를 깬다.
  *
- * **카드 청구액은 카드 고정분을 이미 품고 있다.** 그래서 청구액을 적었으면 카드 쪽은
- * 청구액으로 **대체한다** — 총액에 청구액을 더하면 카드 고정분이 두 번 빠진다
- * (기획서 4-1의 이중과금과 같은 실수를 수단 층에서 반복하는 것이다).
- *
- * **저축도 뺀다.** 총액에서는 옮기는 돈이라 빼지만(규칙 7), 이번 달에 쓸 수 있느냐를
- * 물으면 답은 "못 쓴다"다. 청약에 10만 원이 나가면 그 10만 원은 쓸 수 없다.
+ * 저축은 뺀다. 총액에서는 옮기는 돈이라 빼지만(규칙 8), 이번 달에 쓸 수 있느냐를
+ * 물으면 답은 "못 쓴다"다.
  */
-export function monthlyOutflow(
+export function monthlyReserve(
 	charges: FixedCharge[],
 	ym: YearMonth,
-	cardBill?: number,
-): MonthOutflow {
-	const active = activeCharges(charges, ym);
-
+): MonthReserve {
+	let reserve = 0;
+	let saving = 0;
 	let cardFixed = 0;
-	let account = 0;
-	for (const charge of active) {
+
+	for (const charge of activeCharges(charges, ym)) {
 		if (charge.method?.kind === "card") {
 			cardFixed += charge.amount;
-		} else {
-			account += charge.amount;
+			continue;
+		}
+		reserve += charge.amount;
+		if (isSaving(charge)) {
+			saving += charge.amount;
 		}
 	}
 
-	const cardIsBill = typeof cardBill === "number" && cardBill > 0;
-	const card = cardIsBill ? (cardBill as number) : cardFixed;
-
-	return { card, cardIsBill, cardFixed, account, total: card + account };
+	return { reserve, saving, cardFixed };
 }
 
 /** 카드로 빠지는 고정분 합계 — 카드값 역산(2차)의 재료. */

@@ -9,7 +9,6 @@ import {
 import { colors, radius, shadow, spacing } from "@/design/tokens";
 import { useAppSettings } from "@/hooks/useAppSettings";
 import { useCharges } from "@/hooks/useCharges";
-import { clearCardBills } from "@/services/cardBillStore";
 import { clearCharges } from "@/services/chargeStore";
 import {
 	activeCharges,
@@ -137,7 +136,6 @@ export default function SettingsPage() {
 	const handleClear = () => {
 		clearCharges();
 		clearConfirmations();
-		clearCardBills();
 		setConfirmingClear(false);
 	};
 
@@ -386,7 +384,7 @@ export default function SettingsPage() {
 					<ConfirmDialog
 						open={confirmingClear}
 						title={`${charges.length}개 항목을 모두 지울까요?`}
-						description="등록한 항목과 확인 기록, 적어둔 카드값이 전부 사라지고 되돌릴 수 없어요."
+						description="등록한 항목과 확인 기록이 전부 사라지고 되돌릴 수 없어요."
 						cancelButton={
 							<ConfirmDialog.CancelButton
 								onClick={() => setConfirmingClear(false)}
