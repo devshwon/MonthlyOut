@@ -8,6 +8,7 @@ import {
 	installmentRound,
 	isActive,
 	josa,
+	monthlyOutflow,
 	monthlyTotal,
 	nextRelease,
 	savingTotal,
@@ -314,5 +315,81 @@ describe("withdrawalGroups — 출금 층", () => {
 		);
 
 		expect(groups).toHaveLength(0);
+	});
+});
+
+describe("monthlyOutflow — 이번 달 통장에서 빠져나갈 돈", () => {
+	const base = {
+		category: "subscription" as const,
+		term: null,
+		createdAt: new Date("2026-01-05").getTime(),
+		updatedAt: Date.now(),
+	};
+	/** 카드 고정 17,000 · 이체 고정 43,000 · 저축(이체) 100,000 */
+	const charges = [
+		{
+			...base,
+			id: "a",
+			name: "넷플릭스",
+			amount: 17000,
+			billingDay: 25,
+			method: { kind: "card" as const, name: "신한카드" },
+		},
+		{
+			...base,
+			id: "b",
+			name: "실손보험",
+			amount: 43000,
+			billingDay: 5,
+			category: "insurance" as const,
+			method: { kind: "account" as const, name: "국민은행" },
+		},
+		{
+			...base,
+			id: "c",
+			name: "청약",
+			amount: 100000,
+			billingDay: 25,
+			category: "saving" as const,
+			method: { kind: "account" as const, name: "국민은행" },
+		},
+	];
+
+	it("카드값을 안 적으면 앱이 아는 고정분까지만 센다", () => {
+		const out = monthlyOutflow(charges, "2026-03");
+
+		expect(out.cardIsBill).toBe(false);
+		expect(out.card).toBe(17000);
+		// 저축도 통장에서 나간다 — 총액에선 빼지만 이번 달엔 못 쓰는 돈이다.
+		expect(out.account).toBe(143000);
+		expect(out.total).toBe(160000);
+	});
+
+	it("카드값을 적으면 카드 쪽을 청구액으로 갈아끼운다 — 고정분을 두 번 빼지 않는다", () => {
+		const out = monthlyOutflow(charges, "2026-03", 870000);
+
+		expect(out.cardIsBill).toBe(true);
+		expect(out.card).toBe(870000);
+		expect(out.cardFixed).toBe(17000);
+		// 870,000 + 143,000. 고정분 17,000이 더해지지 않는다.
+		expect(out.total).toBe(1013000);
+	});
+
+	it("총액(monthlyTotal)과는 다른 수를 센다 — 총액은 저축을 뺀다", () => {
+		expect(monthlyTotal(charges, "2026-03")).toBe(60000);
+		expect(monthlyOutflow(charges, "2026-03").total).toBe(160000);
+	});
+
+	it("0이나 음수 청구액은 안 적은 것으로 본다", () => {
+		expect(monthlyOutflow(charges, "2026-03", 0).card).toBe(17000);
+		expect(monthlyOutflow(charges, "2026-03", -5).cardIsBill).toBe(false);
+	});
+
+	it("그 달에 안 나가는 항목은 빠진다", () => {
+		const ended = charges.map((charge) =>
+			charge.id === "a" ? { ...charge, endedMonth: "2026-02" } : charge,
+		);
+
+		expect(monthlyOutflow(ended, "2026-03").card).toBe(0);
 	});
 });

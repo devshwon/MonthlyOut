@@ -24,6 +24,7 @@ import {
 	spacing,
 } from "@/design/tokens";
 import { useAppSettings } from "@/hooks/useAppSettings";
+import { useCardBill } from "@/hooks/useCardBill";
 import { useCharges } from "@/hooks/useCharges";
 import { useConfirmedIds } from "@/hooks/useConfirmations";
 import { useCountUp } from "@/hooks/useCountUp";
@@ -36,6 +37,7 @@ import {
 	formatKrw,
 	formatYearMonth,
 	isSaving,
+	monthlyOutflow,
 	monthlyTotal,
 	nextRelease,
 	savingTotal,
@@ -234,6 +236,17 @@ const s = {
 		borderRadius: radius.md,
 		backgroundColor: colors.accentSoft,
 	} satisfies React.CSSProperties,
+	billLink: {
+		display: "flex",
+		alignItems: "center",
+		gap: spacing.xxs,
+		minHeight: 44,
+		padding: 0,
+		border: "none",
+		background: "none",
+		textAlign: "left" as const,
+		cursor: "pointer",
+	} satisfies React.CSSProperties,
 	incomeSummary: {
 		marginTop: spacing.sm,
 		paddingTop: spacing.sm,
@@ -368,11 +381,16 @@ export default function HomePage() {
 		(charge) => !isSaving(charge),
 	);
 	const total = monthlyTotal(charges, ym);
+	const cardBill = useCardBill(ym);
+	// "쓸 수 있는 돈"은 총액이 아니라 통장에서 빠져나갈 돈으로 센다 —
+	// 카드 청구액을 적었으면 카드 쪽은 그 금액이고, 저축도 이번 달엔 못 쓴다.
+	const outflow = monthlyOutflow(charges, ym, cardBill);
 	const methods = totalByMethodKind(charges, ym);
 	const release = nextRelease(charges, ym);
 	const saving = savingTotal(charges, ym);
 	// 과거 달을 보고 있으면 그때 적용되던 수입으로 계산한다.
 	const income = incomeForMonth(settings.incomes, ym);
+	const left = income == null ? 0 : income - outflow.total;
 	const transfers = transferCharges(charges, ym);
 	// 오늘 빠지는 것들 — 이번 달을 보고 있을 때만 의미가 있다.
 	const today = new Date().getDate();
@@ -623,14 +641,29 @@ export default function HomePage() {
 					<div style={s.incomeSummary}>
 						<Paragraph
 							typography="t7"
-							color={income < total ? colors.danger : colors.textSecondary}
+							color={left < 0 ? colors.danger : colors.textSecondary}
 						>
 							<Paragraph.Text>
-								{income >= total
-									? `고정지출을 빼면 ${formatKrw(income - total)} 남아요`
-									: `고정지출이 월 수입보다 ${formatKrw(total - income)} 많아요`}
+								{left >= 0
+									? `${cardBill ? "카드값까지" : "빠져나갈 돈을"} 빼면 ${formatKrw(left)} 남아요`
+									: `빠져나갈 돈이 월 수입보다 ${formatKrw(-left)} 많아요`}
 							</Paragraph.Text>
 						</Paragraph>
+						{/* 카드값을 안 적었으면 이 숫자는 실제보다 크다 — 그걸 숨기지 않는다. */}
+						<button
+							type="button"
+							style={s.billLink}
+							onClick={() => navigate(`/month/${ym}`)}
+						>
+							<Paragraph typography="t7" color={colors.textTertiary}>
+								<Paragraph.Text>
+									{cardBill
+										? `카드 청구액 ${formatKrw(cardBill)} 기준이에요`
+										: "카드값을 적으면 더 정확해져요"}
+								</Paragraph.Text>
+							</Paragraph>
+							<IconChevronRight size={14} color={colors.textTertiary} />
+						</button>
 					</div>
 				) : null}
 			</div>
