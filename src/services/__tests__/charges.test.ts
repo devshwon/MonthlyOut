@@ -4,7 +4,6 @@ import {
 	billingDayInMonth,
 	categoryBreakdown,
 	chargesDueOn,
-	dueDayGroups,
 	formatCompact,
 	installmentRound,
 	isActive,
@@ -14,6 +13,7 @@ import {
 	savingTotal,
 	totalByMethodKind,
 	usedMethods,
+	withdrawalGroups,
 } from "@/services/charges";
 import { incomeForMonth, SINCE_BEGINNING } from "@/services/settingsStore";
 import type { ChargeCategory, FixedCharge, PaymentMethodKind } from "@/types";
@@ -216,7 +216,7 @@ describe("월 수입 이력", () => {
 	});
 });
 
-describe("dueDayGroups", () => {
+describe("withdrawalGroups — 출금 층", () => {
 	const base = {
 		category: "subscription" as const,
 		method: { kind: "card" as const, name: "신한카드" },
@@ -225,8 +225,8 @@ describe("dueDayGroups", () => {
 		updatedAt: Date.now(),
 	};
 
-	it("날짜순으로 묶고, 같은 날 안에서는 큰 금액이 먼저", () => {
-		const groups = dueDayGroups(
+	it("같은 날 같은 수단은 한 출금으로 묶이고, 안에서는 큰 금액이 먼저", () => {
+		const groups = withdrawalGroups(
 			[
 				{ ...base, id: "a", name: "넷플릭스", amount: 17000, billingDay: 25 },
 				{ ...base, id: "b", name: "보험", amount: 43000, billingDay: 5 },
@@ -235,7 +235,7 @@ describe("dueDayGroups", () => {
 			"2026-03",
 		);
 
-		expect(groups.map((group) => group.day)).toEqual([5, 25]);
+		expect(groups.map((group) => group.billingDay)).toEqual([5, 25]);
 		expect(groups[1].charges.map((charge) => charge.name)).toEqual([
 			"넷플릭스",
 			"멜론",
@@ -243,8 +243,30 @@ describe("dueDayGroups", () => {
 		expect(groups[1].amount).toBe(27900);
 	});
 
+	it("같은 날이라도 수단이 다르면 다른 출금이다 — 사고는 출금 단위에서 난다", () => {
+		const groups = withdrawalGroups(
+			[
+				{ ...base, id: "a", name: "넷플릭스", amount: 17000, billingDay: 25 },
+				{
+					...base,
+					id: "b",
+					name: "청약",
+					amount: 100000,
+					billingDay: 25,
+					method: { kind: "account" as const, name: "국민은행" },
+				},
+			],
+			"2026-03",
+		);
+
+		expect(groups).toHaveLength(2);
+		// 같은 날이면 큰 출금이 먼저
+		expect(groups[0].method?.name).toBe("국민은행");
+		expect(groups[1].method?.name).toBe("신한카드");
+	});
+
 	it("31일은 그 달 말일로 모인다 — 2월이면 28일과 같은 칸", () => {
-		const groups = dueDayGroups(
+		const groups = withdrawalGroups(
 			[
 				{ ...base, id: "a", name: "말일", amount: 10000, billingDay: 31 },
 				{ ...base, id: "b", name: "28일", amount: 20000, billingDay: 28 },
@@ -253,7 +275,7 @@ describe("dueDayGroups", () => {
 		);
 
 		expect(groups).toHaveLength(1);
-		expect(groups[0].day).toBe(28);
+		expect(groups[0].billingDay).toBe(28);
 		expect(groups[0].amount).toBe(30000);
 	});
 
@@ -270,13 +292,14 @@ describe("dueDayGroups", () => {
 			},
 		];
 
-		expect(dueDayGroups(charges, "2026-03")[0].amount).toBe(117000);
+		const groups = withdrawalGroups(charges, "2026-03");
+		expect(groups.reduce((sum, group) => sum + group.amount, 0)).toBe(117000);
 		// 총액은 저축을 뺀 값 그대로다.
 		expect(monthlyTotal(charges, "2026-03")).toBe(17000);
 	});
 
 	it("그 달에 안 나가는 항목은 빠진다", () => {
-		const groups = dueDayGroups(
+		const groups = withdrawalGroups(
 			[
 				{
 					...base,

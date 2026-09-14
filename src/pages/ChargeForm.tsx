@@ -1,4 +1,5 @@
 import {
+	ConfirmDialog,
 	Paragraph,
 	Switch,
 	TextArea,
@@ -506,10 +507,6 @@ export default function ChargeFormPage() {
 
 	const handleDelete = () => {
 		if (!editing) {
-			return;
-		}
-		if (!confirmingDelete) {
-			setConfirmingDelete(true);
 			return;
 		}
 		removeCharge(editing.id);
@@ -1028,13 +1025,36 @@ export default function ChargeFormPage() {
 
 			{editing ? (
 				<div style={s.deleteWrap}>
+					{/* 확인은 TDS 모달로(검수 3-9). "한 번 더 누르세요" 식 버튼은 실수로 두 번
+					    눌러도 지워지고, 검수에서도 안내·확인은 모달을 요구한다. */}
 					<TextButton
 						size="medium"
 						color={colors.danger}
-						onClick={handleDelete}
+						onClick={() => setConfirmingDelete(true)}
 					>
-						{confirmingDelete ? "한 번 더 누르면 삭제돼요" : "항목 삭제"}
+						항목 삭제
 					</TextButton>
+					<ConfirmDialog
+						open={confirmingDelete}
+						title={`${editing.name}${josa(editing.name, "을", "를")} 지울까요?`}
+						description="지난달 기록까지 함께 사라져요. 더 안 나가는 거라면 삭제 대신 위의 해지를 써 주세요."
+						cancelButton={
+							<ConfirmDialog.CancelButton
+								onClick={() => setConfirmingDelete(false)}
+							>
+								취소
+							</ConfirmDialog.CancelButton>
+						}
+						confirmButton={
+							<ConfirmDialog.ConfirmButton
+								color="danger"
+								onClick={handleDelete}
+							>
+								삭제
+							</ConfirmDialog.ConfirmButton>
+						}
+						onClose={() => setConfirmingDelete(false)}
+					/>
 				</div>
 			) : null}
 		</div>

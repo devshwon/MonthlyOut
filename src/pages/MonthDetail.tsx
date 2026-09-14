@@ -27,14 +27,15 @@ import {
 	addMonths,
 	categoryBreakdown,
 	currentYearMonth,
-	dueDayGroups,
 	formatKrw,
 	formatYearMonth,
 	isSaving,
 	isValidYearMonth,
+	METHOD_KIND_LABEL,
 	monthlyTotal,
 	totalByMethodKind,
 	transferCharges,
+	withdrawalGroups,
 } from "@/services/charges";
 import { toggleConfirmed } from "@/services/confirmStore";
 
@@ -151,7 +152,8 @@ export default function MonthDetailPage() {
 	const confirmedAllCount = active.filter((charge) =>
 		confirmed.has(charge.id),
 	).length;
-	const days = dueDayGroups(charges, ym);
+	// 출금 층(기획서 4-2): 같은 날·같은 수단이 한 줄. 통장을 볼 때의 단위와 같다.
+	const withdrawals = withdrawalGroups(charges, ym);
 	const slices = categoryBreakdown(charges, ym);
 	const isThisMonth = ym === fallback;
 	const today = new Date().getDate();
@@ -256,7 +258,7 @@ export default function MonthDetailPage() {
 				/>
 			</div>
 
-			{days.length === 0 ? (
+			{withdrawals.length === 0 ? (
 				<div style={s.empty}>
 					<Paragraph
 						typography="t6"
@@ -290,13 +292,16 @@ export default function MonthDetailPage() {
 					</div>
 
 					<div style={s.card}>
-						{days.map((group, index) => {
+						{withdrawals.map((group, index) => {
 							// 오늘이 속한 달을 볼 때만 지난 날과 남은 날이 의미가 있다.
-							const past = isThisMonth && group.day < today;
-							const isToday = isThisMonth && group.day === today;
+							const past = isThisMonth && group.billingDay < today;
+							const isToday = isThisMonth && group.billingDay === today;
+							const methodLabel = group.method
+								? group.method.name || METHOD_KIND_LABEL[group.method.kind]
+								: null;
 
 							return (
-								<div key={group.day}>
+								<div key={group.key}>
 									<div
 										style={{
 											...s.dayHead,
@@ -311,7 +316,11 @@ export default function MonthDetailPage() {
 											fontWeight="bold"
 											color={past ? colors.textTertiary : colors.textPrimary}
 										>
-											<Paragraph.Text>{`${group.day}일`}</Paragraph.Text>
+											<Paragraph.Text>
+												{methodLabel
+													? `${group.billingDay}일 · ${methodLabel}`
+													: `${group.billingDay}일`}
+											</Paragraph.Text>
 										</Paragraph>
 										{isToday ? (
 											<span style={s.todayBadge}>
@@ -342,6 +351,7 @@ export default function MonthDetailPage() {
 												yearMonth={ym}
 												paper
 												hideBillingDay
+												hideMethod
 												badge={isSaving(charge) ? "총액 제외" : undefined}
 												onClick={() => navigate(`/charge/${charge.id}`)}
 												accessory={

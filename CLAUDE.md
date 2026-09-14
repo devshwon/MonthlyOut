@@ -52,9 +52,9 @@
 | 화면 | 경로 | 하는 일 |
 |---|---|---|
 | 홈 | `/` | **숫자만.** 이번 달 총액(칠판) · 고정이 한마디 + 응원 · 월급 카드(남는 돈) · 카드/이체 분리 · 오늘 빠지는 돈(확인 체크) |
-| 관리 | `/manage` | **카테고리별 목록.** 등록된 **전체**(해지·지난 항목 포함, 달 무관)를 묶어 보여주고 연필 버튼으로 추가·수정 |
+| 관리 | `/manage` | **카테고리별 목록, 큰 금액이 먼저**(기획서 2장: 줄일 대상이 위로). 등록된 **전체**(해지·지난 항목 포함, 달 무관). 연필 버튼으로 추가·수정 |
 | 연간 | `/yearly` | 1~12월 막대(월 탭 → 그 달 상세) · 연 합계/월 평균 · 카테고리별 연간 합계 |
-| 이번 달 | `/month/:ym` | **날짜순 체크리스트.** 그 달 요약 · 5일 → 25일 순으로 묶은 출금 목록(항목마다 확인 체크) · 카테고리 비율. 월 이동 가능 |
+| 이번 달 | `/month/:ym` | **출금 층 체크리스트**(기획서 4-2). "25일 · 신한카드 337,000"처럼 같은 날·같은 수단이 한 묶음, 날짜순. 항목마다 확인 체크 · 카테고리 비율. 월 이동 가능 |
 | 등록/수정 | `/charge/new`, `/charge/:id` | 항목 폼 |
 | 설정 | `/settings` | 현황 · **월 수입**(이력·이번 달부터 적용) · 결제일 알림 동의 · 앱 정보 · 데이터 초기화 |
 
@@ -63,7 +63,7 @@
 | 무엇 | 어디 |
 |---|---|
 | 도메인 타입 | `src/types/index.ts` — `FixedCharge` · `ChargeTerm` · `PaymentMethod` · `WithdrawalGroup` |
-| 계산(순수 함수) | `src/services/charges.ts` — 회차/활성 판정, `activeCharges` · `monthlyTotal` · `nextRelease` · `totalByMethodKind` · `categoryBreakdown` · `groupByCategory`(카테고리 축) · **`dueDayGroups`(날짜 축)** · `yearlyTotals` · `yearlyCategoryTotals` · `transferCharges` · `withdrawalGroups` · `cardFixedTotal` |
+| 계산(순수 함수) | `src/services/charges.ts` — 회차/활성 판정, `activeCharges` · `monthlyTotal` · `nextRelease` · `totalByMethodKind` · `categoryBreakdown` · `groupByCategory`(카테고리 축, 금액순) · **`withdrawalGroups`(출금 축: 날짜·수단)** · `yearlyTotals` · `yearlyCategoryTotals` · `transferCharges` · `withdrawalGroups` · `cardFixedTotal` |
 | 항목 저장소 | `src/services/chargeStore.ts` — localStorage(`monthlyout.charges.v1`) + 모듈 스토어. 변경은 `addCharge`/`updateCharge`/`removeCharge`/`clearCharges`로만 |
 | 설정·수입 저장소 | `src/services/settingsStore.ts` — 월 수입 **이력**(`incomes`: 시작 월 + 금액)과 알림 동의. 그 달 금액은 `incomeForMonth()`로 고른다 |
 | 저장소 공통 | `src/services/storage.ts` — localStorage 접근은 전부 여기를 거친다(테스트·시크릿 모드에서 죽지 않게) |
@@ -259,6 +259,8 @@ apps-in-toss-skills 마켓플레이스 플러그인이 설치돼 있다.
   하단탭과 형태가 겹쳐 사용자가 위치를 헷갈리므로 검수에서 걸린다.
   구현체 = `src/components/BottomNav.tsx`(가운데 뜬 알약 + 그림자, `navSpace()`로 콘텐츠 여백 확보).
   근거: 개발자센터 [UI/UX 가이드](https://developers-apps-in-toss.toss.im/design/consumer-ux-guide) · `prompts/99-last-checklist.md` 2-10.
+- **확인·안내는 TDS 모달(`ConfirmDialog`/`AlertDialog`)로.** "한 번 더 누르면 삭제돼요" 식
+  두 번 누르기 버튼은 검수 3-9에 걸리고, 실수로 두 번 눌러도 지워진다. 삭제·초기화가 그 예다.
 - **뒤로가기를 화면 안에 또 만들지 않는다.** 토스 상단 내비바의 뒤로가기와 동시에 보이면
   검수 2-6 위반이다. 뒤로가기는 `backEvent`로만 처리하고(App의 경로 스택), 화면 안에는
   `<` 버튼을 두지 않는다. 화면 안의 `<`/`>`는 **월 이동처럼 의미가 다른 경우에만** 쓰고 가운데 정렬한다.

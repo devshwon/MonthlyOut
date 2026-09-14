@@ -97,6 +97,8 @@ interface Props {
 	 * "5일" 밑에 다시 "5일 · 국민은행"이 적히면 같은 말이 두 번이다.
 	 */
 	hideBillingDay?: boolean;
+	/** 결제수단을 메타에서 뺀다. "25일 · 신한카드" 머리 아래 놓일 때. */
+	hideMethod?: boolean;
 }
 
 /** 항목 한 줄. 카테고리 색·아이콘이 화면 전체에서 같은 의미로 반복된다. */
@@ -109,12 +111,15 @@ export function ChargeRow({
 	paper = false,
 	badge,
 	hideBillingDay = false,
+	hideMethod = false,
 }: Props) {
 	const round = installmentRound(charge, yearMonth);
 	const meta = [
 		hideBillingDay ? null : formatBillingDay(charge.billingDay),
-		charge.method?.name ||
-			(charge.method ? METHOD_KIND_LABEL[charge.method.kind] : null),
+		hideMethod
+			? null
+			: charge.method?.name ||
+				(charge.method ? METHOD_KIND_LABEL[charge.method.kind] : null),
 	].filter(Boolean);
 
 	return (
@@ -170,9 +175,15 @@ export function ChargeRow({
 							</span>
 						) : null}
 					</div>
-					<Paragraph typography="t7" color={colors.textTertiary} style={s.meta}>
-						<Paragraph.Text>{meta.join(" · ")}</Paragraph.Text>
-					</Paragraph>
+					{meta.length > 0 ? (
+						<Paragraph
+							typography="t7"
+							color={colors.textTertiary}
+							style={s.meta}
+						>
+							<Paragraph.Text>{meta.join(" · ")}</Paragraph.Text>
+						</Paragraph>
+					) : null}
 					{charge.memo ? (
 						<Paragraph
 							typography="t7"

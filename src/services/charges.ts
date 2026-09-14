@@ -263,6 +263,16 @@ export function nextRelease(
 // ─────────────────────────────────────────────
 
 /** 같은 수단 · 같은 날짜에 한 번에 빠지는 돈으로 묶는다. 날짜 오름차순. */
+/**
+ * 출금 층 — 그 달에 **언제, 어디서** 얼마가 빠지는지(기획서 4-2).
+ *
+ * 항목 층이 "넷플릭스 17,000"이라면 여기는 "25일 신한카드 337,000"이다. 잔고 사고는
+ * 항상 이 단위에서 나므로, 이번 달 화면의 확인 체크리스트는 이 순서로 세운다.
+ * 같은 날·같은 수단이 한 묶음이고, 묶음 안은 큰 금액이 먼저다.
+ *
+ * 저축도 포함한다 — 총액에서는 빼지만(규칙 7) 그날 통장에서 나가는 건 사실이라,
+ * 빼면 통장과 안 맞는 목록이 된다. 화면에서 "총액 제외" 배지로 구분한다.
+ */
 export function withdrawalGroups(
 	charges: FixedCharge[],
 	ym: YearMonth,
@@ -273,7 +283,10 @@ export function withdrawalGroups(
 		const methodKey = charge.method
 			? `${charge.method.kind}:${charge.method.name}`
 			: "none";
-		const key = `${methodKey}@${charge.billingDay}`;
+		// 31일 항목은 2월엔 28일에 빠진다 — 그 달 기준으로 보정한 날로 묶어야
+		// "28일 국민은행"과 "31일 국민은행"이 다른 출금으로 갈리지 않는다.
+		const day = billingDayInMonth(charge, ym);
+		const key = `${methodKey}@${day}`;
 		const group = groups.get(key);
 
 		if (group) {
@@ -285,50 +298,10 @@ export function withdrawalGroups(
 		groups.set(key, {
 			key,
 			method: charge.method,
-			billingDay: charge.billingDay,
+			billingDay: day,
 			amount: charge.amount,
 			charges: [charge],
 		});
-	}
-
-	return [...groups.values()].sort(
-		(a, b) => a.billingDay - b.billingDay || b.amount - a.amount,
-	);
-}
-
-export interface DueDayGroup {
-	/** 그 달 기준으로 보정된 결제일(31일 → 그 달 말일) */
-	day: number;
-	amount: number;
-	charges: FixedCharge[];
-}
-
-/**
- * 그 달에 **언제** 얼마가 빠지는지 — 날짜순 묶음.
- *
- * 카테고리별 묶음(`groupByCategory`)과 같은 데이터를 다르게 세운 것이다. 항목 층이
- * "넷플릭스 17,000"이라면 여기는 출금 층이라, 통장을 볼 때의 순서(5일 → 25일)와 같다.
- * 확인 체크가 이 순서 위에 붙는다.
- *
- * 저축도 포함한다 — 총액에서는 빼지만(규칙 7) 그 날 통장에서 나가는 건 사실이라
- * 빼면 "통장과 안 맞는" 목록이 된다. 화면에서 "총액 제외" 배지로 구분한다.
- */
-export function dueDayGroups(
-	charges: FixedCharge[],
-	ym: YearMonth,
-): DueDayGroup[] {
-	const groups = new Map<number, DueDayGroup>();
-
-	for (const charge of activeCharges(charges, ym)) {
-		const day = billingDayInMonth(charge, ym);
-		const group = groups.get(day);
-
-		if (group) {
-			group.amount += charge.amount;
-			group.charges.push(charge);
-			continue;
-		}
-		groups.set(day, { day, amount: charge.amount, charges: [charge] });
 	}
 
 	for (const group of groups.values()) {
@@ -337,7 +310,9 @@ export function dueDayGroups(
 		);
 	}
 
-	return [...groups.values()].sort((a, b) => a.day - b.day);
+	return [...groups.values()].sort(
+		(a, b) => a.billingDay - b.billingDay || b.amount - a.amount,
+	);
 }
 
 /** 카드로 빠지는 고정분 합계 — 카드값 역산(2차)의 재료. */
@@ -448,6 +423,10 @@ export interface CategoryGroup {
 /**
  * 관리 화면용 카테고리별 묶음.
  * 이번 달 활성 여부와 무관하게 **등록된 전체**를 보여준다(끝난 할부도 기록으로 남는다).
+ *
+ * 묶음도, 묶음 안도 **큰 금액이 먼저**다(기획서 2장: 줄일 대상이 자연스럽게 위로 오게).
+ * 카테고리 고정 순서로 두면 5천 원짜리 구독이 30만 원 할부보다 위에 놓인다.
+ * 금액이 같으면 카테고리 고정 순서로 안정시킨다.
  */
 export function groupByCategory(charges: FixedCharge[]): CategoryGroup[] {
 	const groups: CategoryGroup[] = [];
@@ -466,7 +445,7 @@ export function groupByCategory(charges: FixedCharge[]): CategoryGroup[] {
 			amount: list.reduce((sum, charge) => sum + charge.amount, 0),
 		});
 	}
-	return groups;
+	return groups.sort((a, b) => b.amount - a.amount);
 }
 
 export interface MonthTotal {

@@ -65,6 +65,7 @@ export const colors = {
 	positiveSoft: "#E4F7EE",
 	/** 삭제 등 위험 액션 */
 	danger: "#F04452",
+	dangerSoft: "#FDECEC",
 } as const;
 
 export type ColorKey = keyof typeof colors;

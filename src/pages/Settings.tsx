@@ -1,4 +1,4 @@
-import { Paragraph, Switch, TextField } from "@toss/tds-mobile";
+import { ConfirmDialog, Paragraph, Switch, TextField } from "@toss/tds-mobile";
 import { useMemo, useState } from "react";
 import { MoneyBuddy } from "@/components/MoneyBuddy";
 import { PrimaryButton } from "@/components/PrimaryButton";
@@ -134,10 +134,6 @@ export default function SettingsPage() {
 					: "매달 나가는 날, 확인하라고 알려드릴게요.";
 
 	const handleClear = () => {
-		if (!confirmingClear) {
-			setConfirmingClear(true);
-			return;
-		}
 		clearCharges();
 		clearConfirmations();
 		setConfirmingClear(false);
@@ -370,23 +366,38 @@ export default function SettingsPage() {
 						style={{
 							...s.dangerButton,
 							backgroundColor:
-								charges.length === 0 ? colors.surfaceSunken : "#FDECEC",
+								charges.length === 0 ? colors.surfaceSunken : colors.dangerSoft,
 							cursor: charges.length === 0 ? "default" : "pointer",
 						}}
-						onClick={handleClear}
+						onClick={() => setConfirmingClear(true)}
 					>
 						<Paragraph
 							typography="t6"
 							fontWeight="bold"
 							color={charges.length === 0 ? colors.textTertiary : colors.danger}
 						>
-							<Paragraph.Text>
-								{confirmingClear
-									? "한 번 더 누르면 모두 삭제돼요"
-									: "모든 항목 삭제"}
-							</Paragraph.Text>
+							<Paragraph.Text>모든 항목 삭제</Paragraph.Text>
 						</Paragraph>
 					</button>
+					{/* 확인은 TDS 모달로(검수 3-9). 되돌릴 수 없는 일이라 더더욱. */}
+					<ConfirmDialog
+						open={confirmingClear}
+						title={`${charges.length}개 항목을 모두 지울까요?`}
+						description="등록한 항목과 확인 기록이 전부 사라지고 되돌릴 수 없어요."
+						cancelButton={
+							<ConfirmDialog.CancelButton
+								onClick={() => setConfirmingClear(false)}
+							>
+								취소
+							</ConfirmDialog.CancelButton>
+						}
+						confirmButton={
+							<ConfirmDialog.ConfirmButton color="danger" onClick={handleClear}>
+								모두 삭제
+							</ConfirmDialog.ConfirmButton>
+						}
+						onClose={() => setConfirmingClear(false)}
+					/>
 				</div>
 			</div>
 			<div style={s.footer}>
