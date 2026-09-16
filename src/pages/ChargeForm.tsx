@@ -30,7 +30,13 @@ import {
 import { useCharges } from "@/hooks/useCharges";
 import { useFullScreenAd } from "@/hooks/useFullScreenAd";
 import { useSafeAreaInsets } from "@/hooks/useSafeAreaInsets";
-import { canShowInterstitial, markInterstitialShown } from "@/services/adGate";
+import { markAd } from "@/lib/ad-log";
+import {
+	AD_MIN_CHARGES,
+	canShowInterstitial,
+	interstitialShownInSession,
+	markInterstitialShown,
+} from "@/services/adGate";
 import {
 	CATEGORY_GROUPS,
 	type CategoryGroupDef,
@@ -400,8 +406,17 @@ export default function ChargeFormPage() {
 	 * 마운트에 걸면 수정하러 들어온 세션·중간에 나간 세션까지 한 편씩 받아 버리고
 	 * (ads-log KI-23), 저장 버튼을 누른 뒤에 받으면 검수 7-4(재생 시점 실시간 로딩)에
 	 * 걸린다. 그 사이가 여기다 — 다 적었고, 오늘 아직 안 봤고, 새 항목일 때.
+	 *
+	 * **첫 등록 구간은 뺀다({@link AD_MIN_CHARGES}).** 이 앱의 가치는 총액 숫자인데
+	 * 항목이 두어 개면 그 숫자가 틀리다. 즉 처음 몰아서 적는 그 시간이 앱이 쓸모를
+	 * 증명하는 유일한 구간이고, 거기서 광고로 끊으면 총액을 한 번도 못 본 사람을
+	 * 잃는다. 이미 몇 개 적어둔 사람은 총액을 봤고 계속 쓰기로 한 사람이다.
 	 */
-	const adArmed = !editing && canSave && canShowInterstitial();
+	const adArmed =
+		!editing &&
+		canSave &&
+		canShowInterstitial() &&
+		charges.length >= AD_MIN_CHARGES;
 	const interstitial = useFullScreenAd(AD_GROUP_IDS.INTERSTITIAL, {
 		arm: adArmed,
 	});
@@ -466,6 +481,16 @@ export default function ChargeFormPage() {
 		}
 
 		addCharge(draft);
+
+		// 이 저장이 광고 **전**인지 **후**인지 — 아래 show()가 플래그를 바꾸기 전에 읽는다.
+		// save_after_ad가 interstitial_show의 imp와 비슷하면 광고를 보고도 계속 적는
+		// 것이고, 0에 가까우면 광고 한 편이 그 세션의 입력을 끝낸다는 뜻이다.
+		const sawAdBefore = interstitialShownInSession();
+		markAd(
+			"charge_save",
+			"interstitial",
+			sawAdBefore ? "save_after_ad" : "save_before_ad",
+		);
 
 		/*
 		 * 전면광고는 **적는 일이 끝난 여기** 한 곳에만 둔다. 홈 진입이나 화면 전환에
