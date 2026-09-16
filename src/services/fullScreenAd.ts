@@ -214,6 +214,22 @@ function preload(slot: AdSlot): void {
 }
 
 /**
+ * 노출이 끝난 뒤 다음 편을 미리 받는다 — **단 아직 arm된 자리일 때만.**
+ *
+ * `preload()`는 `armed`를 보지 않는다(show()의 폴링 루프가 arm 없이도 불러야 해서다).
+ * 그래서 여기서 걸러야 한다. 안 걸면 "그날 치를 다 쓴 자리"에도 한 편을 더 받아놓는다 —
+ * 예: 저장 직후 전면을 띄우면 하루 한 번 게이트가 닫히고 ChargeForm은 곧 언마운트되는데,
+ * 500ms 뒤 타이머가 그걸 모르고 또 받는다. 노출 없이 버려지므로 실패 판정에는 안 잡히고
+ * eCPM만 깎인다 (ads-log KI-23 ★ 수익 누수).
+ */
+function reloadAfterShow(slot: AdSlot): void {
+	setTimeout(() => {
+		if (!slot.armed) return;
+		preload(slot);
+	}, RELOAD_AFTER_SHOW_MS);
+}
+
+/**
  * 슬롯을 등록한다. **여기서는 받지 않는다.**
  *
  * 이름이 `initialize`라 등록만 하는 것처럼 보이는데 실제로 load를 부르던 구현이
@@ -331,12 +347,12 @@ export function showFullScreenAdSlot(
 								} else {
 									finish({ ok: true, reward: earnedReward, impressed });
 								}
-								setTimeout(() => preload(slot), RELOAD_AFTER_SHOW_MS);
+								reloadAfterShow(slot);
 								break;
 							case "failedToShow":
 								showProbe.renderFail("failedToShow");
 								finish({ ok: false, reason: "failed", impressed });
-								setTimeout(() => preload(slot), RELOAD_AFTER_SHOW_MS);
+								reloadAfterShow(slot);
 								break;
 							default:
 								break;
@@ -345,7 +361,7 @@ export function showFullScreenAdSlot(
 					onError: (err) => {
 						showProbe.renderFail(err);
 						finish({ ok: false, reason: "failed", impressed });
-						setTimeout(() => preload(slot), RELOAD_AFTER_SHOW_MS);
+						reloadAfterShow(slot);
 					},
 				});
 			} catch (err) {
