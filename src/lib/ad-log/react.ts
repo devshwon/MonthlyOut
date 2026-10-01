@@ -144,8 +144,14 @@ export function useAdSlot<T extends HTMLElement = HTMLDivElement>(
 	const inner = useRef<AdProbe | null>(null);
 
 	const [attemptKey, setAttemptKey] = useState(0);
-	const [state, setState] = useState<AdSlotState>("loading");
+	const [state, setStateRaw] = useState<AdSlotState>("loading");
 	const [failures, setFailures] = useState(0);
+	/** 콜백 안에서 현재 상태를 보기 위한 거울 — 렌더를 기다리지 않고 바로 맞춘다. */
+	const stateRef = useRef<AdSlotState>("loading");
+	const setState = useCallback((s: AdSlotState) => {
+		stateRef.current = s;
+		setStateRaw(s);
+	}, []);
 
 	const {
 		placement,
@@ -170,27 +176,45 @@ export function useAdSlot<T extends HTMLElement = HTMLDivElement>(
 	 * 다음 시도의 상태를 건드리지 못하게 막는다.
 	 */
 	const decided = useRef(false);
+	/**
+	 * 이번 시도의 실패가 워치독(콜백 무응답)에서 나왔는지. 워치독은 "아직 소식이 없다"는
+	 * 추정일 뿐이라, 그 뒤에 rendered가 오면 사실이 추정을 이긴다 — 아래 onSuccess 참고.
+	 */
+	const byWatchdog = useRef(false);
 	const failCount = useRef(0);
 
 	/** 실패를 상태 기계에 알린다. `permanent`면 재시도하지 않는다. */
 	const onFailure = useCallback(
-		(permanent: boolean) => {
+		(permanent: boolean, fromWatchdog = false) => {
 			if (decided.current) return;
 			decided.current = true;
+			byWatchdog.current = fromWatchdog;
 			const n = failCount.current + 1;
 			failCount.current = n;
 			setFailures(n);
 			// 재시도 예산은 지금까지의 실패 횟수로 센다 — 배열 길이를 넘으면 끝.
 			setState(permanent || n > delays.length ? "gone" : "waiting");
 		},
-		[delays.length],
+		[delays.length, setState],
 	);
 
 	const onSuccess = useCallback(() => {
-		if (decided.current) return;
+		if (decided.current) {
+			// 워치독이 먼저 실패로 넘긴 뒤 늦게 렌더된 경우(예: 16초 만에 뜬 배너).
+			// 광고는 이미 화면에 있다 — 무시하면 컨테이너가 0으로 접히고, 재시도가 멀쩡히
+			// 떠 있는(어쩌면 이미 노출이 잡힌) 배너를 떼고 새로 붙인다. 되살리고 그 실패는 없던 걸로.
+			// 'gone'(재시도 소진)이면 컨테이너가 이미 내려갔으므로 되살리지 않는다.
+			if (byWatchdog.current && stateRef.current === "waiting") {
+				byWatchdog.current = false;
+				failCount.current = Math.max(0, failCount.current - 1);
+				setFailures(failCount.current);
+				setState("shown");
+			}
+			return;
+		}
 		decided.current = true;
 		setState("shown");
-	}, []);
+	}, [setState]);
 
 	// probe를 갈아끼워도 이 객체의 정체성은 유지된다 → 콜백이 항상 현재 probe를 본다.
 	//
@@ -222,6 +246,7 @@ export function useAdSlot<T extends HTMLElement = HTMLDivElement>(
 	// biome-ignore lint/correctness/useExhaustiveDependencies: attemptKey는 본문에서 안 읽지만 재시도를 촉발하는 값이다 — 빼면 재시도해도 probe가 안 바뀐다.
 	useEffect(() => {
 		decided.current = false;
+		byWatchdog.current = false;
 		inner.current = adProbe({
 			placement,
 			adType,
@@ -250,7 +275,7 @@ export function useAdSlot<T extends HTMLElement = HTMLDivElement>(
 	useEffect(() => {
 		if (state !== "loading") return;
 		const ms = attachWatchdogMs ?? DEFAULT_ATTACH_WATCHDOG_MS;
-		const t = setTimeout(() => onFailure(false), ms);
+		const t = setTimeout(() => onFailure(false, true), ms);
 		return () => clearTimeout(t);
 		// state만으로 충분하다 — 재시도는 waiting → loading 전이를 거치므로
 		// 여기서 attemptKey를 또 볼 필요가 없다.
@@ -268,6 +293,7 @@ export function useAdSlot<T extends HTMLElement = HTMLDivElement>(
 			setState("loading");
 			setAttemptKey((k) => k + 1);
 		};
+		// (늦은 rendered로 'shown'이 되면 이 effect가 정리되며 타이머도 취소된다)
 
 		const fire = () => {
 			if (cancelled) return;
@@ -292,7 +318,7 @@ export function useAdSlot<T extends HTMLElement = HTMLDivElement>(
 			clearTimeout(timer);
 			cleanupVisibility?.();
 		};
-	}, [state, delays]);
+	}, [state, delays, setState]);
 
 	return { ref, probe, attemptKey, state, failures };
 }

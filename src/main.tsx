@@ -14,7 +14,7 @@ import App from "./App";
 // 바꾸려면 괄호 안 KI를 먼저 읽을 것.
 initAdLog({
 	app: "monthlyout", // ads-log의 ALLOWED_APPS와 철자까지 같아야 수집된다 (KI-02)
-	appVersion: __APP_VERSION__,
+	appVersion: __APP_BUILD__,
 	enabled: !import.meta.env.DEV,
 	// 끄면 rendered 시점에 바로 ok로 확정하고 DOM을 한 번도 안 본다 — 가려짐·높이0·
 	// 화면밖이 전부 ok로 묻힌다.

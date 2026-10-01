@@ -9,7 +9,7 @@
     "build": "vite build && ait build",
     "preview": "vite preview",
     "deploy": "ait deploy --api-key __PUT_YOUR_CONSOLE_API_KEY__",
-    "release": "npm run build && npx ait deploy --api-key __PUT_YOUR_CONSOLE_API_KEY__",
+    "release": "npm run build && npx ait deploy --profile devshwon",
     "typecheck": "tsc --noEmit",
     "lint": "biome check .",
     "format": "biome format --write .",

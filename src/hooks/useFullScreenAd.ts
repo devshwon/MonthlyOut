@@ -55,8 +55,11 @@ export function useFullScreenAd(
 		initializeFullScreenAd(adGroupId);
 	}, [adGroupId]);
 
+	// 언마운트하면 내린다. 안 내리면 화면을 떠난 뒤에도 arm이 남아, 앱으로 돌아올
+	// 때마다(visibilitychange) 볼 일 없는 광고를 다시 받는다 (ads-log KI-23).
 	useEffect(() => {
 		armFullScreenAd(adGroupId, arm);
+		return () => armFullScreenAd(adGroupId, false);
 	}, [adGroupId, arm]);
 
 	const show = useCallback(

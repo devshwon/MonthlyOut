@@ -52,6 +52,13 @@ export interface ShowAdOptions {
 
 const LOAD_WAIT_TIMEOUT_MS = 10_000;
 /**
+ * 로드가 멈췄다고 보고 판정(timeout)·재시작하는 시간. 위의 10초(사용자를 기다리게 하는
+ * UX 예산)와 **같은 상수로 쓰지 않는다** — 09-30에 10초 넘게 걸려 받아진 로드가 timeout
+ * 4건으로 찍히고, 멈춤 가드가 그 로드를 버리고 새로 쏴서 req 9에 fill 3이 됐다
+ * (ads-log KI-12 · KI-17).
+ */
+const LOAD_STUCK_MS = 30_000;
+/**
  * 노출 구간 probe의 무응답 판정 시간.
  *
  * 이 구간은 `dismissed`(사용자가 광고를 닫음)가 와야 판정이 끝난다. 즉 이 값은
@@ -162,7 +169,7 @@ function preload(slot: AdSlot): void {
 	// 다시 시작한다. 이 가드가 없으면 isLoading이 영영 true로 남아 이후 preload가
 	// 전부 무시되고, 앱을 껐다 켜기 전까지 전면광고가 다시는 안 뜬다 (ads-log KI-08).
 	const stuck =
-		slot.isLoading && Date.now() - slot.loadStartedAt > LOAD_WAIT_TIMEOUT_MS;
+		slot.isLoading && Date.now() - slot.loadStartedAt > LOAD_STUCK_MS;
 	if (slot.isLoading && !stuck) return;
 
 	slot.isLoading = true;
@@ -182,7 +189,7 @@ function preload(slot: AdSlot): void {
 		placement: loadPlacement(slot.adGroupId),
 		adType: adTypeOf(slot.adGroupId),
 		adGroupId: slot.adGroupId,
-		attachTimeoutMs: LOAD_WAIT_TIMEOUT_MS,
+		attachTimeoutMs: LOAD_STUCK_MS,
 	});
 	slot.loadProbe = probe;
 

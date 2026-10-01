@@ -173,6 +173,8 @@ export function adProbe(opts: AdProbeOptions): AdProbe {
 	const tAttach = Date.now();
 	let tRendered = 0;
 	let settled = false;
+	/** 어떤 판정으로 끝났나 — `late_viewable`은 실패로 끝난 슬롯에만 의미가 있다. */
+	let settledAs: AdOutcome | null = null;
 	let disposed = false;
 	let sawImpression = false;
 	// 퍼널 단계는 슬롯당 최대 1번만 센다. rendered/impression 콜백이 두 번 오는 SDK도
@@ -265,6 +267,7 @@ export function adProbe(opts: AdProbeOptions): AdProbe {
 	): void {
 		if (settled) return;
 		settled = true;
+		settledAs = outcome;
 		clearTimers();
 
 		count(key(outcome));
@@ -389,14 +392,21 @@ export function adProbe(opts: AdProbeOptions): AdProbe {
 
 		viewable() {
 			if (disposed) return;
-			if (!stView) {
+			const first = !stView;
+			if (first) {
 				stView = true;
 				count(key("view"));
 			}
 			if (settled) {
 				// 우리 타이머가 너무 짧아서 문제로 오판한 뒤 뒤늦게 viewable이 온 경우.
 				// viewableMs 튜닝 지표로 쓰려고 카운터만 남긴다 (상세는 불필요).
-				count(key("late_viewable"));
+				//
+				// **실패로 끝난 슬롯의 첫 viewable만** 센다. 예전엔 settle 뒤의 viewable을
+				// 판정·횟수 불문하고 셌는데, 하단 고정 배너는 새로고침·회전마다 viewable을
+				// 다시 쏘므로 정상 `ok` 슬롯에서도 쌓였다 — monthlyout app_bottom이
+				// view 32에 late_viewable 41이었다. 그러면 "오판" 지표가 아니라 "배너
+				// 새로고침 횟수"가 된다.
+				if (first && settledAs !== "ok") count(key("late_viewable"));
 				return;
 			}
 			settle("ok");
@@ -446,24 +456,31 @@ export function adProbe(opts: AdProbeOptions): AdProbe {
 			clearTimers();
 			if (settled) return;
 
-			// 렌더 + 임프레션까지 확인됐다면 성공으로 세도 안전하다.
-			if (tRendered && sawImpression) {
-				settled = true;
-				count(key("ok"));
-
-				// 다만 이건 **검사를 통과한 ok가 아니라 검사를 못 한 ok**다.
-				// strictViewable이 켜져 있으면 viewable이 안 올 때 8초 뒤 inspect()가
-				// 원인(obstructed/zero_size/offscreen)을 캐야 하는데, 그 전에 dispose가
-				// 오면 바로 위 clearTimers()가 타이머를 죽여 검사가 한 번도 안 돈다.
-				// ad-log는 백그라운드 전환 때 전송하며 probe를 dispose하므로, 렌더 후
-				// viewableMs 안에 앱을 벗어난 슬롯이 전부 여기로 샌다.
-				//
-				// 판정을 빼지 않고 카운터만 따로 두는 이유: ok를 안 세면 이 슬롯이
-				// 집계에서 통째로 빠져 분모가 줄고, 남은 실패가 도드라져 실패율이
-				// 부풀어 오른다(ok 9 + nofill 1 → 10%가 100%로). 규모만 드러내고
-				// 실패율은 건드리지 않는다. (ads-log KI-16)
-				count(key("disposed_early"));
+			// 결론 없이 버려진 슬롯. 판정은 안 남기지만(아래 주석) 규모는 센다 — 안 세면
+			// `req`만 남고 어디로 갔는지 안 보여서 "fill률 23%"가 광고 문제로 읽힌다.
+			// tripb 배너가 그랬다: 빈 홈 화면이 자리를 가져가며 attach 전에 언마운트돼
+			// req 146 중 113이 판정 없이 사라졌다.
+			if (!(tRendered && sawImpression)) {
+				count(key("disposed_unsettled"));
+				return;
 			}
+
+			// 렌더 + 임프레션까지 확인됐다면 성공으로 세도 안전하다.
+			settled = true;
+			count(key("ok"));
+
+			// 다만 이건 **검사를 통과한 ok가 아니라 검사를 못 한 ok**다.
+			// strictViewable이 켜져 있으면 viewable이 안 올 때 8초 뒤 inspect()가
+			// 원인(obstructed/zero_size/offscreen)을 캐야 하는데, 그 전에 dispose가
+			// 오면 바로 위 clearTimers()가 타이머를 죽여 검사가 한 번도 안 돈다.
+			// ad-log는 백그라운드 전환 때 전송하며 probe를 dispose하므로, 렌더 후
+			// viewableMs 안에 앱을 벗어난 슬롯이 전부 여기로 샌다.
+			//
+			// 판정을 빼지 않고 카운터만 따로 두는 이유: ok를 안 세면 이 슬롯이
+			// 집계에서 통째로 빠져 분모가 줄고, 남은 실패가 도드라져 실패율이
+			// 부풀어 오른다(ok 9 + nofill 1 → 10%가 100%로). 규모만 드러내고
+			// 실패율은 건드리지 않는다. (ads-log KI-16)
+			count(key("disposed_early"));
 		},
 	};
 }

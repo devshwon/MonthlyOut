@@ -10,4 +10,4 @@ node scripts/sync-client.mjs <이 앱 경로> --dir src/lib/ad-log
 ```
 
 - 수집 주소: `https://log.wonkeylab.kr/v1/ad`
-- 동기화 시각: 2026-09-13T04:16:41.422Z
+- 동기화 시각: 2026-10-01T01:59:26.504Z
