@@ -134,7 +134,7 @@
 - **빌드**: Vite가 웹을 빌드하고, `ait build`는 그 산출물을 `monthlyout.ait`로 패키징만 한다 — `npm run build` = `vite build && ait build`. **순서를 바꾸거나 `ait build`만 돌리면 실패한다.** `vite.config.ts`의 `build.outDir`와 `apps-in-toss.config.ts`의 `webBundleDir`는 **반드시 일치**(둘 다 `dist`).
 - **UI**: TDS(`@toss/tds-mobile`) **필수**. 입력·버튼·모달 등은 TDS 우선(`TextField` · `Chip`/`ChipItem` · `Switch` · `Button` · `Paragraph`), 불가피할 때만 커스텀.
 - **저장**: 서버 없음. localStorage만 쓴다(기획서 7장 — 데이터가 항목 리스트 하나라 서버가 필요 없다).
-- **SDK**: `@apps-in-toss/web-framework` 3.1.1 (위치·결제·광고·이벤트 등은 여기서 import). TDS는 `@toss/tds-mobile`·`@toss/tds-mobile-ait` 2.5.1. 브라우저 개발용 `@apps-in-toss/devtools` 3.1.1(devDependency).
+- **SDK**: `@apps-in-toss/web-framework` 3.7.0 (위치·결제·광고·이벤트 등은 여기서 import). TDS는 `@toss/tds-mobile`·`@toss/tds-mobile-ait` 2.5.1. 브라우저 개발용 `@apps-in-toss/devtools` 3.7.0(devDependency).
 - **설정 파일**: `apps-in-toss.config.ts` (2.x의 `granite.config.ts`를 대체).
 
 ### 광고 붙인 자리
@@ -176,7 +176,7 @@
 
 ## 상단 네비게이션 바(앱 이름 표시줄) 켜기/끄기
 
-토스가 미니앱 위에 씌우는 상단 바(뒤로가기 · 앱 아이콘+이름 · 홈 · 더보기)는 `apps-in-toss.config.ts`의 **`navigationBar`** 로 제어한다. `defineConfig`에 바로 넣으면 된다. **초기 설정만 지원**(런타임 변경 API 없음, 액세서리 버튼만 런타임 추가 가능). 키를 아예 안 넣으면 기본값(타이틀 표시)으로 뜬다 — 지금이 그 상태다.
+토스가 미니앱 위에 씌우는 상단 바(뒤로가기 · 앱 아이콘+이름 · 홈 · 더보기)는 `apps-in-toss.config.ts`의 **`navigationBar`** 로 제어한다. `defineConfig`에 바로 넣으면 된다. 3.7.0부터 런타임에도 `NavigationBar.setOptions({...})`로 바꿀 수 있다(넘긴 필드만 반영, 이 앱은 아직 안 쓴다). 키를 아예 안 넣으면 기본값(타이틀 표시)으로 뜬다 — 지금이 그 상태다.
 
 - **"상단 꺼줘 / 앱 이름 표시줄 없애줘"** → `withTitle: false`. 바를 더 비우려면 버튼도 함께 끈다.
 - **"상단 켜줘"** → `navigationBar` 키를 지우거나 `withTitle: true`(기본 동작).
