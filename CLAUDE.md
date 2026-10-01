@@ -130,7 +130,7 @@
 ## 기술 스택
 
 - **플랫폼**: Apps in Toss WebView (비게임)
-- **앱**: React 18 + TypeScript, react-router-dom(HashRouter)
+- **앱**: React 18 + TypeScript, react-router-dom 7(HashRouter) · Vite 6
 - **빌드**: Vite가 웹을 빌드하고, `ait build`는 그 산출물을 `monthlyout.ait`로 패키징만 한다 — `npm run build` = `vite build && ait build`. **순서를 바꾸거나 `ait build`만 돌리면 실패한다.** `vite.config.ts`의 `build.outDir`와 `apps-in-toss.config.ts`의 `webBundleDir`는 **반드시 일치**(둘 다 `dist`).
 - **UI**: TDS(`@toss/tds-mobile`) **필수**. 입력·버튼·모달 등은 TDS 우선(`TextField` · `Chip`/`ChipItem` · `Switch` · `Button` · `Paragraph`), 불가피할 때만 커스텀.
 - **저장**: 서버 없음. localStorage만 쓴다(기획서 7장 — 데이터가 항목 리스트 하나라 서버가 필요 없다).
