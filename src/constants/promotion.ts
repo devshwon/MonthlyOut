@@ -39,10 +39,15 @@ export const DAILY_GRANT_LIMIT = 5000;
  */
 export const PROMOTION_CODES = {
 	/**
-	 * 첫 항목 등록 보상. 콘솔에서 **1인 1회 · 1회 {@link FIRST_CHARGE_REWARD}원**으로 건다 —
-	 * 중복 지급을 막는 진짜 방어선은 이 프로모션 설정이다(docs/point-granting.md 0장).
+	 * 첫 항목 등록 보상 — 콘솔 "첫 고정지출 등록하면 5원"(id 60651, 예산 2,000원).
+	 * 1회 {@link FIRST_CHARGE_REWARD}원 · **1인 하루 한도 5원**. 콘솔에는 "1인 1회" 설정이 없어서
+	 * 토스가 막는 건 하루 단위다 — 같은 날 두 번은 4114로 막히지만, 데이터를 지우고
+	 * 다음 날 다시 적으면 한 번 더 받을 수 있다. 5원이라 감수한다.
+	 *
+	 * ⚠️ 지금은 `TEST_` 코드다. 시작 전 필수 테스트(isTested)를 콘솔 QR 앱에서 한 번
+	 * 지급해 통과시키고, 그다음 `TEST_`를 떼고 배포한 뒤 프로모션을 RUNNING으로 바꾼다.
 	 */
-	FIRST_CHARGE: "__PUT_FIRST_CHARGE_PROMOTION_CODE__",
+	FIRST_CHARGE: "TEST_01M4AGFXD06GZC0BX3BHXWV28A",
 } as const;
 
 /** 첫 항목 등록 보상 금액(원). 콘솔 프로모션의 1회 지급액과 반드시 같아야 한다(다르면 4114). */
