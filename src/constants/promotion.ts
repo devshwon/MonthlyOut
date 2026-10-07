@@ -44,10 +44,11 @@ export const PROMOTION_CODES = {
 	 * 토스가 막는 건 하루 단위다 — 같은 날 두 번은 4114로 막히지만, 데이터를 지우고
 	 * 다음 날 다시 적으면 한 번 더 받을 수 있다. 5원이라 감수한다.
 	 *
-	 * ⚠️ 지금은 `TEST_` 코드다. 시작 전 필수 테스트(isTested)를 콘솔 QR 앱에서 한 번
-	 * 지급해 통과시키고, 그다음 `TEST_`를 떼고 배포한 뒤 프로모션을 RUNNING으로 바꾼다.
+	 * 시작 전 필수 테스트(isTested)는 앞에 `TEST_`를 붙인 코드로 QR 앱에서 한 번 지급해
+	 * 통과시킨다(TEST_ 번들 deploymentId 01a11509-1e07-7a7d-9921-b41e7ae0c2f8).
+	 * 통과 전에는 프로모션을 RUNNING으로 못 바꾸고, 그동안 지급은 4109로 실패해 pending에 남는다.
 	 */
-	FIRST_CHARGE: "TEST_01M4AGFXD06GZC0BX3BHXWV28A",
+	FIRST_CHARGE: "01M4AGFXD06GZC0BX3BHXWV28A",
 } as const;
 
 /** 첫 항목 등록 보상 금액(원). 콘솔 프로모션의 1회 지급액과 반드시 같아야 한다(다르면 4114). */
