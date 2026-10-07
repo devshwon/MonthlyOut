@@ -13,6 +13,7 @@ import {
 } from "@/components/icons";
 import { MoneyBuddy } from "@/components/MoneyBuddy";
 import { PrimaryButton } from "@/components/PrimaryButton";
+import { FIRST_CHARGE_REWARD } from "@/constants/promotion";
 import {
 	boardColors,
 	boardSurface,
@@ -44,6 +45,7 @@ import {
 	transferCharges,
 } from "@/services/charges";
 import { toggleConfirmed } from "@/services/confirmStore";
+import { canOfferFirstChargeReward } from "@/services/firstChargeReward";
 import { incomeForMonth } from "@/services/settingsStore";
 import { buildTips, pickNextTip } from "@/services/tips";
 
@@ -356,6 +358,8 @@ const s = {
 	} satisfies React.CSSProperties,
 	previewName: { flex: 1 } satisfies React.CSSProperties,
 	emptyCta: { marginTop: spacing.md } satisfies React.CSSProperties,
+	/** 첫 등록 보상 안내 — 버튼 바로 위 한 줄. 총액 칠판보다 튀지 않게 작게 둔다. */
+	emptyReward: { marginTop: spacing.md } satisfies React.CSSProperties,
 };
 
 export default function HomePage() {
@@ -710,6 +714,18 @@ export default function HomePage() {
 							</div>
 						))}
 					</div>
+
+					{canOfferFirstChargeReward(charges.length) ? (
+						<Paragraph
+							typography="t7"
+							color={colors.textSecondary}
+							style={s.emptyReward}
+						>
+							<Paragraph.Text>
+								첫 항목을 적으면 토스포인트 {FIRST_CHARGE_REWARD}원을 드려요
+							</Paragraph.Text>
+						</Paragraph>
+					) : null}
 
 					<div style={s.emptyCta}>
 						<PrimaryButton onClick={() => navigate("/charge/new")}>

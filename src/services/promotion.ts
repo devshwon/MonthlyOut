@@ -114,13 +114,22 @@ async function grantOnce(
 		if (typeof result === "object" && "key" in result) {
 			return { ok: true, rewardKey: (result as { key: string }).key };
 		}
-		if (typeof result === "object" && "errorCode" in result) {
-			const r = result as { errorCode: string; message?: string };
-			const reason = ERROR_CODE_MAP[r.errorCode] ?? "unknown";
+		// 비즈니스 오류는 `errorCode`로 올 때도 `code`로 올 때도 있다(docs/point-granting.md 2장).
+		if (
+			typeof result === "object" &&
+			("errorCode" in result || "code" in result)
+		) {
+			const r = result as {
+				errorCode?: string;
+				code?: string;
+				message?: string;
+			};
+			const code = String(r.errorCode ?? r.code ?? "");
+			const reason = ERROR_CODE_MAP[code] ?? "unknown";
 			return {
 				ok: false,
 				reason,
-				rawCode: r.errorCode,
+				rawCode: code,
 				rawMessage: r.message,
 			};
 		}

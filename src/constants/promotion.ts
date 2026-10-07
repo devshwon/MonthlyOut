@@ -38,10 +38,21 @@ export const DAILY_GRANT_LIMIT = 5000;
  * 로컬 기록/SDK 응답을 너그럽게 처리해요.
  */
 export const PROMOTION_CODES = {
-	/** 예시: 매일 출석 보상 */
-	ATTENDANCE: "__PUT_ATTENDANCE_PROMOTION_CODE__",
-	/** 예시: 환전(별→포인트) 보상 */
-	EXCHANGE: "__PUT_EXCHANGE_PROMOTION_CODE__",
-	/** 예시: 리워드 광고 시청 보상 */
-	REWARD_AD: "__PUT_REWARD_AD_PROMOTION_CODE__",
+	/**
+	 * 첫 항목 등록 보상. 콘솔에서 **1인 1회 · 1회 {@link FIRST_CHARGE_REWARD}원**으로 건다 —
+	 * 중복 지급을 막는 진짜 방어선은 이 프로모션 설정이다(docs/point-granting.md 0장).
+	 */
+	FIRST_CHARGE: "__PUT_FIRST_CHARGE_PROMOTION_CODE__",
 } as const;
+
+/** 첫 항목 등록 보상 금액(원). 콘솔 프로모션의 1회 지급액과 반드시 같아야 한다(다르면 4114). */
+export const FIRST_CHARGE_REWARD = 5;
+
+/**
+ * 콘솔에 프로모션이 실제로 만들어졌는지. false면 보상 문구도 지급 호출도 내지 않는다 —
+ * 자리표시자로 부르면 4100이 돌아오는데, 사용자에겐 "5원 준다더니 안 준다"로 보인다.
+ * 개발 빌드에서는 화면 확인을 위해 켜둔다(mock SDK라 실제 지급은 없다).
+ */
+export const FIRST_CHARGE_REWARD_READY =
+	!PROMOTION_CODES.FIRST_CHARGE.includes("PUT_FIRST_CHARGE") ||
+	import.meta.env.DEV;

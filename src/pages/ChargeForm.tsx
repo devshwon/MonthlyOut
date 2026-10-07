@@ -5,6 +5,7 @@ import {
 	TextArea,
 	TextButton,
 	TextField,
+	useToast,
 } from "@toss/tds-mobile";
 import { useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
@@ -18,6 +19,7 @@ import {
 } from "@/components/icons";
 import { PrimaryButton } from "@/components/PrimaryButton";
 import { AD_GROUP_IDS } from "@/constants/ads";
+import { FIRST_CHARGE_REWARD } from "@/constants/promotion";
 import {
 	categoryColors,
 	categorySoftColors,
@@ -62,6 +64,10 @@ import {
 	TERM_DEFAULT_CATEGORIES,
 	usedMethods,
 } from "@/services/charges";
+import {
+	claimFirstChargeReward,
+	shouldGrantFirstChargeReward,
+} from "@/services/firstChargeReward";
 import type { ChargeCategory, ChargeDraft, PaymentMethodKind } from "@/types";
 
 const s = {
@@ -236,6 +242,10 @@ const s = {
 		paddingTop: spacing.sm,
 		marginTop: spacing.md,
 	} satisfies React.CSSProperties,
+	rewardHint: {
+		marginBottom: spacing.xs,
+		textAlign: "center" as const,
+	} satisfies React.CSSProperties,
 };
 
 /** 접힌 단계 한 줄. 누르면 그 단계만 펼쳐진다. */
@@ -314,6 +324,7 @@ function formatMonthInput(value: string): string {
 export default function ChargeFormPage() {
 	const navigate = useNavigate();
 	const insets = useSafeAreaInsets();
+	const { openToast } = useToast();
 	const { id } = useParams<{ id: string }>();
 	const editing = id && id !== "new" ? getCharge(id) : undefined;
 	const thisMonth = useMemo(() => currentYearMonth(), []);
@@ -421,6 +432,9 @@ export default function ChargeFormPage() {
 		arm: adArmed,
 	});
 
+	/** 첫 항목이면 저장 버튼 위에 보상을 알린다. 수정 화면에는 없다. */
+	const rewardDue = !editing && shouldGrantFirstChargeReward(charges.length);
+
 	const methodsForKind = methodOptions.filter(
 		(option) => option.kind === methodKind,
 	);
@@ -481,6 +495,22 @@ export default function ChargeFormPage() {
 		}
 
 		addCharge(draft);
+
+		/*
+		 * 첫 항목 보상은 저장 결과를 기다리지 않는다 — 지급이 늦거나 실패해도 저장은
+		 * 이미 끝났다. 새로 받았을 때만 토스트를 띄우고, 실패는 조용히 넘긴다
+		 * (다음 저장에서 한 번 더 부른다). 첫 등록 구간이라 전면광고와 겹치지 않는다.
+		 */
+		if (rewardDue) {
+			void claimFirstChargeReward().then((granted) => {
+				if (granted) {
+					// 아래는 하단 배너와 플로팅 탭이 겹쳐 있어 토스트가 가려진다 — 위로 띄운다.
+					openToast(`토스포인트 ${FIRST_CHARGE_REWARD}원을 받았어요`, {
+						type: "top",
+					});
+				}
+			});
+		}
 
 		// 이 저장이 광고 **전**인지 **후**인지 — 아래 show()가 플래그를 바꾸기 전에 읽는다.
 		// save_after_ad가 interstitial_show의 imp와 비슷하면 광고를 보고도 계속 적는
@@ -988,6 +1018,17 @@ export default function ChargeFormPage() {
 			</div>
 
 			<div style={{ ...s.cta, paddingBottom: insets.bottom }}>
+				{rewardDue ? (
+					<Paragraph
+						typography="t7"
+						color={colors.textSecondary}
+						style={s.rewardHint}
+					>
+						<Paragraph.Text>
+							저장하면 토스포인트 {FIRST_CHARGE_REWARD}원을 드려요
+						</Paragraph.Text>
+					</Paragraph>
+				) : null}
 				<PrimaryButton disabled={!canSave} onClick={handleSave}>
 					저장
 				</PrimaryButton>

@@ -6,6 +6,7 @@ import { ChargeRow } from "@/components/ChargeRow";
 import { HandDrawnCheck } from "@/components/HandDrawnCheck";
 import { CategoryIcon, IconChevronRight, IconPencil } from "@/components/icons";
 import { MoneyBuddy } from "@/components/MoneyBuddy";
+import { FIRST_CHARGE_REWARD } from "@/constants/promotion";
 import {
 	categoryColors,
 	categorySoftColors,
@@ -27,6 +28,7 @@ import {
 	isEnded,
 	monthlyTotal,
 } from "@/services/charges";
+import { canOfferFirstChargeReward } from "@/services/firstChargeReward";
 
 const s = {
 	page: {
@@ -208,6 +210,17 @@ export default function ManagePage() {
 							지출 추가를 눌러 매달 나가는 돈을 기록해 보세요.
 						</Paragraph.Text>
 					</Paragraph>
+					{canOfferFirstChargeReward(charges.length) ? (
+						<Paragraph
+							typography="t7"
+							color={colors.textSecondary}
+							style={s.emptyDescription}
+						>
+							<Paragraph.Text>
+								첫 항목을 적으면 토스포인트 {FIRST_CHARGE_REWARD}원을 드려요
+							</Paragraph.Text>
+						</Paragraph>
+					) : null}
 				</div>
 			) : (
 				groups.map((group) => (
